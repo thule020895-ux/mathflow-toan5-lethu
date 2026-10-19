@@ -1,0 +1,8 @@
+{
+  "name": "Copy of Remix: TOÁN LỚP 5 - CÔ THU",
+  "description": "Ứng dụng học tập tương tác giúp học sinh lớp 5 khám phá hình phẳng, hình khối, công thức diện tích và hình khai triển qua các mô hình trực quan.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

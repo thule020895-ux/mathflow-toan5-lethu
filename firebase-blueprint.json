@@ -1,0 +1,56 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User account profile for students, teachers, and admins",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "User UID" },
+        "displayName": { "type": "string", "description": "User display name" },
+        "email": { "type": "string", "description": "User email" },
+        "role": { "type": "string", "enum": ["student", "teacher", "admin"], "description": "Account role" },
+        "photoURL": { "type": "string", "description": "Avatar URL" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Account creation timestamp" },
+        "lastLogin": { "type": "string", "format": "date-time", "description": "Last login timestamp" }
+      },
+      "required": ["uid", "displayName", "email", "role", "createdAt", "lastLogin"]
+    },
+    "Attendance": {
+      "title": "Attendance",
+      "description": "Student attendance and play count",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Student name" },
+        "count": { "type": "number", "description": "Number of times played" },
+        "lastPlayed": { "type": "string", "format": "date-time", "description": "Last time played" }
+      },
+      "required": ["name", "count", "lastPlayed"]
+    },
+    "Score": {
+      "title": "Score",
+      "description": "Student score for a specific round",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Student name" },
+        "score": { "type": "number", "description": "Score achieved" },
+        "round": { "type": "number", "description": "Round number" },
+        "date": { "type": "string", "format": "date-time", "description": "Date of score" }
+      },
+      "required": ["name", "score", "round", "date"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Collection of all user account profiles"
+    },
+    "/attendance/{studentId}": {
+      "schema": "Attendance",
+      "description": "Collection of student attendance records"
+    },
+    "/scores/{scoreId}": {
+      "schema": "Score",
+      "description": "Collection of all student scores"
+    }
+  }
+}

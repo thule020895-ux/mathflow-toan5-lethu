@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toán Lớp 5 - Khám phá Hình học</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background-color: #f0f9ff;
+        }
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+        }
+        .perspective {
+            perspective: 1000px;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        /* 3D Transform styles for Shape3DPanel */
+        .preserve-3d {
+            transform-style: preserve-3d;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="module">
+        import React, { useState, useRef, useEffect, useCallback } from 'https://esm.sh/react@19.2.3';
+        import ReactDOM from 'https://esm.sh/react-dom@19.2.3/client';
+        import { motion, AnimatePresence } from 'https://esm.sh/framer-motion@12.0.0';
+        import confetti from 'https://esm.sh/canvas-confetti@1.9.3';
+        import { 
+            Triangle, Box, BookOpen, Info, Layers, Timer, Gamepad2, PenTool, 
+            GraduationCap, Maximize, Minimize, Eraser, Pen, RotateCcw, Trash2, 
+            Download, Undo2, Square, Circle as CircleIcon, Minus, Zap, Trophy, 
+            Play, Heart, Circle, Bike, ChevronRight, Star, Target, Compass, 
+            Calculator, Car, Navigation, ArrowRight, Tag, HelpCircle, RotateCw,
+            CheckCircle2, XCircle, ChevronLeft, LayoutGrid, RectangleHorizontal,
+            LayoutTemplate, ChevronDown, ChevronUp, Bell, Award, Medal, Crown, User
+        } from 'https://esm.sh/lucide-react@0.475.0';
+
+        // --- Types & Constants ---
+        const QUESTION_SETS = {
+            1: [
+                { id: '1-1', type: 'multiple', question: 'Chữ số 5 trong số 17,352 có giá trị là bao nhiêu?', options: ['5', '0,5', '0,05', '0,005'], answer: '0,05' },
+                { id: '1-2', type: 'multiple', question: 'Số thập phân 4,08 được đọc như thế nào?', options: ['Bốn phẩy tám', 'Bốn phẩy không tám', 'Bốn phẩy tám mươi', 'Bốn không tám'], answer: 'Bốn phẩy không tám' },
+                { id: '1-3', type: 'multiple', question: 'Phân số nào sau đây bằng 0,5?', options: ['1/4', '1/2', '2/3', '3/4'], answer: '1/2' },
+                { id: '1-4', type: 'multiple', question: 'Hãy chọn kết quả đúng: 1 km bằng bao nhiêu mét?', options: ['10 m', '100 m', '1000 m', '10000 m'], answer: '1000 m' },
+                { id: '1-5', type: 'multiple', question: 'Hình nào dưới đây có bốn cạnh bằng nhau?', options: ['Hình chữ nhật', 'Hình vuông', 'Hình thang', 'Hình tam giác'], answer: 'Hình vuông' },
+                { id: '1-6', type: 'multiple', question: '5 m² bằng bao nhiêu đề-xi-mét vuông?', options: ['50 dm²', '500 dm²', '5000 dm²', '50000 dm²'], answer: '500 dm²' },
+                { id: '1-7', type: 'multiple', question: 'Hãy tính: 0,6 × 10 = ?', options: ['0,06', '6', '60', '0,6'], answer: '6' },
+                { id: '1-8', type: 'multiple', question: '1 giờ 30 phút bằng bao nhiêu phút?', options: ['60 phút', '75 phút', '90 phút', '120 phút'], answer: '90 phút' },
+                { id: '1-9', type: 'multiple', question: 'Trong các số sau, số nào lớn nhất?', options: ['3,45', '3,405', '3,54', '3,504'], answer: '3,54' },
+                { id: '1-10', type: 'multiple', question: 'Hãy tính: 25 × 8 = ?', options: ['150', '200', '250', '300'], answer: '200' },
+                { id: '1-11', type: 'multiple', question: 'Hãy tính tổng: 48 + 52 + 37 + 63 = ?', options: ['180', '190', '200', '210'], answer: '200' },
+                { id: '1-12', type: 'multiple', question: '3/4 của 20 bằng bao nhiêu?', options: ['12', '14', '15', '16'], answer: '15' },
+                { id: '1-13', type: 'multiple', question: 'Một hình chữ nhật có chiều dài 15 m, chiều rộng 8 m. Diện tích hình chữ nhật đó bằng bao nhiêu?', options: ['100 m²', '110 m²', '120 m²', '130 m²'], answer: '120 m²' },
+                { id: '1-14', type: 'multiple', question: '2,5 km bằng bao nhiêu mét?', options: ['250 m', '2500 m', '25000 m', '25 m'], answer: '2500 m' },
+                { id: '1-15', type: 'multiple', question: 'Hãy tính: 0,75 + 1,25 = ?', options: ['1,5', '2', '2,25', '2,5'], answer: '2' },
+                { id: '1-16', type: 'multiple', question: 'Một lớp có 36 học sinh, trong đó 1/6 là học sinh giỏi. Hỏi lớp đó có bao nhiêu học sinh giỏi?', options: ['4', '5', '6', '7'], answer: '6' },
+                { id: '1-17', type: 'multiple', question: 'Một hình vuông có diện tích 64 cm². Độ dài cạnh hình vuông là bao nhiêu?', options: ['6 cm', '7 cm', '8 cm', '9 cm'], answer: '8 cm' },
+                { id: '1-18', type: 'multiple', question: 'Một cửa hàng bán 0,5 kg chè giá 40 000 đồng. Hỏi 1 kg chè có giá bao nhiêu tiền?', options: ['60 000 đồng', '70 000 đồng', '80 000 đồng', '90 000 đồng'], answer: '80 000 đồng' },
+                { id: '1-19', type: 'multiple', question: 'Một người đi bộ với vận tốc 4 km/giờ. Sau 2,5 giờ, người đó đi được quãng đường bao nhiêu ki-lô-mét?', options: ['8 km', '9 km', '10 km', '12 km'], answer: '10 km' },
+                { id: '1-20', type: 'multiple', question: 'Một mảnh vườn hình chữ nhật có chiều dài 20 m, chiều rộng 12 m. Biết rằng 1 m² thu được 2 kg rau. Hỏi cả mảnh vườn thu được bao nhiêu ki-lô-gam rau?', options: ['400 kg', '420 kg', '480 kg', '500 kg'], answer: '480 kg' }
+            ],
+            2: [
+                { id: '2-1', type: 'multiple', question: 'Chữ số 6 trong số 23,164 có giá trị là bao nhiêu?', options: ['6', '0,6', '0,06', '0,006'], answer: '0,06' },
+                { id: '2-2', type: 'multiple', question: 'Số thập phân 7,05 được đọc như thế nào?', options: ['Bảy phẩy năm', 'Bảy phẩy không năm', 'Bảy phẩy năm mươi', 'Bảy không năm'], answer: 'Bảy phẩy không năm' },
+                { id: '2-3', type: 'multiple', question: 'Phân số nào sau đây bằng 0,25?', options: ['1/2', '1/4', '2/3', '3/5'], answer: '1/4' },
+                { id: '2-4', type: 'multiple', question: '1 tấn bằng bao nhiêu ki-lô-gam?', options: ['100 kg', '1000 kg', '10000 kg', '10 kg'], answer: '1000 kg' },
+                { id: '2-5', type: 'multiple', question: 'Hình nào dưới đây có bốn góc vuông?', options: ['Hình thang', 'Hình chữ nhật', 'Hình tam giác', 'Hình bình hành'], answer: 'Hình chữ nhật' },
+                { id: '2-6', type: 'multiple', question: '3 m² bằng bao nhiêu đề-xi-mét vuông?', options: ['30 dm²', '300 dm²', '3000 dm²', '30000 dm²'], answer: '300 dm²' },
+                { id: '2-7', type: 'multiple', question: 'Hãy tính: 0,8 × 10 = ?', options: ['0,08', '8', '80', '0,8'], answer: '8' },
+                { id: '2-8', type: 'multiple', question: '2 giờ bằng bao nhiêu phút?', options: ['100 phút', '110 phút', '120 phút', '140 phút'], answer: '120 phút' },
+                { id: '2-9', type: 'multiple', question: 'Trong các số sau, số nào lớn nhất?', options: ['4,25', '4,205', '4,52', '4,502'], answer: '4,52' },
+                { id: '2-10', type: 'multiple', question: 'Hãy tính: 25 × 6 = ?', options: ['100', '150', '200', '250'], answer: '150' },
+                { id: '2-11', type: 'multiple', question: 'Hãy tính tổng: 36 + 64 + 27 + 73 = ?', options: ['180', '190', '200', '210'], answer: '200' },
+                { id: '2-12', type: 'multiple', question: '2/5 của 30 bằng bao nhiêu?', options: ['10', '12', '15', '18'], answer: '12' },
+                { id: '2-13', type: 'multiple', question: 'Một hình chữ nhật có chiều dài 14 m, chiều rộng 6 m. Diện tích hình chữ nhật bằng bao nhiêu?', options: ['70 m²', '84 m²', '90 m²', '96 m²'], answer: '84 m²' },
+                { id: '2-14', type: 'multiple', question: '3,5 km bằng bao nhiêu mét?', options: ['350 m', '3500 m', '35000 m', '35 m'], answer: '3500 m' },
+                { id: '2-15', type: 'multiple', question: 'Hãy tính: 0,8 + 1,2 = ?', options: ['1,8', '2', '2,2', '2,5'], answer: '2' },
+                { id: '2-16', type: 'multiple', question: 'Một lớp có 40 học sinh, trong đó 1/5 là học sinh giỏi. Hỏi lớp đó có bao nhiêu học sinh giỏi?', options: ['6', '7', '8', '9'], answer: '8' },
+                { id: '2-17', type: 'multiple', question: 'Một hình vuông có diện tích 81 cm². Độ dài cạnh hình vuông là bao nhiêu?', options: ['7 cm', '8 cm', '9 cm', '10 cm'], answer: '9 cm' },
+                { id: '2-18', type: 'multiple', question: 'Một cửa hàng bán 0,5 kg mật ong giá 60 000 đồng. Hỏi 1 kg mật ong có giá bao nhiêu tiền?', options: ['90 000 đồng', '100 000 đồng', '110 000 đồng', '120 000 đồng'], answer: '120 000 đồng' },
+                { id: '2-19', type: 'multiple', question: 'Một người đi xe đạp với vận tốc 10 km/giờ. Sau 2,5 giờ, người đó đi được quãng đường bao nhiêu ki-lô-mét?', options: ['20 km', '22 km', '25 km', '30 km'], answer: '25 km' },
+                { id: '2-20', type: 'multiple', question: 'Một mảnh vườn hình chữ nhật có chiều dài 18 m, chiều rộng 12 m. Biết rằng 1 m² thu được 3 kg rau. Hỏi cả mảnh vườn thu được bao nhiêu ki-lô-gam rau?', options: ['540 kg', '648 kg', '700 kg', '720 kg'], answer: '648 kg' }
+            ],
+            3: [
+                { id: '3-1', type: 'multiple', question: 'Chữ số 4 trong số 12,346 có giá trị là bao nhiêu?', options: ['4', '0,4', '0,04', '0,004'], answer: '0,04' },
+                { id: '3-2', type: 'multiple', question: 'Số thập phân 5,07 được đọc như thế nào?', options: ['Năm phẩy bảy', 'Năm phẩy không bảy', 'Năm phẩy bảy mươi', 'Năm không bảy'], answer: 'Năm phẩy không bảy' },
+                { id: '3-3', type: 'multiple', question: 'Phân số nào sau đây bằng 0,75?', options: ['1/4', '3/4', '2/5', '1/3'], answer: '3/4' },
+                { id: '3-4', type: 'multiple', question: '1 giờ bằng bao nhiêu phút?', options: ['30 phút', '45 phút', '60 phút', '90 phút'], answer: '60 phút' },
+                { id: '3-5', type: 'multiple', question: 'Hình nào dưới đây có ba cạnh?', options: ['Hình vuông', 'Hình tam giác', 'Hình chữ nhật', 'Hình thang'], answer: 'Hình tam giác' },
+                { id: '3-6', type: 'multiple', question: '7 m² bằng bao nhiêu đề-xi-mét vuông?', options: ['70 dm²', '700 dm²', '7000 dm²', '70000 dm²'], answer: '700 dm²' },
+                { id: '3-7', type: 'multiple', question: 'Hãy tính: 0,9 × 10 = ?', options: ['0,09', '9', '90', '0,9'], answer: '9' },
+                { id: '3-8', type: 'multiple', question: '1,5 giờ bằng bao nhiêu phút?', options: ['75 phút', '80 phút', '85 phút', '90 phút'], answer: '90 phút' },
+                { id: '3-9', type: 'multiple', question: 'Trong các số sau, số nào lớn nhất?', options: ['5,26', '5,206', '5,62', '5,602'], answer: '5,62' },
+                { id: '3-10', type: 'multiple', question: 'Hãy tính: 25 × 4 = ?', options: ['50', '75', '100', '125'], answer: '100' },
+                { id: '3-11', type: 'multiple', question: 'Hãy tính tổng: 45 + 55 + 36 + 64 = ?', options: ['180', '190', '200', '210'], answer: '200' },
+                { id: '3-12', type: 'multiple', question: '3/5 của 20 bằng bao nhiêu?', options: ['10', '11', '12', '13'], answer: '12' },
+                { id: '3-13', type: 'multiple', question: 'Một hình chữ nhật có chiều dài 16 m, chiều rộng 5 m. Diện tích hình chữ nhật bằng bao nhiêu?', options: ['70 m²', '75 m²', '80 m²', '85 m²'], answer: '80 m²' },
+                { id: '3-14', type: 'multiple', question: '4,5 km bằng bao nhiêu mét?', options: ['450 m', '4500 m', '45000 m', '45 m'], answer: '4500 m' },
+                { id: '3-15', type: 'multiple', question: 'Hãy tính: 1,4 + 0,6 = ?', options: ['1,8', '2', '2,2', '2,4'], answer: '2' },
+                { id: '3-16', type: 'multiple', question: 'Một lớp có 30 học sinh, trong đó 1/5 là học sinh giỏi. Hỏi lớp đó có bao nhiêu học sinh giỏi?', options: ['5', '6', '7', '8'], answer: '6' },
+                { id: '3-17', type: 'multiple', question: 'Một hình vuông có diện tích 49 cm². Độ dài cạnh hình vuông là bao nhiêu?', options: ['6 cm', '7 cm', '8 cm', '9 cm'], answer: '7 cm' },
+                { id: '3-18', type: 'multiple', question: 'Một cửa hàng bán 0,4 kg chè giá 20 000 đồng. Hỏi 1 kg chè có giá bao nhiêu tiền?', options: ['40 000 đồng', '45 000 đồng', '50 000 đồng', '60 000 đồng'], answer: '50 000 đồng' },
+                { id: '3-19', type: 'multiple', question: 'Một xe máy đi với vận tốc 40 km/giờ. Sau 1,5 giờ, xe đi được quãng đường bao nhiêu ki-lô-mét?', options: ['50 km', '55 km', '60 km', '65 km'], answer: '60 km' },
+                { id: '3-20', type: 'multiple', question: 'Một thửa ruộng hình chữ nhật có chiều dài 15 m, chiều rộng 12 m. Biết rằng 1 m² thu được 2 kg lúa. Hỏi cả thửa ruộng thu được bao nhiêu ki-lô-gam lúa?', options: ['300 kg', '320 kg', '340 kg', '360 kg'], answer: '360 kg' }
+            ],
+            4: [
+                { id: '4-1', type: 'multiple', question: 'Chữ số 3 trong số 8,734 có giá trị là bao nhiêu?', options: ['3', '0,3', '0,03', '0,003'], answer: '0,03' },
+                { id: '4-2', type: 'multiple', question: 'Số 6,04 đọc là:', options: ['Sáu phẩy bốn', 'Sáu phẩy không bốn', 'Sáu phẩy bốn mươi', 'Sáu không bốn'], answer: 'Sáu phẩy không bốn' },
+                { id: '4-3', type: 'multiple', question: 'Phân số nào bằng 0,2?', options: ['1/5', '1/2', '2/3', '3/4'], answer: '1/5' },
+                { id: '4-4', type: 'multiple', question: '1 kg =', options: ['10 g', '100 g', '1000 g', '10000 g'], answer: '1000 g' },
+                { id: '4-5', type: 'multiple', question: 'Hình có 2 cặp cạnh song song:', options: ['Hình chữ nhật', 'Hình tam giác', 'Hình thang', 'Hình tròn'], answer: 'Hình chữ nhật' },
+                { id: '4-6', type: 'multiple', question: '9 m² =', options: ['90 dm²', '900 dm²', '9000 dm²', '90000 dm²'], answer: '900 dm²' },
+                { id: '4-7', type: 'multiple', question: '0,7 × 10 =', options: ['0,07', '7', '70', '0,7'], answer: '7' },
+                { id: '4-8', type: 'multiple', question: '2,5 giờ =', options: ['120 phút', '130 phút', '140 phút', '150 phút'], answer: '150 phút' },
+                { id: '4-9', type: 'multiple', question: 'Số lớn nhất là:', options: ['6,35', '6,305', '6,53', '6,503'], answer: '6,53' },
+                { id: '4-10', type: 'multiple', question: '25 × 12 =', options: ['250', '275', '300', '325'], answer: '300' },
+                { id: '4-11', type: 'multiple', question: '25 + 75 + 48 + 52 =', options: ['180', '190', '200', '210'], answer: '200' },
+                { id: '4-12', type: 'multiple', question: '4/5 của 20:', options: ['12', '14', '16', '18'], answer: '16' },
+                { id: '4-13', type: 'multiple', question: 'Hình chữ nhật 10 m × 9 m:', options: ['80 m²', '90 m²', '100 m²', '110 m²'], answer: '90 m²' },
+                { id: '4-14', type: 'multiple', question: '1,8 km =', options: ['180 m', '1800 m', '18000 m', '18 m'], answer: '1800 m' },
+                { id: '4-15', type: 'multiple', question: '1,6 + 0,4 =', options: ['1,8', '2', '2,2', '2,4'], answer: '2' },
+                { id: '4-16', type: 'multiple', question: 'Lớp 35 HS, 1/7 giỏi:', options: ['4', '5', '6', '7'], answer: '5' },
+                { id: '4-17', type: 'multiple', question: 'Hình vuông diện tích 36 cm²:', options: ['5 cm', '6 cm', '7 cm', '8 cm'], answer: '6 cm' },
+                { id: '4-18', type: 'multiple', question: '0,5 kg đường giá 12 000 đồng. 1 kg:', options: ['18 000', '20 000', '24 000', '25 000'], answer: '24 000' },
+                { id: '4-19', type: 'multiple', question: 'Xe chạy 30 km/giờ trong 1,5 giờ:', options: ['40 km', '45 km', '50 km', '55 km'], answer: '45 km' },
+                { id: '4-20', type: 'multiple', question: 'Mảnh đất 16 m × 10 m. 1 m² thu 2 kg rau:', options: ['280 kg', '300 kg', '320 kg', '340 kg'], answer: '320 kg' }
+            ],
+            5: [
+                { id: '5-1', type: 'multiple', question: 'Chữ số 8 trong số 15,284:', options: ['8', '0,8', '0,08', '0,008'], answer: '0,08' },
+                { id: '5-2', type: 'multiple', question: 'Số 9,02 đọc là:', options: ['Chín phẩy hai', 'Chín phẩy không hai', 'Chín phẩy hai mươi', 'Chín không hai'], answer: 'Chín phẩy không hai' },
+                { id: '5-3', type: 'multiple', question: 'Phân số bằng 0,4:', options: ['2/5', '1/3', '3/4', '4/5'], answer: '2/5' },
+                { id: '5-4', type: 'multiple', question: '1 ha =', options: ['100 m²', '1000 m²', '10000 m²', '100000 m²'], answer: '10000 m²' },
+                { id: '5-5', type: 'multiple', question: 'Hình có 1 cặp cạnh song song:', options: ['Hình thang', 'Hình vuông', 'Hình chữ nhật', 'Hình tam giác'], answer: 'Hình thang' },
+                { id: '5-6', type: 'multiple', question: '6 m² =', options: ['60 dm²', '600 dm²', '6000 dm²', '60000 dm²'], answer: '600 dm²' },
+                { id: '5-7', type: 'multiple', question: '0,5 × 10 =', options: ['0,05', '5', '50', '0,5'], answer: '5' },
+                { id: '5-8', type: 'multiple', question: '3 giờ =', options: ['120 phút', '150 phút', '180 phút', '200 phút'], answer: '180 phút' },
+                { id: '5-9', type: 'multiple', question: 'Số lớn nhất:', options: ['7,45', '7,405', '7,54', '7,504'], answer: '7,54' },
+                { id: '5-10', type: 'multiple', question: '25 × 16 =', options: ['300', '350', '400', '450'], answer: '400' },
+                { id: '5-11', type: 'multiple', question: '35 + 65 + 27 + 73 =', options: ['180', '190', '200', '210'], answer: '200' },
+                { id: '5-12', type: 'multiple', question: '2/3 của 18:', options: ['10', '11', '12', '13'], answer: '12' },
+                { id: '5-13', type: 'multiple', question: 'Hình chữ nhật 12 m × 7 m:', options: ['70 m²', '80 m²', '84 m²', '90 m²'], answer: '84 m²' },
+                { id: '5-14', type: 'multiple', question: '6,5 km =', options: ['650 m', '6500 m', '65000 m', '65 m'], answer: '6500 m' },
+                { id: '5-15', type: 'multiple', question: '2,3 + 1,7 =', options: ['3', '4', '4,5', '5'], answer: '4' },
+                { id: '5-16', type: 'multiple', question: 'Lớp 28 HS, 1/4 giỏi:', options: ['6', '7', '8', '9'], answer: '7' },
+                { id: '5-17', type: 'multiple', question: 'Hình vuông diện tích 100 cm²:', options: ['8 cm', '9 cm', '10 cm', '11 cm'], answer: '10 cm' },
+                { id: '5-18', type: 'multiple', question: '0,2 kg chè giá 10 000 đồng. 1 kg:', options: ['40 000', '45 000', '50 000', '60 000'], answer: '50 000' },
+                { id: '5-19', type: 'multiple', question: 'Xe đi 50 km/giờ trong 1,2 giờ:', options: ['55 km', '60 km', '65 km', '70 km'], answer: '60 km' },
+                { id: '5-20', type: 'multiple', question: 'Ruộng 20 m × 15 m. 1 m² thu 3 kg lúa:', options: ['800 kg', '850 kg', '900 kg', '950 kg'], answer: '900 kg' }
+            ]
+        };
+
+        // --- Components ---
+        const DrawingBoard = () => {
+            const canvasRef = useRef(null);
+            const contextRef = useRef(null);
+            const [isDrawing, setIsDrawing] = useState(false);
+            const [color, setColor] = useState('#4f46e5');
+            const [lineWidth, setLineWidth] = useState(5);
+            const [tool, setTool] = useState('pen');
+            const [history, setHistory] = useState([]);
+
+            useEffect(() => {
+                const canvas = canvasRef.current;
+                if (!canvas) return;
+                const container = canvas.parentElement;
+                if (container) {
+                    canvas.width = container.clientWidth * 2;
+                    canvas.height = container.clientHeight * 2;
+                    canvas.style.width = `${container.clientWidth}px`;
+                    canvas.style.height = `${container.clientHeight}px`;
+                }
+                const context = canvas.getContext('2d');
+                if (context) {
+                    context.scale(2, 2);
+                    context.lineCap = 'round';
+                    context.lineJoin = 'round';
+                    context.strokeStyle = color;
+                    context.lineWidth = lineWidth;
+                    contextRef.current = context;
+                    context.fillStyle = 'white';
+                    context.fillRect(0, 0, canvas.width, canvas.height);
+                    saveToHistory();
+                }
+                const handleResize = () => {
+                    const tempCanvas = document.createElement('canvas');
+                    const tempCtx = tempCanvas.getContext('2d');
+                    tempCanvas.width = canvas.width;
+                    tempCanvas.height = canvas.height;
+                    tempCtx?.drawImage(canvas, 0, 0);
+                    if (container) {
+                        canvas.width = container.clientWidth * 2;
+                        canvas.height = container.clientHeight * 2;
+                        canvas.style.width = `${container.clientWidth}px`;
+                        canvas.style.height = `${container.clientHeight}px`;
+                        context?.scale(2, 2);
+                        context?.drawImage(tempCanvas, 0, 0, tempCanvas.width, tempCanvas.height, 0, 0, container.clientWidth, container.clientHeight);
+                    }
+                };
+                window.addEventListener('resize', handleResize);
+                return () => window.removeEventListener('resize', handleResize);
+            }, []);
+
+            useEffect(() => {
+                if (contextRef.current) {
+                    contextRef.current.strokeStyle = tool === 'eraser' ? 'white' : color;
+                    contextRef.current.lineWidth = lineWidth;
+                }
+            }, [color, lineWidth, tool]);
+
+            const saveToHistory = () => {
+                const canvas = canvasRef.current;
+                if (canvas) {
+                    setHistory(prev => [...prev.slice(-19), canvas.toDataURL()]);
+                }
+            };
+
+            const startDrawing = (e) => {
+                const canvas = canvasRef.current;
+                if (!canvas) return;
+                const rect = canvas.getBoundingClientRect();
+                const x = ('touches' in e ? e.touches[0].clientX : e.clientX) - rect.left;
+                const y = ('touches' in e ? e.touches[0].clientY : e.clientY) - rect.top;
+                contextRef.current?.beginPath();
+                contextRef.current?.moveTo(x, y);
+                setIsDrawing(true);
+            };
+
+            const draw = (e) => {
+                if (!isDrawing) return;
+                const canvas = canvasRef.current;
+                if (!canvas) return;
+                const rect = canvas.getBoundingClientRect();
+                const x = ('touches' in e ? e.touches[0].clientX : e.clientX) - rect.left;
+                const y = ('touches' in e ? e.touches[0].clientY : e.clientY) - rect.top;
+                contextRef.current?.lineTo(x, y);
+                contextRef.current?.stroke();
+            };
+
+            const stopDrawing = () => {
+                if (isDrawing) {
+                    contextRef.current?.closePath();
+                    setIsDrawing(false);
+                    saveToHistory();
+                }
+            };
+
+            const clearCanvas = () => {
+                const canvas = canvasRef.current;
+                const context = contextRef.current;
+                if (canvas && context) {
+                    context.fillStyle = 'white';
+                    context.fillRect(0, 0, canvas.width, canvas.height);
+                    saveToHistory();
+                }
+            };
+
+            const undo = () => {
+                if (history.length <= 1) return;
+                const canvas = canvasRef.current;
+                const context = contextRef.current;
+                if (canvas && context) {
+                    const newHistory = [...history];
+                    newHistory.pop();
+                    const lastState = newHistory[newHistory.length - 1];
+                    const img = new Image();
+                    img.src = lastState;
+                    img.onload = () => {
+                        context.fillStyle = 'white';
+                        context.fillRect(0, 0, canvas.width, canvas.height);
+                        context.drawImage(img, 0, 0, canvas.width / 2, canvas.height / 2);
+                        setHistory(newHistory);
+                    };
+                }
+            };
+
+            const download = () => {
+                const canvas = canvasRef.current;
+                if (canvas) {
+                    const link = document.createElement('a');
+                    link.download = 'nhap-toan-lop-5.png';
+                    link.href = canvas.toDataURL();
+                    link.click();
+                }
+            };
+
+            return React.createElement('div', { className: "flex flex-col h-[600px] bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-200" },
+                React.createElement('div', { className: "bg-slate-50 p-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4" },
+                    React.createElement('div', { className: "flex items-center gap-2 bg-white p-1 rounded-2xl shadow-sm border border-slate-100" },
+                        React.createElement('button', { onClick: () => setTool('pen'), className: `p-3 rounded-xl transition-all ${tool === 'pen' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'text-slate-400 hover:bg-slate-50'}`, title: "Bút vẽ" }, React.createElement(Pen, { size: 20 })),
+                        React.createElement('button', { onClick: () => setTool('eraser'), className: `p-3 rounded-xl transition-all ${tool === 'eraser' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'text-slate-400 hover:bg-slate-50'}`, title: "Tẩy" }, React.createElement(Eraser, { size: 20 }))
+                    ),
+                    React.createElement('div', { className: "flex items-center gap-3" },
+                        React.createElement('div', { className: "flex items-center gap-1 bg-white p-1 rounded-2xl shadow-sm border border-slate-100" },
+                            ['#4f46e5', '#ef4444', '#10b981', '#f59e0b', '#000000'].map(c => React.createElement('button', { key: c, onClick: () => { setColor(c); setTool('pen'); }, className: `w-8 h-8 rounded-lg border-2 transition-all ${color === c && tool === 'pen' ? 'border-slate-400 scale-110' : 'border-transparent'}`, style: { backgroundColor: c } }))
+                        ),
+                        React.createElement('div', { className: "flex items-center gap-2 bg-white px-3 py-1 rounded-2xl shadow-sm border border-slate-100" },
+                            React.createElement('span', { className: "text-[10px] font-black text-slate-400 uppercase" }, "Cỡ"),
+                            React.createElement('input', { type: "range", min: "1", max: "20", value: lineWidth, onChange: (e) => setLineWidth(Number(e.target.value)), className: "w-24 accent-indigo-600" })
+                        )
+                    ),
+                    React.createElement('div', { className: "flex items-center gap-2" },
+                        React.createElement('button', { onClick: undo, className: "p-3 text-slate-600 hover:bg-white hover:shadow-sm rounded-xl transition-all", title: "Hoàn tác" }, React.createElement(Undo2, { size: 20 })),
+                        React.createElement('button', { onClick: clearCanvas, className: "p-3 text-rose-600 hover:bg-rose-50 rounded-xl transition-all", title: "Xóa hết" }, React.createElement(Trash2, { size: 20 })),
+                        React.createElement('button', { onClick: download, className: "p-3 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 rounded-xl transition-all flex items-center gap-2 font-bold px-4", title: "Tải về" }, React.createElement(Download, { size: 18 }), React.createElement('span', { className: "hidden sm:inline" }, "Lưu nháp"))
+                    )
+                ),
+                React.createElement('div', { className: "flex-1 relative bg-slate-200 p-4" },
+                    React.createElement('div', { className: "w-full h-full bg-white rounded-xl shadow-inner overflow-hidden cursor-crosshair" },
+                        React.createElement('canvas', { ref: canvasRef, onMouseDown: startDrawing, onMouseMove: draw, onMouseUp: stopDrawing, onMouseLeave: stopDrawing, onTouchStart: startDrawing, onTouchMove: draw, onTouchEnd: stopDrawing, className: "touch-none" })
+                    ),
+                    React.createElement('div', { className: "absolute bottom-8 right-8 pointer-events-none opacity-10 select-none" },
+                        React.createElement('div', { className: "text-4xl font-black italic" }, "BẢNG NHÁP TOÁN")
+                    )
+                )
+            );
+        };
+
+        const MotionPanel = () => {
+            const [mode, setMode] = useState('s');
+            const [inputs, setInputs] = useState({ s: 120, v: 40, t: 3, unitS: 'km', unitV: 'km/giờ', unitT: 'giờ' });
+            const [animProgress, setAnimProgress] = useState(0);
+
+            useEffect(() => {
+                if (mode === 's') setInputs(prev => ({ ...prev, s: Number((prev.v * prev.t).toFixed(2)) }));
+                else if (mode === 'v') setInputs(prev => ({ ...prev, v: prev.t !== 0 ? Number((prev.s / prev.t).toFixed(2)) : 0 }));
+                else if (mode === 't') setInputs(prev => ({ ...prev, t: prev.v !== 0 ? Number((prev.s / prev.v).toFixed(2)) : 0 }));
+            }, [mode, inputs.s, inputs.v, inputs.t]);
+
+            useEffect(() => {
+                let interval;
+                setAnimProgress(0);
+                interval = setInterval(() => {
+                    setAnimProgress(prev => (prev >= 100 ? 0 : prev + 1));
+                }, 50);
+                return () => clearInterval(interval);
+            }, [mode]);
+
+            const generateRandom = () => {
+                const s = Math.floor(Math.random() * 500) + 50;
+                const v = Math.floor(Math.random() * 80) + 10;
+                const t = Number((s / v).toFixed(2));
+                setInputs({ ...inputs, s, v, t });
+            };
+
+            const getSolutionTitle = () => {
+                switch(mode) {
+                    case 's': return 'Quãng đường vật đó đi được là:';
+                    case 'v': return 'Vận tốc của vật đó là:';
+                    case 't': return 'Thời gian vật đó đi hết quãng đường là:';
+                }
+            };
+
+            return React.createElement('div', { className: "flex flex-col lg:flex-row h-full min-h-[70vh]" },
+                React.createElement('div', { className: "w-full lg:w-80 bg-slate-50 p-6 border-r border-slate-200 space-y-6 overflow-y-auto" },
+                    React.createElement('div', null,
+                        React.createElement('h3', { className: "text-lg font-bold text-slate-800 mb-4 flex items-center gap-2" }, React.createElement(Navigation, { className: "text-orange-600", size: 20 }), "Đại lượng cần tính"),
+                        React.createElement('div', { className: "grid grid-cols-1 gap-2" },
+                            [{ id: 's', label: 'Tính Quãng đường (s)', icon: React.createElement(Navigation, { size: 16 }) }, { id: 'v', label: 'Tính Vận tốc (v)', icon: React.createElement(Car, { size: 16 }) }, { id: 't', label: 'Tính Thời gian (t)', icon: React.createElement(Timer, { size: 16 }) }].map(m =>
+                                React.createElement('button', { key: m.id, onClick: () => setMode(m.id), className: `text-left px-4 py-3 rounded-xl transition-all font-bold flex items-center gap-3 ${mode === m.id ? 'bg-orange-600 text-white shadow-lg' : 'bg-white hover:bg-orange-50 text-slate-700 border border-slate-200'}` }, m.icon, m.label)
+                            )
+                        )
+                    ),
+                    React.createElement('div', { className: "space-y-4" },
+                        React.createElement('h3', { className: "text-lg font-bold text-slate-800 flex items-center gap-2" }, React.createElement(Calculator, { className: "text-blue-600", size: 20 }), "Nhập dữ liệu"),
+                        React.createElement('div', { className: "space-y-3" },
+                            mode !== 's' && React.createElement('div', { className: "bg-white p-3 rounded-xl border border-slate-200 shadow-sm" },
+                                React.createElement('label', { className: "text-[10px] font-black text-slate-400 uppercase block mb-1" }, "Quãng đường (s)"),
+                                React.createElement('div', { className: "flex items-center gap-2" },
+                                    React.createElement('input', { type: "number", value: inputs.s, onChange: (e) => setInputs({ ...inputs, s: Number(e.target.value) }), className: "w-full font-bold outline-none text-orange-600" }),
+                                    React.createElement('select', { value: inputs.unitS, onChange: (e) => setInputs({ ...inputs, unitS: e.target.value }), className: "text-xs font-bold text-slate-500 bg-slate-100 p-1 rounded" }, React.createElement('option', null, "km"), React.createElement('option', null, "m"))
+                                )
+                            ),
+                            mode !== 'v' && React.createElement('div', { className: "bg-white p-3 rounded-xl border border-slate-200 shadow-sm" },
+                                React.createElement('label', { className: "text-[10px] font-black text-slate-400 uppercase block mb-1" }, "Vận tốc (v)"),
+                                React.createElement('div', { className: "flex items-center gap-2" },
+                                    React.createElement('input', { type: "number", value: inputs.v, onChange: (e) => setInputs({ ...inputs, v: Number(e.target.value) }), className: "w-full font-bold outline-none text-blue-600" }),
+                                    React.createElement('select', { value: inputs.unitV, onChange: (e) => setInputs({ ...inputs, unitV: e.target.value }), className: "text-[10px] font-bold text-slate-500 bg-slate-100 p-1 rounded" }, React.createElement('option', null, "km/giờ"), React.createElement('option', null, "m/phút"), React.createElement('option', null, "m/giây"))
+                                )
+                            ),
+                            mode !== 't' && React.createElement('div', { className: "bg-white p-3 rounded-xl border border-slate-200 shadow-sm" },
+                                React.createElement('label', { className: "text-[10px] font-black text-slate-400 uppercase block mb-1" }, "Thời gian (t)"),
+                                React.createElement('div', { className: "flex items-center gap-2" },
+                                    React.createElement('input', { type: "number", value: inputs.t, onChange: (e) => setInputs({ ...inputs, t: Number(e.target.value) }), className: "w-full font-bold outline-none text-emerald-600" }),
+                                    React.createElement('select', { value: inputs.unitT, onChange: (e) => setInputs({ ...inputs, unitT: e.target.value }), className: "text-xs font-bold text-slate-500 bg-slate-100 p-1 rounded" }, React.createElement('option', null, "giờ"), React.createElement('option', null, "phút"), React.createElement('option', null, "giây"))
+                                )
+                            ),
+                            React.createElement('button', { onClick: generateRandom, className: "w-full py-3 rounded-xl flex items-center justify-center gap-2 font-bold bg-blue-100 text-blue-700 hover:bg-blue-200 transition-all shadow-sm" }, React.createElement(RotateCcw, { size: 18 }), " Bài toán ngẫu nhiên")
+                        )
+                    ),
+                    React.createElement('div', { className: "bg-orange-50 p-4 rounded-xl border border-orange-100" },
+                        React.createElement('h4', { className: "text-[10px] font-black text-orange-700 uppercase mb-2 flex items-center gap-1" }, React.createElement(HelpCircle, { size: 12 }), " Lưu ý đơn vị"),
+                        React.createElement('ul', { className: "text-[10px] text-orange-800 space-y-1 font-bold italic" }, React.createElement('li', null, "• km đi với giờ (km/giờ)"), React.createElement('li', null, "• m đi với phút hoặc giây"), React.createElement('li', null, "• Cần đổi đơn vị nếu không khớp"))
+                    )
+                ),
+                React.createElement('div', { className: "flex-1 p-4 md:p-8 flex flex-col bg-white overflow-y-auto" },
+                    React.createElement('div', { className: "max-w-4xl mx-auto w-full space-y-8" },
+                        React.createElement('div', { className: "bg-slate-50 rounded-3xl border border-slate-200 p-8 shadow-inner relative overflow-hidden" },
+                            React.createElement('div', { className: "absolute top-4 left-4 z-10 bg-orange-600 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-md" }, "Minh họa chuyển động"),
+                            React.createElement('div', { className: "h-40 flex items-center relative" },
+                                React.createElement('div', { className: "absolute w-full h-1 bg-slate-300 bottom-10 rounded-full" },
+                                    React.createElement('div', { className: "absolute -top-6 left-0 text-[10px] font-bold text-slate-400 uppercase tracking-tighter" }, "Bắt đầu (A)"),
+                                    React.createElement('div', { className: "absolute -top-6 right-0 text-[10px] font-bold text-slate-400 uppercase tracking-tighter" }, "Kết thúc (B)")
+                                ),
+                                React.createElement('div', { className: "absolute transition-all duration-75 ease-linear flex flex-col items-center", style: { left: `${animProgress}%`, bottom: '40px', transform: 'translateX(-50%)' } },
+                                    React.createElement('div', { className: "bg-white px-2 py-1 rounded-lg shadow-sm border border-slate-100 mb-2 text-[10px] font-bold text-blue-600 whitespace-nowrap" }, `v = ${inputs.v} ${inputs.unitV}`),
+                                    inputs.v < 15 ? React.createElement(Bike, { className: "text-orange-500", size: 32 }) : React.createElement(Car, { className: "text-blue-600", size: 36 })
+                                ),
+                                React.createElement('div', { className: "absolute bottom-2 left-1/2 -translate-x-1/2 w-full flex justify-between px-2" },
+                                    React.createElement('div', { className: "text-[10px] font-bold text-emerald-600" }, `t = 0 ${inputs.unitT}`),
+                                    React.createElement('div', { className: "text-[10px] font-bold text-orange-600 text-center" }, `Quãng đường s = ${inputs.s} ${inputs.unitS}`),
+                                    React.createElement('div', { className: "text-[10px] font-bold text-emerald-600" }, `t = ${inputs.t} ${inputs.unitT}`)
+                                )
+                            )
+                        ),
+                        React.createElement('div', { className: "grid grid-cols-1 md:grid-cols-2 gap-6" },
+                            React.createElement('div', { className: "bg-indigo-50 p-6 rounded-3xl border border-indigo-100 shadow-sm" },
+                                React.createElement('h4', { className: "text-indigo-900 font-black text-sm mb-6 uppercase tracking-tight flex items-center gap-2" }, React.createElement(BookOpen, { size: 18, className: "text-indigo-600" }), " Bảng công thức ghi nhớ"),
+                                React.createElement('div', { className: "space-y-4" },
+                                    React.createElement('div', { className: `p-4 rounded-2xl border transition-all ${mode === 's' ? 'bg-orange-600 text-white border-orange-400 shadow-md' : 'bg-white text-slate-700 border-slate-100'}` },
+                                        React.createElement('p', { className: `text-[10px] font-black uppercase mb-1 ${mode === 's' ? 'text-orange-100' : 'text-slate-400'}` }, "Tìm Quãng đường"),
+                                        React.createElement('div', { className: "flex justify-between items-center" }, React.createElement('span', { className: "text-xl font-black italic" }, "s = v × t"), React.createElement('span', { className: "text-[10px] opacity-70" }, "Nhân vận tốc với thời gian"))
+                                    ),
+                                    React.createElement('div', { className: `p-4 rounded-2xl border transition-all ${mode === 'v' ? 'bg-blue-600 text-white border-blue-400 shadow-md' : 'bg-white text-slate-700 border-slate-100'}` },
+                                        React.createElement('p', { className: `text-[10px] font-black uppercase mb-1 ${mode === 'v' ? 'text-blue-100' : 'text-slate-400'}` }, "Tìm Vận tốc"),
+                                        React.createElement('div', { className: "flex justify-between items-center" }, React.createElement('span', { className: "text-xl font-black italic" }, "v = s : t"), React.createElement('span', { className: "text-[10px] opacity-70" }, "Chia quãng đường cho thời gian"))
+                                    ),
+                                    React.createElement('div', { className: `p-4 rounded-2xl border transition-all ${mode === 't' ? 'bg-emerald-600 text-white border-emerald-400 shadow-md' : 'bg-white text-slate-700 border-slate-100'}` },
+                                        React.createElement('p', { className: `text-[10px] font-black uppercase mb-1 ${mode === 't' ? 'text-emerald-100' : 'text-slate-400'}` }, "Tìm Thời gian"),
+                                        React.createElement('div', { className: "flex justify-between items-center" }, React.createElement('span', { className: "text-xl font-black italic" }, "t = s : v"), React.createElement('span', { className: "text-[10px] opacity-70" }, "Chia quãng đường cho vận tốc"))
+                                    )
+                                ),
+                                React.createElement('div', { className: "mt-6 bg-white/50 p-3 rounded-xl border border-indigo-100 text-center" }, React.createElement('p', { className: "text-[11px] font-bold text-slate-500 italic" }, "Ghi chú: ", React.createElement('span', { className: "text-orange-600" }, "s"), " (Quãng đường), ", React.createElement('span', { className: "text-blue-600" }, "v"), " (Vận tốc), ", React.createElement('span', { className: "text-emerald-600" }, "t"), " (Thời gian)"))
+                            ),
+                            React.createElement('div', { className: "bg-emerald-50 p-6 rounded-3xl border border-emerald-100 shadow-sm relative overflow-hidden" },
+                                React.createElement('div', { className: "absolute top-0 right-0 p-4 opacity-5" }, React.createElement(Calculator, { size: 80, className: "text-emerald-900" })),
+                                React.createElement('h4', { className: "text-emerald-900 font-bold mb-4 flex items-center gap-2 border-b border-emerald-200 pb-2" }, React.createElement(ArrowRight, { size: 18, className: "text-emerald-600" }), "Bài giải chi tiết"),
+                                React.createElement('div', { className: "space-y-4 font-serif" },
+                                    React.createElement('div', { className: "text-center" }, React.createElement('p', { className: "font-bold text-emerald-900 text-sm mb-3 underline decoration-emerald-200 underline-offset-4 tracking-wider" }, "BÀI GIẢI"), React.createElement('p', { className: "text-slate-700 font-bold mb-4 italic" }, getSolutionTitle())),
+                                    React.createElement('div', { className: "bg-white/80 p-5 rounded-xl border border-emerald-200 shadow-inner" }, React.createElement('p', { className: "text-[10px] font-black text-slate-400 uppercase mb-2" }, "Phép tính:"), React.createElement('p', { className: "text-emerald-800 font-bold text-xl text-center" }, `${mode === 's' ? `${inputs.v} × ${inputs.t}` : `${inputs.s} : ${mode === 'v' ? inputs.t : inputs.v}`} = ${mode === 's' ? inputs.s : mode === 'v' ? inputs.v : inputs.t} (${mode === 's' ? inputs.unitS : mode === 'v' ? inputs.unitV : inputs.unitT})`)),
+                                    React.createElement('div', { className: "text-right" }, React.createElement('p', { className: "text-[10px] font-black text-slate-400 uppercase mb-1" }, "Đáp số:"), React.createElement('p', { className: "text-2xl font-black text-emerald-700" }, `${mode === 's' ? inputs.s : mode === 'v' ? inputs.v : inputs.t} ${mode === 's' ? inputs.unitS : mode === 'v' ? inputs.unitV : inputs.unitT}`))
+                                )
+                            )
+                        ),
+                        React.createElement('div', { className: "bg-slate-900 text-white p-6 rounded-3xl shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 border-4 border-slate-800" },
+                            React.createElement('div', { className: "flex items-center gap-4" }, React.createElement('div', { className: "bg-white/10 p-3 rounded-2xl text-orange-400" }, React.createElement(Info, { size: 28 })), React.createElement('div', null, React.createElement('h5', { className: "font-bold text-lg leading-tight" }, "Mẹo đổi đơn vị nhanh"), React.createElement('p', { className: "text-slate-400 text-xs mt-1" }, "Lớp 5 thường gặp nhất là đổi Phút ra Giờ (chia 60)"))),
+                            React.createElement('div', { className: "grid grid-cols-2 gap-3 w-full md:w-auto" },
+                                React.createElement('div', { className: "bg-white/5 px-4 py-2 rounded-xl border border-white/10 text-center" }, React.createElement('span', { className: "block text-[10px] text-slate-500 font-bold uppercase mb-1" }, "30 phút"), React.createElement('span', { className: "font-bold text-orange-300" }, "0,5 giờ")),
+                                React.createElement('div', { className: "bg-white/5 px-4 py-2 rounded-xl border border-white/10 text-center" }, React.createElement('span', { className: "block text-[10px] text-slate-500 font-bold uppercase mb-1" }, "15 phút"), React.createElement('span', { className: "font-bold text-emerald-300" }, "0,25 giờ"))
+                            )
+                        )
+                    )
+                )
+            );
+        };
+        const GamePanel = () => {
+            const [gameType, setGameType] = useState(null);
+            const [score, setScore] = useState(0);
+            const [lives, setLives] = useState(3);
+            const [timeLeft, setTimeLeft] = useState(30);
+            const [currentProblem, setCurrentProblem] = useState(null);
+            const [gameState, setGameState] = useState('menu'); // menu, playing, gameover
+            const [feedback, setFeedback] = useState(null);
+
+            const generateProblem = useCallback((type) => {
+                let problem = {};
+                if (type === 'area') {
+                    const shapes = ['tam giác', 'hình thang', 'hình tròn'];
+                    const shape = shapes[Math.floor(Math.random() * shapes.length)];
+                    if (shape === 'tam giác') {
+                        const a = Math.floor(Math.random() * 20) + 5;
+                        const h = Math.floor(Math.random() * 15) + 5;
+                        problem = { question: `Tính diện tích tam giác có đáy ${a}cm và chiều cao ${h}cm`, answer: (a * h) / 2 };
+                    } else if (shape === 'hình thang') {
+                        const a = Math.floor(Math.random() * 15) + 5;
+                        const b = Math.floor(Math.random() * 15) + 5;
+                        const h = Math.floor(Math.random() * 10) + 5;
+                        problem = { question: `Tính diện tích hình thang có đáy lớn ${a}cm, đáy bé ${b}cm, chiều cao ${h}cm`, answer: ((a + b) * h) / 2 };
+                    } else {
+                        const r = Math.floor(Math.random() * 10) + 1;
+                        problem = { question: `Tính diện tích hình tròn có bán kính ${r}cm (π=3,14)`, answer: Number((r * r * 3.14).toFixed(2)) };
+                    }
+                } else if (type === 'motion') {
+                    const v = Math.floor(Math.random() * 60) + 10;
+                    const t = Math.floor(Math.random() * 5) + 1;
+                    problem = { question: `Một ô tô đi với vận tốc ${v}km/giờ trong ${t} giờ. Tính quãng đường ô tô đi được.`, answer: v * t };
+                } else if (type === 'volume') {
+                    const a = Math.floor(Math.random() * 10) + 2;
+                    const b = Math.floor(Math.random() * 8) + 2;
+                    const h = Math.floor(Math.random() * 6) + 2;
+                    problem = { question: `Tính thể tích hình hộp chữ nhật có chiều dài ${a}cm, chiều rộng ${b}cm, chiều cao ${h}cm`, answer: a * b * h };
+                }
+                setCurrentProblem(problem);
+            }, []);
+
+            useEffect(() => {
+                let timer;
+                if (gameState === 'playing' && timeLeft > 0) {
+                    timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
+                } else if (timeLeft === 0 && gameState === 'playing') {
+                    setGameState('gameover');
+                }
+                return () => clearInterval(timer);
+            }, [gameState, timeLeft]);
+
+            const startGame = (type) => {
+                setGameType(type);
+                setScore(0);
+                setLives(3);
+                setTimeLeft(30);
+                setGameState('playing');
+                generateProblem(type);
+            };
+
+            const handleAnswer = (userAnswer) => {
+                if (Number(userAnswer) === currentProblem.answer) {
+                    setScore(prev => prev + 10);
+                    setFeedback('correct');
+                    confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
+                    setTimeout(() => {
+                        setFeedback(null);
+                        generateProblem(gameType);
+                        setTimeLeft(prev => Math.min(prev + 5, 30));
+                    }, 1000);
+                } else {
+                    setLives(prev => prev - 1);
+                    setFeedback('wrong');
+                    if (lives <= 1) {
+                        setGameState('gameover');
+                    } else {
+                        setTimeout(() => {
+                            setFeedback(null);
+                            generateProblem(gameType);
+                        }, 1000);
+                    }
+                }
+            };
+
+            if (gameState === 'menu') {
+                return React.createElement('div', { className: "flex-1 flex flex-col items-center justify-center p-8 bg-gradient-to-b from-orange-50 to-white" },
+                    React.createElement(motion.div, { initial: { scale: 0.9, opacity: 0 }, animate: { scale: 1, opacity: 1 }, className: "text-center space-y-8" },
+                        React.createElement('div', { className: "inline-block p-4 bg-orange-100 rounded-full text-orange-600 mb-4" }, React.createElement(Gamepad2, { size: 64 })),
+                        React.createElement('h2', { className: "text-4xl font-black text-slate-800" }, "THỬ THÁCH TOÁN HỌC"),
+                        React.createElement('p', { className: "text-slate-500 font-bold max-w-md mx-auto" }, "Chọn một chủ đề để bắt đầu trò chơi. Trả lời đúng để ghi điểm và nhận thêm thời gian!"),
+                        React.createElement('div', { className: "grid grid-cols-1 md:grid-cols-3 gap-4" },
+                            [{ id: 'area', label: 'Tính Diện Tích', icon: React.createElement(Triangle, null), color: 'bg-blue-600' }, { id: 'motion', label: 'Chuyển Động', icon: React.createElement(Car, null), color: 'bg-orange-600' }, { id: 'volume', label: 'Tính Thể Tích', icon: React.createElement(Box, null), color: 'bg-emerald-600' }].map(g =>
+                                React.createElement('button', { key: g.id, onClick: () => startGame(g.id), className: `${g.color} text-white p-6 rounded-3xl shadow-lg hover:scale-105 transition-all flex flex-col items-center gap-3 font-black uppercase tracking-tight` }, g.icon, g.label)
+                            )
+                        )
+                    )
+                );
+            }
+
+            if (gameState === 'gameover') {
+                return React.createElement('div', { className: "flex-1 flex flex-col items-center justify-center p-8 bg-slate-900 text-white" },
+                    React.createElement(motion.div, { initial: { y: 20, opacity: 0 }, animate: { y: 0, opacity: 1 }, className: "text-center space-y-6" },
+                        React.createElement(Trophy, { size: 80, className: "text-yellow-400 mx-auto" }),
+                        React.createElement('h2', { className: "text-5xl font-black" }, "HẾT GIỜ!"),
+                        React.createElement('div', { className: "bg-white/10 p-8 rounded-3xl border border-white/10" },
+                            React.createElement('p', { className: "text-slate-400 font-bold uppercase tracking-widest mb-2" }, "Điểm số của bạn"),
+                            React.createElement('p', { className: "text-6xl font-black text-yellow-400" }, score)
+                        ),
+                        React.createElement('button', { onClick: () => setGameState('menu'), className: "bg-white text-slate-900 px-8 py-4 rounded-2xl font-black uppercase tracking-tight hover:bg-yellow-400 transition-all" }, "Chơi lại")
+                    )
+                );
+            }
+
+            return React.createElement('div', { className: "flex-1 flex flex-col bg-white" },
+                React.createElement('div', { className: "bg-slate-100 p-4 flex justify-between items-center border-b border-slate-200" },
+                    React.createElement('div', { className: "flex items-center gap-6" },
+                        React.createElement('div', { className: "flex flex-col" }, React.createElement('span', { className: "text-[10px] font-black text-slate-400 uppercase" }, "Điểm"), React.createElement('span', { className: "text-2xl font-black text-blue-600" }, score)),
+                        React.createElement('div', { className: "flex flex-col" }, React.createElement('span', { className: "text-[10px] font-black text-slate-400 uppercase" }, "Mạng"), React.createElement('div', { className: "flex gap-1" }, Array.from({ length: 3 }).map((_, i) => React.createElement(Heart, { key: i, size: 20, className: i < lives ? 'fill-rose-500 text-rose-500' : 'text-slate-300' }))))
+                    ),
+                    React.createElement('div', { className: "flex flex-col items-center" },
+                        React.createElement('span', { className: "text-[10px] font-black text-slate-400 uppercase" }, "Thời gian"),
+                        React.createElement('div', { className: `text-3xl font-black ${timeLeft < 10 ? 'text-rose-600 animate-pulse' : 'text-slate-800'}` }, timeLeft, "s")
+                    )
+                ),
+                React.createElement('div', { className: "flex-1 flex flex-col items-center justify-center p-8" },
+                    currentProblem && React.createElement(AnimatePresence, { mode: "wait" },
+                        React.createElement(motion.div, { key: currentProblem.question, initial: { x: 50, opacity: 0 }, animate: { x: 0, opacity: 1 }, exit: { x: -50, opacity: 0 }, className: "max-w-2xl w-full text-center space-y-8" },
+                            React.createElement('div', { className: "bg-slate-50 p-10 rounded-[3rem] border-4 border-slate-100 shadow-inner" }, React.createElement('h3', { className: "text-2xl md:text-3xl font-bold text-slate-800 leading-relaxed" }, currentProblem.question)),
+                            React.createElement('div', { className: "flex flex-col items-center gap-4" },
+                                React.createElement('input', { autoFocus: true, type: "number", placeholder: "Nhập kết quả...", className: "w-full max-w-xs text-center text-3xl font-black p-6 rounded-3xl border-4 border-slate-200 focus:border-blue-500 outline-none transition-all", onKeyDown: (e) => { if (e.key === 'Enter') { handleAnswer(e.target.value); e.target.value = ''; } } }),
+                                React.createElement('p', { className: "text-slate-400 font-bold text-sm" }, "Nhấn Enter để gửi câu trả lời")
+                            )
+                        )
+                    ),
+                    feedback && React.createElement(motion.div, { initial: { scale: 0.5, opacity: 0 }, animate: { scale: 1, opacity: 1 }, className: `fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 p-8 rounded-full shadow-2xl ${feedback === 'correct' ? 'bg-emerald-500' : 'bg-rose-500'}` },
+                        feedback === 'correct' ? React.createElement(CheckCircle2, { size: 80, className: "text-white" }) : React.createElement(XCircle, { size: 80, className: "text-white" })
+                    )
+                )
+            );
+        };
+
+        const QuizPanel = () => {
+            const [topic, setTopic] = useState(null);
+            const [currentQuestion, setCurrentQuestion] = useState(0);
+            const [score, setScore] = useState(0);
+            const [showResult, setShowResult] = useState(false);
+            const [selectedAnswer, setSelectedAnswer] = useState(null);
+            const [isCorrect, setIsCorrect] = useState(null);
+
+            const quizzes = {
+                '2d': [
+                    { q: "Công thức tính diện tích hình tam giác là gì?", a: ["(Đáy × Chiều cao) : 2", "Đáy × Chiều cao", "Đáy + Chiều cao", "(Đáy + Chiều cao) × 2"], c: 0, e: "Diện tích hình tam giác bằng độ dài đáy nhân với chiều cao (cùng một đơn vị đo) rồi chia cho 2." },
+                    { q: "Muốn tính diện tích hình thang, ta làm thế nào?", a: ["Đáy lớn × Đáy bé × Chiều cao", "(Đáy lớn + Đáy bé) × Chiều cao : 2", "Đáy lớn + Đáy bé + Chiều cao", "Đáy lớn × Chiều cao"], c: 1, e: "Diện tích hình thang bằng tổng độ dài hai đáy nhân với chiều cao (cùng một đơn vị đo) rồi chia cho 2." },
+                    { q: "Diện tích hình tròn có bán kính r được tính bằng công thức:", a: ["r × 2 × 3,14", "r × r × 3,14", "r × 3,14", "r + r + 3,14"], c: 1, e: "Muốn tính diện tích của hình tròn ta lấy bán kính nhân với bán kính rồi nhân với số 3,14." }
+                ],
+                'motion': [
+                    { q: "Muốn tính vận tốc ta làm thế nào?", a: ["v = s × t", "v = s : t", "v = t : s", "v = s + t"], c: 1, e: "Muốn tính vận tốc ta lấy quãng đường chia cho thời gian." },
+                    { q: "Đơn vị vận tốc thường gặp là gì?", a: ["km, m", "giờ, phút", "km/giờ, m/phút", "kg, g"], c: 2, e: "Đơn vị vận tốc là đơn vị quãng đường trên đơn vị thời gian." }
+                ]
+            };
+
+            const handleAnswer = (index) => {
+                if (selectedAnswer !== null) return;
+                setSelectedAnswer(index);
+                const correct = index === quizzes[topic][currentQuestion].c;
+                setIsCorrect(correct);
+                if (correct) setScore(prev => prev + 1);
+                setTimeout(() => {
+                    if (currentQuestion < quizzes[topic].length - 1) {
+                        setCurrentQuestion(prev => prev + 1);
+                        setSelectedAnswer(null);
+                        setIsCorrect(null);
+                    } else {
+                        setShowResult(true);
+                        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+                    }
+                }, 2000);
+            };
+
+            if (!topic) {
+                return React.createElement('div', { className: "flex-1 p-8 flex flex-col items-center justify-center bg-slate-50" },
+                    React.createElement('h2', { className: "text-3xl font-black text-slate-800 mb-8" }, "CHỌN CHỦ ĐỀ LUYỆN TẬP"),
+                    React.createElement('div', { className: "grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl" },
+                        Object.keys(quizzes).map(t => React.createElement('button', { key: t, onClick: () => setTopic(t), className: "bg-white p-8 rounded-3xl shadow-lg border-2 border-transparent hover:border-indigo-500 transition-all flex flex-col items-center gap-4" },
+                            React.createElement('div', { className: "p-4 bg-indigo-100 rounded-2xl text-indigo-600" }, t === '2d' ? React.createElement(Triangle, { size: 32 }) : React.createElement(Timer, { size: 32 })),
+                            React.createElement('span', { className: "text-xl font-black text-slate-700 uppercase" }, t === '2d' ? "Hình Phẳng" : "Chuyển Động")
+                        ))
+                    )
+                );
+            }
+
+            if (showResult) {
+                return React.createElement('div', { className: "flex-1 flex flex-col items-center justify-center p-8 bg-indigo-600 text-white" },
+                    React.createElement(motion.div, { initial: { scale: 0.8, opacity: 0 }, animate: { scale: 1, opacity: 1 }, className: "text-center space-y-6" },
+                        React.createElement(GraduationCap, { size: 100, className: "mx-auto text-yellow-400" }),
+                        React.createElement('h2', { className: "text-5xl font-black" }, "HOÀN THÀNH!"),
+                        React.createElement('div', { className: "text-2xl font-bold" }, "Bạn đã trả lời đúng ", React.createElement('span', { className: "text-4xl text-yellow-400" }, score, "/", quizzes[topic].length), " câu hỏi"),
+                        React.createElement('button', { onClick: () => { setTopic(null); setShowResult(false); setCurrentQuestion(0); setScore(0); }, className: "bg-white text-indigo-600 px-10 py-4 rounded-2xl font-black uppercase tracking-tight hover:bg-yellow-400 hover:text-indigo-900 transition-all" }, "Làm chủ đề khác")
+                    )
+                );
+            }
+
+            const q = quizzes[topic][currentQuestion];
+            return React.createElement('div', { className: "flex-1 flex flex-col bg-white" },
+                React.createElement('div', { className: "w-full h-2 bg-slate-100" }, React.createElement('div', { className: "h-full bg-indigo-600 transition-all duration-500", style: { width: `${((currentQuestion + 1) / quizzes[topic].length) * 100}%` } })),
+                React.createElement('div', { className: "flex-1 p-4 md:p-12 flex flex-col items-center" },
+                    React.createElement('div', { className: "max-w-3xl w-full space-y-8" },
+                        React.createElement('div', { className: "flex justify-between items-center" },
+                            React.createElement('span', { className: "bg-indigo-100 text-indigo-700 px-4 py-1 rounded-full font-black text-xs uppercase" }, `Câu hỏi ${currentQuestion + 1}/${quizzes[topic].length}`),
+                            React.createElement('div', { className: "flex items-center gap-2 text-slate-400 font-bold" }, React.createElement(Trophy, { size: 16 }), React.createElement('span', null, "Điểm: ", score))
+                        ),
+                        React.createElement('h3', { className: "text-2xl md:text-3xl font-bold text-slate-800 leading-tight" }, q.q),
+                        React.createElement('div', { className: "grid grid-cols-1 gap-4" },
+                            q.a.map((ans, i) => {
+                                let style = "bg-white border-2 border-slate-200 text-slate-700 hover:border-indigo-300 hover:bg-indigo-50";
+                                if (selectedAnswer === i) {
+                                    style = i === q.c ? "bg-emerald-500 border-emerald-500 text-white" : "bg-rose-500 border-rose-500 text-white";
+                                } else if (selectedAnswer !== null && i === q.c) {
+                                    style = "bg-emerald-500 border-emerald-500 text-white";
+                                }
+                                return React.createElement('button', { key: i, onClick: () => handleAnswer(i), className: `w-full text-left p-6 rounded-2xl transition-all font-bold text-lg flex items-center justify-between ${style}` },
+                                    ans,
+                                    selectedAnswer === i && (i === q.c ? React.createElement(CheckCircle2, null) : React.createElement(XCircle, null))
+                                );
+                            })
+                        ),
+                        selectedAnswer !== null && React.createElement(motion.div, { initial: { y: 20, opacity: 0 }, animate: { y: 0, opacity: 1 }, className: `p-6 rounded-2xl border-2 ${isCorrect ? 'bg-emerald-50 border-emerald-100 text-emerald-800' : 'bg-rose-50 border-rose-100 text-rose-800'}` },
+                            React.createElement('p', { className: "font-black text-xs uppercase mb-2" }, "Giải thích:"),
+                            React.createElement('p', { className: "font-medium" }, q.e)
+                        )
+                    )
+                )
+            );
+        };
+        const Fraction = ({ n, d }) => React.createElement('div', { className: "inline-flex flex-col items-center align-middle mx-1" },
+            React.createElement('span', { className: "border-b border-current px-1 text-sm leading-none pb-0.5" }, n),
+            React.createElement('span', { className: "text-sm leading-none pt-0.5" }, d)
+        );
+
+        const Shape2DPanel = () => {
+            const [shape, setShape] = useState('triangle');
+            const [params, setParams] = useState({ a: 10, b: 8, h: 6, r: 5 });
+            const [showSteps, setShowSteps] = useState(false);
+
+            const generateRandom = () => {
+                setParams({
+                    a: Math.floor(Math.random() * 20) + 5,
+                    b: Math.floor(Math.random() * 15) + 5,
+                    h: Math.floor(Math.random() * 12) + 4,
+                    r: Math.floor(Math.random() * 10) + 2
+                });
+                setShowSteps(false);
+            };
+
+            const getArea = () => {
+                if (shape === 'triangle') return (params.a * params.h) / 2;
+                if (shape === 'trapezoid') return ((params.a + params.b) * params.h) / 2;
+                if (shape === 'circle') return Number((params.r * params.r * 3.14).toFixed(2));
+                return 0;
+            };
+
+            return React.createElement('div', { className: "flex flex-col lg:flex-row h-full min-h-[70vh]" },
+                React.createElement('div', { className: "w-full lg:w-80 bg-slate-50 p-6 border-r border-slate-200 space-y-6 overflow-y-auto" },
+                    React.createElement('div', null,
+                        React.createElement('h3', { className: "text-lg font-bold text-slate-800 mb-4 flex items-center gap-2" }, React.createElement(Triangle, { className: "text-blue-600", size: 20 }), "Chọn hình phẳng"),
+                        React.createElement('div', { className: "grid grid-cols-1 gap-2" },
+                            [{ id: 'triangle', label: 'Hình Tam Giác', icon: React.createElement(Triangle, { size: 16 }) }, { id: 'trapezoid', label: 'Hình Thang', icon: React.createElement(RectangleHorizontal, { size: 16 }) }, { id: 'circle', label: 'Hình Tròn', icon: React.createElement(Circle, { size: 16 }) }].map(s =>
+                                React.createElement('button', { key: s.id, onClick: () => { setShape(s.id); setShowSteps(false); }, className: `text-left px-4 py-3 rounded-xl transition-all font-bold flex items-center gap-3 ${shape === s.id ? 'bg-blue-600 text-white shadow-lg' : 'bg-white hover:bg-blue-50 text-slate-700 border border-slate-200'}` }, s.icon, s.label)
+                            )
+                        )
+                    ),
+                    React.createElement('div', { className: "space-y-4" },
+                        React.createElement('h3', { className: "text-lg font-bold text-slate-800 flex items-center gap-2" }, React.createElement(Calculator, { className: "text-indigo-600", size: 20 }), "Nhập kích thước"),
+                        React.createElement('div', { className: "space-y-3" },
+                            shape === 'triangle' && React.createElement(React.Fragment, null,
+                                React.createElement('div', { className: "bg-white p-3 rounded-xl border border-slate-200 shadow-sm" }, React.createElement('label', { className: "text-[10px] font-black text-slate-400 uppercase block mb-1" }, "Đáy (a)"), React.createElement('input', { type: "number", value: params.a, onChange: (e) => setParams({ ...params, a: Number(e.target.value) }), className: "w-full font-bold outline-none text-blue-600" })),
+                                React.createElement('div', { className: "bg-white p-3 rounded-xl border border-slate-200 shadow-sm" }, React.createElement('label', { className: "text-[10px] font-black text-slate-400 uppercase block mb-1" }, "Chiều cao (h)"), React.createElement('input', { type: "number", value: params.h, onChange: (e) => setParams({ ...params, h: Number(e.target.value) }), className: "w-full font-bold outline-none text-indigo-600" }))
+                            ),
+                            shape === 'trapezoid' && React.createElement(React.Fragment, null,
+                                React.createElement('div', { className: "bg-white p-3 rounded-xl border border-slate-200 shadow-sm" }, React.createElement('label', { className: "text-[10px] font-black text-slate-400 uppercase block mb-1" }, "Đáy lớn (a)"), React.createElement('input', { type: "number", value: params.a, onChange: (e) => setParams({ ...params, a: Number(e.target.value) }), className: "w-full font-bold outline-none text-blue-600" })),
+                                React.createElement('div', { className: "bg-white p-3 rounded-xl border border-slate-200 shadow-sm" }, React.createElement('label', { className: "text-[10px] font-black text-slate-400 uppercase block mb-1" }, "Đáy bé (b)"), React.createElement('input', { type: "number", value: params.b, onChange: (e) => setParams({ ...params, b: Number(e.target.value) }), className: "w-full font-bold outline-none text-emerald-600" })),
+                                React.createElement('div', { className: "bg-white p-3 rounded-xl border border-slate-200 shadow-sm" }, React.createElement('label', { className: "text-[10px] font-black text-slate-400 uppercase block mb-1" }, "Chiều cao (h)"), React.createElement('input', { type: "number", value: params.h, onChange: (e) => setParams({ ...params, h: Number(e.target.value) }), className: "w-full font-bold outline-none text-indigo-600" }))
+                            ),
+                            shape === 'circle' && React.createElement('div', { className: "bg-white p-3 rounded-xl border border-slate-200 shadow-sm" },
+                                React.createElement('label', { className: "text-[10px] font-black text-slate-400 uppercase block mb-1" }, "Bán kính (r)"),
+                                React.createElement('input', { type: "number", value: params.r, onChange: (e) => setParams({ ...params, r: Number(e.target.value) }), className: "w-full font-bold outline-none text-rose-600" })
+                            ),
+                            React.createElement('button', { onClick: generateRandom, className: "w-full py-3 rounded-xl flex items-center justify-center gap-2 font-bold bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-all shadow-sm" }, React.createElement(RotateCcw, { size: 18 }), " Kích thước ngẫu nhiên")
+                        )
+                    )
+                ),
+                React.createElement('div', { className: "flex-1 p-4 md:p-8 flex flex-col bg-white overflow-y-auto" },
+                    React.createElement('div', { className: "max-w-4xl mx-auto w-full space-y-8" },
+                        React.createElement('div', { className: "bg-slate-50 rounded-3xl border border-slate-200 p-8 shadow-inner relative overflow-hidden flex items-center justify-center min-h-[300px]" },
+                            shape === 'triangle' && React.createElement('svg', { width: "300", height: "200", viewBox: "0 0 300 200", className: "drop-shadow-2xl" },
+                                React.createElement('path', { d: "M 150 20 L 280 180 L 20 180 Z", fill: "#3b82f6", fillOpacity: "0.2", stroke: "#2563eb", strokeWidth: "3" }),
+                                React.createElement('line', { x1: "150", y1: "20", x2: "150", y2: "180", stroke: "#4f46e5", strokeWidth: "2", strokeDasharray: "5,5" }),
+                                React.createElement('rect', { x: "145", y: "175", width: "10", height: "5", fill: "#4f46e5" }),
+                                React.createElement('text', { x: "150", y: "195", textAnchor: "middle", className: "text-xs font-bold fill-blue-700" }, `a = ${params.a}cm`),
+                                React.createElement('text', { x: "140", y: "100", textAnchor: "end", className: "text-xs font-bold fill-indigo-700" }, `h = ${params.h}cm`)
+                            ),
+                            shape === 'trapezoid' && React.createElement('svg', { width: "300", height: "200", viewBox: "0 0 300 200", className: "drop-shadow-2xl" },
+                                React.createElement('path', { d: "M 80 40 L 220 40 L 280 160 L 20 160 Z", fill: "#10b981", fillOpacity: "0.2", stroke: "#059669", strokeWidth: "3" }),
+                                React.createElement('line', { x1: "80", y1: "40", x2: "80", y2: "160", stroke: "#4f46e5", strokeWidth: "2", strokeDasharray: "5,5" }),
+                                React.createElement('text', { x: "150", y: "30", textAnchor: "middle", className: "text-xs font-bold fill-emerald-700" }, `b = ${params.b}cm`),
+                                React.createElement('text', { x: "150", y: "180", textAnchor: "middle", className: "text-xs font-bold fill-blue-700" }, `a = ${params.a}cm`),
+                                React.createElement('text', { x: "70", y: "100", textAnchor: "end", className: "text-xs font-bold fill-indigo-700" }, `h = ${params.h}cm`)
+                            ),
+                            shape === 'circle' && React.createElement('svg', { width: "300", height: "200", viewBox: "0 0 300 200", className: "drop-shadow-2xl" },
+                                React.createElement('circle', { cx: "150", cy: "100", r: "80", fill: "#f43f5e", fillOpacity: "0.2", stroke: "#e11d48", strokeWidth: "3" }),
+                                React.createElement('line', { x1: "150", y1: "100", x2: "230", y2: "100", stroke: "#e11d48", strokeWidth: "2", strokeDasharray: "5,5" }),
+                                React.createElement('circle', { cx: "150", cy: "100", r: "3", fill: "#e11d48" }),
+                                React.createElement('text', { x: "190", y: "90", textAnchor: "middle", className: "text-xs font-bold fill-rose-700" }, `r = ${params.r}cm`)
+                            )
+                        ),
+                        React.createElement('div', { className: "grid grid-cols-1 md:grid-cols-2 gap-6" },
+                            React.createElement('div', { className: "bg-blue-50 p-6 rounded-3xl border border-blue-100 shadow-sm" },
+                                React.createElement('h4', { className: "text-blue-900 font-black text-sm mb-6 uppercase tracking-tight flex items-center gap-2" }, React.createElement(BookOpen, { size: 18, className: "text-blue-600" }), "Công thức tính diện tích"),
+                                React.createElement('div', { className: "bg-white p-6 rounded-2xl border border-blue-100 shadow-md text-center" },
+                                    shape === 'triangle' && React.createElement('div', { className: "text-2xl font-black italic text-blue-800" }, "S = ", React.createElement(Fraction, { n: "a × h", d: "2" })),
+                                    shape === 'trapezoid' && React.createElement('div', { className: "text-2xl font-black italic text-emerald-800" }, "S = ", React.createElement(Fraction, { n: "(a + b) × h", d: "2" })),
+                                    shape === 'circle' && React.createElement('div', { className: "text-2xl font-black italic text-rose-800" }, "S = r × r × 3,14")
+                                ),
+                                React.createElement('button', { onClick: () => setShowSteps(!showSteps), className: "w-full mt-6 py-3 rounded-xl font-bold bg-white text-blue-600 border border-blue-200 hover:bg-blue-600 hover:text-white transition-all shadow-sm flex items-center justify-center gap-2" }, showSteps ? React.createElement(Minimize, { size: 18 }) : React.createElement(Maximize, { size: 18 }), showSteps ? "Ẩn bài giải" : "Xem bài giải chi tiết")
+                            ),
+                            React.createElement('div', { className: "bg-slate-900 text-white p-6 rounded-3xl shadow-xl relative overflow-hidden" },
+                                React.createElement('div', { className: "absolute top-0 right-0 p-4 opacity-10" }, React.createElement(Calculator, { size: 80 })),
+                                React.createElement('h4', { className: "text-slate-400 font-black text-[10px] uppercase tracking-widest mb-4" }, "Kết quả tính toán"),
+                                React.createElement('div', { className: "space-y-4" },
+                                    React.createElement('div', null, React.createElement('p', { className: "text-slate-500 text-xs font-bold mb-1" }, "Diện tích (S):"), React.createElement('p', { className: "text-4xl font-black text-blue-400" }, getArea(), React.createElement('span', { className: "text-lg ml-2 text-slate-400" }, "cm²"))),
+                                    showSteps && React.createElement(motion.div, { initial: { height: 0, opacity: 0 }, animate: { height: 'auto', opacity: 1 }, className: "pt-4 border-t border-white/10 space-y-3 font-serif italic text-sm text-slate-300" },
+                                        React.createElement('p', null, "Lời giải:"),
+                                        shape === 'triangle' && React.createElement('p', null, `Diện tích hình tam giác là: (${params.a} × ${params.h}) : 2 = ${getArea()} (cm²)`),
+                                        shape === 'trapezoid' && React.createElement('p', null, `Diện tích hình thang là: (${params.a} + ${params.b}) × ${params.h} : 2 = ${getArea()} (cm²)`),
+                                        shape === 'circle' && React.createElement('p', null, `Diện tích hình tròn là: ${params.r} × ${params.r} × 3,14 = ${getArea()} (cm²)`),
+                                        React.createElement('p', { className: "text-right font-bold text-white not-italic" }, `Đáp số: ${getArea()} cm²`)
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            );
+        };
+
+        const Shape3DPanel = () => {
+            const [shape, setShape] = useState('prism');
+            const [params, setParams] = useState({ a: 10, b: 6, h: 8 });
+            const [view, setView] = useState('3d'); // 3d, net
+            const [rotation, setRotation] = useState({ x: -20, y: 35 });
+
+            const getSurfaceArea = () => {
+                if (shape === 'prism') return 2 * (params.a * params.b + params.a * params.h + params.b * params.h);
+                return 6 * params.a * params.a;
+            };
+
+            return React.createElement('div', { className: "flex flex-col lg:flex-row h-full min-h-[70vh]" },
+                React.createElement('div', { className: "w-full lg:w-80 bg-slate-50 p-6 border-r border-slate-200 space-y-6 overflow-y-auto" },
+                    React.createElement('div', null,
+                        React.createElement('h3', { className: "text-lg font-bold text-slate-800 mb-4 flex items-center gap-2" }, React.createElement(Box, { className: "text-purple-600", size: 20 }), "Chọn hình khối"),
+                        React.createElement('div', { className: "grid grid-cols-1 gap-2" },
+                            [{ id: 'prism', label: 'Hình Hộp Chữ Nhật', icon: React.createElement(Box, { size: 16 }) }, { id: 'cube', label: 'Hình Lập Phương', icon: React.createElement(LayoutGrid, { size: 16 }) }].map(s =>
+                                React.createElement('button', { key: s.id, onClick: () => setShape(s.id), className: `text-left px-4 py-3 rounded-xl transition-all font-bold flex items-center gap-3 ${shape === s.id ? 'bg-purple-600 text-white shadow-lg' : 'bg-white hover:bg-purple-50 text-slate-700 border border-slate-200'}` }, s.icon, s.label)
+                            )
+                        )
+                    ),
+                    React.createElement('div', { className: "space-y-4" },
+                        React.createElement('h3', { className: "text-lg font-bold text-slate-800 flex items-center gap-2" }, React.createElement(Calculator, { className: "text-indigo-600", size: 20 }), "Kích thước (cm)"),
+                        React.createElement('div', { className: "space-y-3" },
+                            React.createElement('div', { className: "bg-white p-3 rounded-xl border border-slate-200 shadow-sm" }, React.createElement('label', { className: "text-[10px] font-black text-slate-400 uppercase block mb-1" }, shape === 'cube' ? "Cạnh (a)" : "Chiều dài (a)"), React.createElement('input', { type: "number", value: params.a, onChange: (e) => setParams({ ...params, a: Number(e.target.value) }), className: "w-full font-bold outline-none text-purple-600" })),
+                            shape === 'prism' && React.createElement(React.Fragment, null,
+                                React.createElement('div', { className: "bg-white p-3 rounded-xl border border-slate-200 shadow-sm" }, React.createElement('label', { className: "text-[10px] font-black text-slate-400 uppercase block mb-1" }, "Chiều rộng (b)"), React.createElement('input', { type: "number", value: params.b, onChange: (e) => setParams({ ...params, b: Number(e.target.value) }), className: "w-full font-bold outline-none text-blue-600" })),
+                                React.createElement('div', { className: "bg-white p-3 rounded-xl border border-slate-200 shadow-sm" }, React.createElement('label', { className: "text-[10px] font-black text-slate-400 uppercase block mb-1" }, "Chiều cao (h)"), React.createElement('input', { type: "number", value: params.h, onChange: (e) => setParams({ ...params, h: Number(e.target.value) }), className: "w-full font-bold outline-none text-emerald-600" }))
+                            )
+                        )
+                    ),
+                    React.createElement('div', { className: "bg-purple-50 p-4 rounded-xl border border-purple-100" },
+                        React.createElement('h4', { className: "text-[10px] font-black text-purple-700 uppercase mb-2" }, "Ghi chú hình học"),
+                        React.createElement('p', { className: "text-[10px] text-purple-800 font-bold italic" }, shape === 'cube' ? "Hình lập phương là hình hộp chữ nhật có 6 mặt là các hình vuông bằng nhau." : "Hình hộp chữ nhật có 6 mặt, 8 đỉnh và 12 cạnh.")
+                    )
+                ),
+                React.createElement('div', { className: "flex-1 p-4 md:p-8 flex flex-col bg-white overflow-y-auto" },
+                    React.createElement('div', { className: "max-w-4xl mx-auto w-full space-y-8" },
+                        React.createElement('div', { className: "flex justify-center gap-4" },
+                            React.createElement('button', { onClick: () => setView('3d'), className: `px-6 py-2 rounded-full font-black text-xs uppercase tracking-widest transition-all ${view === '3d' ? 'bg-slate-900 text-white shadow-xl' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}` }, "Góc nhìn 3D"),
+                            React.createElement('button', { onClick: () => setView('net'), className: `px-6 py-2 rounded-full font-black text-xs uppercase tracking-widest transition-all ${view === 'net' ? 'bg-slate-900 text-white shadow-xl' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}` }, "Hình khai triển")
+                        ),
+                        React.createElement('div', { className: "bg-slate-50 rounded-3xl border border-slate-200 p-8 shadow-inner relative overflow-hidden flex items-center justify-center min-h-[400px] perspective" },
+                            view === '3d' ? React.createElement('div', { className: "preserve-3d transition-transform duration-500", style: { transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`, width: '150px', height: '150px' } },
+                                React.createElement('div', { className: "absolute inset-0 bg-purple-500/40 border-2 border-purple-600 flex items-center justify-center font-bold text-white", style: { transform: `translateZ(${params.b * 5}px)`, width: `${params.a * 10}px`, height: `${params.h * 10}px` } }, "Trước"),
+                                React.createElement('div', { className: "absolute inset-0 bg-purple-500/40 border-2 border-purple-600 flex items-center justify-center font-bold text-white", style: { transform: `rotateY(180deg) translateZ(${params.b * 5}px)`, width: `${params.a * 10}px`, height: `${params.h * 10}px` } }, "Sau"),
+                                React.createElement('div', { className: "absolute inset-0 bg-blue-500/40 border-2 border-blue-600 flex items-center justify-center font-bold text-white", style: { transform: `rotateY(90deg) translateZ(${params.a * 5}px)`, width: `${params.b * 10}px`, height: `${params.h * 10}px` } }, "Phải"),
+                                React.createElement('div', { className: "absolute inset-0 bg-blue-500/40 border-2 border-blue-600 flex items-center justify-center font-bold text-white", style: { transform: `rotateY(-90deg) translateZ(${params.a * 5}px)`, width: `${params.b * 10}px`, height: `${params.h * 10}px` } }, "Trái"),
+                                React.createElement('div', { className: "absolute inset-0 bg-emerald-500/40 border-2 border-emerald-600 flex items-center justify-center font-bold text-white", style: { transform: `rotateX(90deg) translateZ(${params.h * 5}px)`, width: `${params.a * 10}px`, height: `${params.b * 10}px` } }, "Trên"),
+                                React.createElement('div', { className: "absolute inset-0 bg-emerald-500/40 border-2 border-emerald-600 flex items-center justify-center font-bold text-white", style: { transform: `rotateX(-90deg) translateZ(${params.h * 5}px)`, width: `${params.a * 10}px`, height: `${params.b * 10}px` } }, "Dưới")
+                            ) : React.createElement('div', { className: "flex flex-col items-center" },
+                                React.createElement('div', { className: "grid grid-cols-4 gap-1" },
+                                    React.createElement('div', null), React.createElement('div', { className: "w-16 h-16 bg-emerald-100 border-2 border-emerald-300 rounded flex items-center justify-center text-[10px] font-bold" }, "Trên"), React.createElement('div', null), React.createElement('div', null),
+                                    React.createElement('div', { className: "w-16 h-16 bg-blue-100 border-2 border-blue-300 rounded flex items-center justify-center text-[10px] font-bold" }, "Trái"),
+                                    React.createElement('div', { className: "w-16 h-16 bg-purple-100 border-2 border-purple-300 rounded flex items-center justify-center text-[10px] font-bold" }, "Trước"),
+                                    React.createElement('div', { className: "w-16 h-16 bg-blue-100 border-2 border-blue-300 rounded flex items-center justify-center text-[10px] font-bold" }, "Phải"),
+                                    React.createElement('div', { className: "w-16 h-16 bg-purple-100 border-2 border-purple-300 rounded flex items-center justify-center text-[10px] font-bold" }, "Sau"),
+                                    React.createElement('div', null), React.createElement('div', { className: "w-16 h-16 bg-emerald-100 border-2 border-emerald-300 rounded flex items-center justify-center text-[10px] font-bold" }, "Dưới"), React.createElement('div', null), React.createElement('div', null)
+                                )
+                            ),
+                            view === '3d' && React.createElement('div', { className: "absolute bottom-4 right-4 flex flex-col gap-2" },
+                                React.createElement('button', { onClick: () => setRotation(prev => ({ ...prev, y: prev.y + 45 })), className: "p-2 bg-white rounded-full shadow-md hover:bg-slate-100" }, React.createElement(RotateCw, { size: 20 })),
+                                React.createElement('button', { onClick: () => setRotation(prev => ({ ...prev, x: prev.x + 45 })), className: "p-2 bg-white rounded-full shadow-md hover:bg-slate-100" }, React.createElement(RotateCcw, { size: 20 }))
+                            )
+                        ),
+                        React.createElement('div', { className: "grid grid-cols-1 md:grid-cols-2 gap-6" },
+                            React.createElement('div', { className: "bg-purple-50 p-6 rounded-3xl border border-purple-100 shadow-sm" },
+                                React.createElement('h4', { className: "text-purple-900 font-black text-sm mb-6 uppercase tracking-tight flex items-center gap-2" }, React.createElement(BookOpen, { size: 18, className: "text-purple-600" }), "Công thức Diện tích toàn phần"),
+                                React.createElement('div', { className: "bg-white p-6 rounded-2xl border border-purple-100 shadow-md text-center" },
+                                    shape === 'prism' ? React.createElement('div', { className: "text-xl font-black italic text-purple-800" }, "S = 2 × (a×b + a×h + b×h)") : React.createElement('div', { className: "text-xl font-black italic text-purple-800" }, "S = 6 × a × a")
+                                )
+                            ),
+                            React.createElement('div', { className: "bg-slate-900 text-white p-6 rounded-3xl shadow-xl" },
+                                React.createElement('p', { className: "text-slate-500 text-[10px] font-black uppercase mb-2" }, "Diện tích toàn phần:"),
+                                React.createElement('p', { className: "text-4xl font-black text-purple-400" }, getSurfaceArea(), React.createElement('span', { className: "text-lg ml-2 text-slate-400" }, "cm²")),
+                                React.createElement('div', { className: "mt-4 pt-4 border-t border-white/10 text-xs text-slate-400 italic" },
+                                    shape === 'prism' ? `S = 2 × (${params.a}×${params.b} + ${params.a}×${params.h} + ${params.b}×${params.h}) = ${getSurfaceArea()}` : `S = 6 × ${params.a} × ${params.a} = ${getSurfaceArea()}`
+                                )
+                            )
+                        )
+                    )
+                )
+            );
+        };
+
+        const GoldenBellGame = () => {
+            const [gameState, setGameState] = useState('start');
+            const [playerName, setPlayerName] = useState('');
+            const [currentRound, setCurrentRound] = useState(1);
+            const [questions, setQuestions] = useState([]);
+            const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+            const [totalScore, setTotalScore] = useState(0);
+            const [roundScore, setRoundScore] = useState(0);
+            const [roundScores, setRoundScores] = useState([0, 0, 0, 0, 0]);
+            const [correctCount, setCorrectCount] = useState(0);
+            const [wrongCount, setWrongCount] = useState(0);
+            const [timeLeft, setTimeLeft] = useState(20);
+            const [userAnswer, setUserAnswer] = useState('');
+            const [showFeedback, setShowFeedback] = useState(null);
+            
+            const [leaderboards, setLeaderboards] = useState({
+                total: [],
+                round1: [],
+                round2: [],
+                round3: [],
+                round4: [],
+                round5: []
+            });
+
+            const timerRef = useRef(null);
+
+            const roundThemes = {
+                1: { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-800', accent: 'bg-blue-500', hover: 'hover:border-blue-400', light: 'bg-blue-100', shadow: 'shadow-blue-200', hex: '#3b82f6' },
+                2: { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-800', accent: 'bg-emerald-500', hover: 'hover:border-emerald-400', light: 'bg-emerald-100', shadow: 'shadow-emerald-200', hex: '#10b981' },
+                3: { bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-800', accent: 'bg-purple-500', hover: 'hover:border-purple-400', light: 'bg-purple-100', shadow: 'shadow-purple-200', hex: '#a855f7' },
+                4: { bg: 'bg-rose-50', border: 'border-rose-200', text: 'text-rose-800', accent: 'bg-rose-500', hover: 'hover:border-rose-400', light: 'bg-rose-100', shadow: 'shadow-rose-200', hex: '#f43f5e' },
+                5: { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-800', accent: 'bg-amber-500', hover: 'hover:border-amber-400', light: 'bg-amber-100', shadow: 'shadow-amber-200', hex: '#f59e0b' }
+            };
+
+            useEffect(() => {
+                const saved = localStorage.getItem('golden_bell_leaderboards_v2');
+                if (saved) setLeaderboards(JSON.parse(saved));
+            }, []);
+
+            const saveLeaderboards = (newLeaderboards) => {
+                setLeaderboards(newLeaderboards);
+                localStorage.setItem('golden_bell_leaderboards_v2', JSON.stringify(newLeaderboards));
+            };
+
+            const updateLeaderboard = (type, name, score) => {
+                const newEntry = {
+                    name: name || 'Học sinh ẩn danh',
+                    score: score,
+                    date: new Date().toLocaleDateString('vi-VN')
+                };
+                const currentList = leaderboards[type] || [];
+                const updated = [...currentList, newEntry].sort((a, b) => b.score - a.score).slice(0, 5);
+                
+                const newLeaderboards = { ...leaderboards, [type]: updated };
+                saveLeaderboards(newLeaderboards);
+                return updated;
+            };
+
+            const generateQuestions = useCallback((round) => {
+                const set = QUESTION_SETS[round] || [];
+                return set.map(q => ({
+                    ...q,
+                    options: q.options ? [...q.options].sort(() => Math.random() - 0.5) : []
+                }));
+            }, []);
+
+            const handleNextQuestion = useCallback(() => {
+                if (currentQuestionIndex < questions.length - 1) {
+                    setCurrentQuestionIndex(prev => prev + 1);
+                    setTimeLeft(20);
+                    setUserAnswer('');
+                    setShowFeedback(null);
+                } else {
+                    // End of game (set)
+                    updateLeaderboard(`round${currentRound}`, playerName, roundScore);
+                    const newRoundScores = [...roundScores];
+                    newRoundScores[currentRound - 1] = roundScore;
+                    setRoundScores(newRoundScores);
+                    setGameState('round_summary');
+                }
+            }, [currentQuestionIndex, questions.length, currentRound, roundScore, playerName, leaderboards, roundScores]);
+
+            useEffect(() => {
+                if (gameState === 'playing' && timeLeft > 0 && !showFeedback) {
+                    timerRef.current = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
+                } else if (timeLeft === 0 && gameState === 'playing') {
+                    handleAnswer(null);
+                }
+                return () => clearInterval(timerRef.current);
+            }, [gameState, timeLeft, showFeedback, handleNextQuestion]);
+
+            const handleAnswer = (ans) => {
+                if (showFeedback) return;
+                const currentQ = questions[currentQuestionIndex];
+                let isCorrect = false;
+                if (currentQ.type === 'multiple' || currentQ.type === 'fill') isCorrect = ans?.toString().trim() === currentQ.answer.toString();
+                else if (currentQ.type === 'boolean') isCorrect = ans === currentQ.answer;
+
+                if (isCorrect) {
+                    setRoundScore(prev => prev + 10);
+                    setCorrectCount(prev => prev + 1);
+                    setShowFeedback('correct');
+                    confetti({ particleCount: 30, spread: 60, origin: { y: 0.7 }, colors: [roundThemes[currentRound].hex] });
+                } else {
+                    setWrongCount(prev => prev + 1);
+                    setShowFeedback('wrong');
+                }
+                setTimeout(() => handleNextQuestion(), 1200);
+            };
+
+            const startNewGame = () => {
+                if (!playerName.trim()) { alert('Vui lòng nhập tên của em!'); return; }
+                setTotalScore(0); setRoundScore(0); setCorrectCount(0); setWrongCount(0); 
+                setCurrentQuestionIndex(0); setRoundScores([0, 0, 0, 0, 0]);
+                setQuestions(generateQuestions(currentRound)); setGameState('playing'); setTimeLeft(20);
+            };
+
+            const startNextRound = () => {
+                const nextR = currentRound + 1;
+                setTotalScore(prev => prev + roundScore);
+                setRoundScore(0);
+                setCurrentRound(nextR);
+                setCurrentQuestionIndex(0);
+                setQuestions(generateQuestions(nextR));
+                setGameState('playing');
+                setTimeLeft(20);
+                setUserAnswer('');
+                setShowFeedback(null);
+            };
+
+            const theme = roundThemes[currentRound] || roundThemes[5];
+
+            return React.createElement('div', { className: `h-full flex flex-col ${theme.bg} overflow-hidden relative transition-colors duration-500` },
+                gameState === 'start' && React.createElement(motion.div, { className: "flex-1 flex flex-col items-center justify-center p-6 z-10" },
+                    React.createElement('div', { className: "bg-white p-8 rounded-[3rem] shadow-2xl border-8 border-amber-200 max-w-2xl w-full text-center" },
+                        React.createElement('div', { className: "bg-amber-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6" }, React.createElement(Bell, { size: 40, className: "text-amber-600 animate-bounce" })),
+                        React.createElement('h1', { className: "text-4xl font-black text-amber-800 mb-4 uppercase tracking-tighter" }, "RUNG CHUÔNG VÀNG"),
+                        React.createElement('p', { className: "text-slate-500 font-bold mb-8" }, "Mỗi lượt chơi gồm 20 câu hỏi. Hãy cố gắng đạt điểm cao nhất!"),
+                        React.createElement('div', { className: "mb-8 text-left" },
+                            React.createElement('label', { className: "block text-sm font-black text-slate-500 uppercase mb-2 ml-2" }, "Tên của em là gì?"),
+                            React.createElement('input', { type: "text", value: playerName, onChange: (e) => setPlayerName(e.target.value), placeholder: "Nhập tên tại đây...", className: "w-full bg-slate-100 border-4 border-transparent focus:border-amber-400 rounded-2xl py-4 px-6 text-xl font-bold text-slate-700 outline-none transition-all" })
+                        ),
+                        React.createElement('div', { className: "mb-8 text-left" },
+                            React.createElement('label', { className: "block text-sm font-black text-slate-500 uppercase mb-2 ml-2" }, "Chọn Game (Mã đề):"),
+                            React.createElement('div', { className: "grid grid-cols-5 gap-2" },
+                                [1, 2, 3, 4, 5].map(r => React.createElement('button', { key: r, onClick: () => setCurrentRound(r), className: `py-3 rounded-xl font-bold transition-all ${currentRound === r ? 'bg-amber-500 text-white shadow-lg scale-105' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}` }, `MÃ ${r}`))
+                            )
+                        ),
+                        React.createElement('button', { onClick: startNewGame, className: "w-full bg-amber-500 hover:bg-amber-600 text-white py-5 rounded-2xl text-2xl font-black shadow-xl transform active:scale-95 transition-all" }, "BẮT ĐẦU CHƠI"),
+                        leaderboards[`round${currentRound}`] && leaderboards[`round${currentRound}`].length > 0 && React.createElement('div', { className: "mt-8" },
+                            React.createElement('h3', { className: "text-lg font-black text-slate-800 uppercase mb-4 flex items-center justify-center gap-2" }, React.createElement(Trophy, { size: 20, className: "text-amber-500" }), `BẢNG VÀNG MÃ ĐỀ ${currentRound}`),
+                            React.createElement('div', { className: "bg-slate-50 rounded-2xl p-4 max-h-40 overflow-y-auto" },
+                                leaderboards[`round${currentRound}`].map((e, i) => React.createElement('div', { key: i, className: "flex justify-between py-2 border-b border-slate-200 last:border-0" },
+                                    React.createElement('span', { className: "font-bold text-slate-700" }, `${i + 1}. ${e.name}`),
+                                    React.createElement('span', { className: "font-black text-amber-600" }, `${e.score} điểm`)
+                                ))
+                            )
+                        )
+                    )
+                ),
+                gameState === 'playing' && React.createElement(motion.div, { className: "flex-1 flex flex-col z-10" },
+                    React.createElement('div', { className: `bg-white p-4 border-b-4 ${theme.border} flex justify-between items-center shadow-sm` },
+                        React.createElement('div', { className: "flex items-center gap-4" },
+                            React.createElement('div', { className: `${theme.accent} text-white px-4 py-2 rounded-xl font-black text-sm shadow-lg` }, `VÒNG ${currentRound}`),
+                            React.createElement('div', { className: "text-slate-400 font-bold text-sm" }, `Câu ${currentQuestionIndex + 1}/20`)
+                        ),
+                        React.createElement('div', { className: "flex items-center gap-6" },
+                            React.createElement('div', { className: "flex items-center gap-2" }, React.createElement(CheckCircle2, { className: "text-emerald-500", size: 20 }), React.createElement('span', { className: "font-black text-emerald-600" }, correctCount)),
+                            React.createElement('div', { className: "flex items-center gap-2" }, React.createElement(XCircle, { className: "text-rose-500", size: 20 }), React.createElement('span', { className: "font-black text-rose-600" }, wrongCount)),
+                            React.createElement('div', { className: "bg-slate-900 text-white px-6 py-2 rounded-xl font-black shadow-lg" }, `${totalScore + roundScore} ĐIỂM`)
+                        )
+                    ),
+                    React.createElement('div', { className: "h-2 bg-slate-100 w-full" }, React.createElement(motion.div, { animate: { width: `${(timeLeft / 20) * 100}%` }, className: `h-full ${theme.accent}` })),
+                    React.createElement('div', { className: "flex-1 flex flex-col items-center justify-center p-6" },
+                        React.createElement('div', { className: "w-full max-w-4xl" },
+                            React.createElement(motion.div, { key: questions[currentQuestionIndex].id, initial: { x: 50, opacity: 0 }, animate: { x: 0, opacity: 1 }, className: `bg-white p-10 rounded-[3rem] shadow-2xl border-4 ${theme.border} mb-8 text-center relative overflow-hidden` },
+                                showFeedback && React.createElement(motion.div, { initial: { opacity: 0 }, animate: { opacity: 1 }, className: `absolute inset-0 flex items-center justify-center z-20 backdrop-blur-sm ${showFeedback === 'correct' ? 'bg-emerald-500/20' : 'bg-rose-500/20'}` },
+                                    React.createElement(motion.div, { initial: { scale: 0 }, animate: { scale: 1 }, className: `p-6 rounded-full bg-white shadow-2xl ${showFeedback === 'correct' ? 'text-emerald-500' : 'text-rose-500'}` }, showFeedback === 'correct' ? React.createElement(CheckCircle2, { size: 80 }) : React.createElement(XCircle, { size: 80 }))
+                                ),
+                                React.createElement('h2', { className: "text-3xl font-black text-slate-800 leading-tight" }, questions[currentQuestionIndex].question)
+                            ),
+                            React.createElement('div', { className: "grid grid-cols-1 md:grid-cols-2 gap-4" },
+                                questions[currentQuestionIndex].type === 'multiple' && questions[currentQuestionIndex].options.map((opt, idx) =>
+                                    React.createElement('button', { key: idx, onClick: () => handleAnswer(opt), className: `bg-white hover:${theme.bg} border-4 border-white ${theme.hover} p-6 rounded-2xl text-2xl font-black text-slate-700 shadow-lg transition-all transform active:scale-95` }, opt)
+                                ),
+                                questions[currentQuestionIndex].type === 'boolean' && [
+                                    React.createElement('button', { key: 't', onClick: () => handleAnswer(true), className: "bg-emerald-500 hover:bg-emerald-600 text-white p-8 rounded-2xl text-3xl font-black shadow-lg transform active:scale-95 transition-all" }, "ĐÚNG"),
+                                    React.createElement('button', { key: 'f', onClick: () => handleAnswer(false), className: "bg-rose-500 hover:bg-rose-600 text-white p-8 rounded-2xl text-3xl font-black shadow-lg transform active:scale-95 transition-all" }, "SAI")
+                                ],
+                                questions[currentQuestionIndex].type === 'fill' && React.createElement('div', { className: "col-span-full flex flex-col items-center gap-4" },
+                                    React.createElement('input', { type: "text", value: userAnswer, onChange: (e) => setUserAnswer(e.target.value), placeholder: "Nhập kết quả...", className: `w-full max-w-md bg-white border-4 ${theme.border} rounded-2xl py-6 px-8 text-4xl font-black text-center text-slate-700 outline-none shadow-xl focus:${theme.border}`, onKeyDown: (e) => e.key === 'Enter' && handleAnswer(userAnswer) }),
+                                    React.createElement('button', { onClick: () => handleAnswer(userAnswer), className: `${theme.accent} text-white px-12 py-4 rounded-2xl text-xl font-black shadow-lg hover:opacity-90 transition-all` }, "GỬI ĐÁP ÁN")
+                                )
+                            )
+                        )
+                    )
+                ),
+                gameState === 'round_summary' && React.createElement(motion.div, { className: "flex-1 flex flex-col items-center justify-center p-6 z-10" },
+                    React.createElement('div', { className: `bg-white p-10 rounded-[3rem] shadow-2xl border-8 ${theme.border} max-w-2xl w-full text-center` },
+                        React.createElement('div', { className: `${theme.light} w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6` }, React.createElement(Award, { size: 40, className: theme.text })),
+                        React.createElement('h2', { className: `text-4xl font-black ${theme.text} mb-2 uppercase` }, `KẾT THÚC MÃ ĐỀ ${currentRound}!`),
+                        React.createElement('p', { className: "text-2xl font-bold text-slate-500 mb-6" }, `Điểm của em: `, React.createElement('span', { className: "text-slate-800 font-black" }, `${roundScore}`)),
+                        
+                        React.createElement('div', { className: "mb-8" },
+                            React.createElement('h3', { className: "text-sm font-black text-slate-400 uppercase mb-4 tracking-widest" }, `BẢNG XẾP HẠNG MÃ ĐỀ ${currentRound}`),
+                            React.createElement('div', { className: "bg-slate-50 rounded-2xl p-4" },
+                                leaderboards[`round${currentRound}`].map((e, i) => React.createElement('div', { key: i, className: "flex justify-between py-2 border-b border-slate-200 last:border-0" },
+                                    React.createElement('span', { className: "font-bold text-slate-700" }, `${i + 1}. ${e.name}`),
+                                    React.createElement('span', { className: `font-black ${theme.text}` }, `${e.score} điểm`)
+                                ))
+                            )
+                        ),
+                        
+                        React.createElement('div', { className: "grid grid-cols-2 gap-4" },
+                            React.createElement('button', { onClick: startNewGame, className: `w-full ${theme.accent} text-white py-4 rounded-2xl text-xl font-black shadow-lg hover:opacity-90 transition-all` }, "CHƠI LẠI"),
+                            React.createElement('button', { onClick: () => setGameState('start'), className: "w-full bg-slate-100 text-slate-700 py-4 rounded-2xl text-xl font-black hover:bg-slate-200 transition-all" }, "CHỌN MÃ KHÁC")
+                        )
+                    )
+                ),
+                gameState === 'final_summary' && React.createElement(motion.div, { className: "flex-1 flex flex-col items-center justify-center p-6 z-10" },
+                    React.createElement('div', { className: "bg-white p-10 rounded-[3rem] shadow-2xl border-8 border-amber-400 max-w-4xl w-full text-center" },
+                        React.createElement(Crown, { size: 80, className: "text-yellow-400 mx-auto mb-4 animate-pulse" }),
+                        React.createElement('h2', { className: "text-4xl font-black text-amber-800 mb-2 uppercase" }, `CHÚC MỪNG ${playerName.toUpperCase()}!`),
+                        React.createElement('p', { className: "text-xl font-bold text-slate-500 mb-8" }, `Em đã xuất sắc vượt qua cả 5 vòng thi và trở thành Tân Trạng Nguyên!`),
+                        
+                        React.createElement('div', { className: "grid grid-cols-1 md:grid-cols-2 gap-8 mb-8" },
+                            React.createElement('div', null,
+                                React.createElement('h3', { className: "text-sm font-black text-slate-400 uppercase mb-4 tracking-widest" }, "ĐIỂM SỐ CHI TIẾT"),
+                                React.createElement('div', { className: "bg-amber-50 rounded-3xl p-6 space-y-3" },
+                                    roundScores.map((s, i) => React.createElement('div', { key: i, className: "flex justify-between items-center" },
+                                        React.createElement('span', { className: "font-bold text-slate-600" }, `Vòng ${i + 1}`),
+                                        React.createElement('span', { className: "font-black text-amber-700" }, `${s} điểm`)
+                                    )),
+                                    React.createElement('div', { className: "pt-3 border-t-2 border-amber-200 flex justify-between items-center" },
+                                        React.createElement('span', { className: "font-black text-slate-800" }, "TỔNG CỘNG"),
+                                        React.createElement('span', { className: "text-3xl font-black text-amber-600" }, `${totalScore + roundScore}`)
+                                    )
+                                )
+                            ),
+                            React.createElement('div', null,
+                                React.createElement('h3', { className: "text-sm font-black text-slate-400 uppercase mb-4 tracking-widest" }, "BẢNG VÀNG TRẠNG NGUYÊN"),
+                                React.createElement('div', { className: "bg-slate-50 rounded-3xl p-6" },
+                                    leaderboards.total.map((e, i) => React.createElement('div', { key: i, className: "flex justify-between py-2 border-b border-slate-200 last:border-0" },
+                                        React.createElement('span', { className: "font-bold text-slate-700" }, `${i + 1}. ${e.name}`),
+                                        React.createElement('span', { className: "font-black text-amber-600" }, `${e.score} điểm`)
+                                    ))
+                                )
+                            )
+                        ),
+                        
+                        React.createElement('div', { className: "grid grid-cols-2 gap-4" },
+                            React.createElement('button', { onClick: () => setGameState('start'), className: "bg-slate-100 text-slate-700 py-4 rounded-2xl text-xl font-black hover:bg-slate-200 transition-all" }, "CHƠI LẠI"),
+                            React.createElement('button', { onClick: () => window.location.reload(), className: "bg-amber-500 text-white py-4 rounded-2xl text-xl font-black shadow-lg hover:bg-amber-600 transition-all" }, "LUYỆN TẬP")
+                        )
+                    )
+                )
+            );
+        };
+
+            const [shape, setShape] = useState('prism');
+            const [params, setParams] = useState({ a: 10, b: 6, h: 8 });
+            const [rotation, setRotation] = useState({ x: -20, y: 35 });
+
+            const getVolume = () => {
+                if (shape === 'prism') return params.a * params.b * params.h;
+                return params.a * params.a * params.a;
+            };
+
+            return React.createElement('div', { className: "flex flex-col lg:flex-row h-full min-h-[70vh]" },
+                React.createElement('div', { className: "w-full lg:w-80 bg-slate-50 p-6 border-r border-slate-200 space-y-6 overflow-y-auto" },
+                    React.createElement('div', null,
+                        React.createElement('h3', { className: "text-lg font-bold text-slate-800 mb-4 flex items-center gap-2" }, React.createElement(Layers, { className: "text-emerald-600", size: 20 }), "Chọn hình khối"),
+                        React.createElement('div', { className: "grid grid-cols-1 gap-2" },
+                            [{ id: 'prism', label: 'Hình Hộp Chữ Nhật', icon: React.createElement(Box, { size: 16 }) }, { id: 'cube', label: 'Hình Lập Phương', icon: React.createElement(LayoutGrid, { size: 16 }) }].map(s =>
+                                React.createElement('button', { key: s.id, onClick: () => setShape(s.id), className: `text-left px-4 py-3 rounded-xl transition-all font-bold flex items-center gap-3 ${shape === s.id ? 'bg-emerald-600 text-white shadow-lg' : 'bg-white hover:bg-emerald-50 text-slate-700 border border-slate-200'}` }, s.icon, s.label)
+                            )
+                        )
+                    ),
+                    React.createElement('div', { className: "space-y-4" },
+                        React.createElement('h3', { className: "text-lg font-bold text-slate-800 flex items-center gap-2" }, React.createElement(Calculator, { className: "text-indigo-600", size: 20 }), "Kích thước (cm)"),
+                        React.createElement('div', { className: "space-y-3" },
+                            React.createElement('div', { className: "bg-white p-3 rounded-xl border border-slate-200 shadow-sm" }, React.createElement('label', { className: "text-[10px] font-black text-slate-400 uppercase block mb-1" }, shape === 'cube' ? "Cạnh (a)" : "Chiều dài (a)"), React.createElement('input', { type: "number", value: params.a, onChange: (e) => setParams({ ...params, a: Number(e.target.value) }), className: "w-full font-bold outline-none text-emerald-600" })),
+                            shape === 'prism' && React.createElement(React.Fragment, null,
+                                React.createElement('div', { className: "bg-white p-3 rounded-xl border border-slate-200 shadow-sm" }, React.createElement('label', { className: "text-[10px] font-black text-slate-400 uppercase block mb-1" }, "Chiều rộng (b)"), React.createElement('input', { type: "number", value: params.b, onChange: (e) => setParams({ ...params, b: Number(e.target.value) }), className: "w-full font-bold outline-none text-blue-600" })),
+                                React.createElement('div', { className: "bg-white p-3 rounded-xl border border-slate-200 shadow-sm" }, React.createElement('label', { className: "text-[10px] font-black text-slate-400 uppercase block mb-1" }, "Chiều cao (h)"), React.createElement('input', { type: "number", value: params.h, onChange: (e) => setParams({ ...params, h: Number(e.target.value) }), className: "w-full font-bold outline-none text-purple-600" }))
+                            )
+                        )
+                    ),
+                    React.createElement('div', { className: "bg-emerald-50 p-4 rounded-xl border border-emerald-100" },
+                        React.createElement('h4', { className: "text-[10px] font-black text-emerald-700 uppercase mb-2" }, "Đơn vị thể tích"),
+                        React.createElement('ul', { className: "text-[10px] text-emerald-800 space-y-1 font-bold italic" }, React.createElement('li', null, "• 1 dm³ = 1 lít"), React.createElement('li', null, "• 1 m³ = 1000 dm³"), React.createElement('li', null, "• 1 dm³ = 1000 cm³"))
+                    )
+                ),
+                React.createElement('div', { className: "flex-1 p-4 md:p-8 flex flex-col bg-white overflow-y-auto" },
+                    React.createElement('div', { className: "max-w-4xl mx-auto w-full space-y-8" },
+                        React.createElement('div', { className: "bg-slate-50 rounded-3xl border border-slate-200 p-8 shadow-inner relative overflow-hidden flex items-center justify-center min-h-[400px] perspective" },
+                            React.createElement('div', { className: "preserve-3d transition-transform duration-500", style: { transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`, width: '150px', height: '150px' } },
+                                React.createElement('div', { className: "absolute inset-0 bg-emerald-500/40 border-2 border-emerald-600 flex items-center justify-center font-bold text-white", style: { transform: `translateZ(${params.b * 5}px)`, width: `${params.a * 10}px`, height: `${params.h * 10}px` } }, "Trước"),
+                                React.createElement('div', { className: "absolute inset-0 bg-emerald-500/40 border-2 border-emerald-600 flex items-center justify-center font-bold text-white", style: { transform: `rotateY(180deg) translateZ(${params.b * 5}px)`, width: `${params.a * 10}px`, height: `${params.h * 10}px` } }, "Sau"),
+                                React.createElement('div', { className: "absolute inset-0 bg-blue-500/40 border-2 border-blue-600 flex items-center justify-center font-bold text-white", style: { transform: `rotateY(90deg) translateZ(${params.a * 5}px)`, width: `${params.b * 10}px`, height: `${params.h * 10}px` } }, "Phải"),
+                                React.createElement('div', { className: "absolute inset-0 bg-blue-500/40 border-2 border-blue-600 flex items-center justify-center font-bold text-white", style: { transform: `rotateY(-90deg) translateZ(${params.a * 5}px)`, width: `${params.b * 10}px`, height: `${params.h * 10}px` } }, "Trái"),
+                                React.createElement('div', { className: "absolute inset-0 bg-purple-500/40 border-2 border-purple-600 flex items-center justify-center font-bold text-white", style: { transform: `rotateX(90deg) translateZ(${params.h * 5}px)`, width: `${params.a * 10}px`, height: `${params.b * 10}px` } }, "Trên"),
+                                React.createElement('div', { className: "absolute inset-0 bg-purple-500/40 border-2 border-purple-600 flex items-center justify-center font-bold text-white", style: { transform: `rotateX(-90deg) translateZ(${params.h * 5}px)`, width: `${params.a * 10}px`, height: `${params.b * 10}px` } }, "Dưới")
+                            ),
+                            React.createElement('div', { className: "absolute bottom-4 right-4 flex flex-col gap-2" },
+                                React.createElement('button', { onClick: () => setRotation(prev => ({ ...prev, y: prev.y + 45 })), className: "p-2 bg-white rounded-full shadow-md hover:bg-slate-100" }, React.createElement(RotateCw, { size: 20 })),
+                                React.createElement('button', { onClick: () => setRotation(prev => ({ ...prev, x: prev.x + 45 })), className: "p-2 bg-white rounded-full shadow-md hover:bg-slate-100" }, React.createElement(RotateCcw, { size: 20 }))
+                            )
+                        ),
+                        React.createElement('div', { className: "grid grid-cols-1 md:grid-cols-2 gap-6" },
+                            React.createElement('div', { className: "bg-emerald-50 p-6 rounded-3xl border border-emerald-100 shadow-sm" },
+                                React.createElement('h4', { className: "text-emerald-900 font-black text-sm mb-6 uppercase tracking-tight flex items-center gap-2" }, React.createElement(BookOpen, { size: 18, className: "text-emerald-600" }), "Công thức tính Thể tích"),
+                                React.createElement('div', { className: "bg-white p-6 rounded-2xl border border-emerald-100 shadow-md text-center" },
+                                    shape === 'prism' ? React.createElement('div', { className: "text-2xl font-black italic text-emerald-800" }, "V = a × b × h") : React.createElement('div', { className: "text-2xl font-black italic text-emerald-800" }, "V = a × a × a")
+                                )
+                            ),
+                            React.createElement('div', { className: "bg-slate-900 text-white p-6 rounded-3xl shadow-xl" },
+                                React.createElement('p', { className: "text-slate-500 text-[10px] font-black uppercase mb-2" }, "Thể tích (V):"),
+                                React.createElement('p', { className: "text-4xl font-black text-emerald-400" }, getVolume(), React.createElement('span', { className: "text-lg ml-2 text-slate-400" }, "cm³")),
+                                React.createElement('div', { className: "mt-4 pt-4 border-t border-white/10 text-xs text-slate-400 italic" },
+                                    shape === 'prism' ? `V = ${params.a} × ${params.b} × ${params.h} = ${getVolume()}` : `V = ${params.a} × ${params.a} × ${params.a} = ${getVolume()}`
+                                )
+                            )
+                        )
+                    )
+                )
+            );
+        };
+
+        const App = () => {
+            const [activeTab, setActiveTab] = useState('2d');
+            const [isFullscreen, setIsFullscreen] = useState(false);
+
+            const toggleFullScreen = () => {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().then(() => setIsFullscreen(true)).catch(err => {
+                        console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+                    });
+                } else {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen().then(() => setIsFullscreen(false));
+                    }
+                }
+            };
+
+            return React.createElement('div', { className: "min-h-screen flex flex-col bg-[#f8fafc]" },
+                React.createElement('header', { className: "bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 text-white py-2 px-4 shadow-xl sticky top-0 z-50" },
+                    React.createElement('div', { className: "container mx-auto flex flex-col lg:flex-row justify-between items-center gap-2" },
+                        React.createElement('div', { className: "flex items-center gap-2" },
+                            React.createElement('div', { className: "bg-white p-1.5 rounded-xl text-indigo-700 shadow-lg transform -rotate-3" }, React.createElement(BookOpen, { size: 24 })),
+                            React.createElement('div', null,
+                                React.createElement('h1', { className: "text-xl md:text-2xl font-black uppercase tracking-tighter leading-none" }, "TOÁN LỚP 5 – CÔ THU"),
+                                React.createElement('p', { className: "text-[9px] md:text-[10px] opacity-90 font-black uppercase tracking-widest bg-black/20 px-1.5 py-0 rounded inline-block" }, "Học tập sáng tạo - Tư duy vượt trội")
+                            )
+                        ),
+                        React.createElement('div', { className: "flex items-center gap-2 overflow-x-auto max-w-full no-scrollbar" },
+                            React.createElement('nav', { className: "flex bg-white/10 p-1 rounded-xl backdrop-blur-md" },
+                                React.createElement('div', { className: "flex gap-1" },
+                                    [{ id: '2d', label: 'Hình Phẳng', icon: React.createElement(Triangle, { size: 16 }), color: 'text-indigo-700' },
+                                     { id: '3d', label: 'Khai Triển', icon: React.createElement(Box, { size: 16 }), color: 'text-indigo-700' },
+                                     { id: 'volume', label: 'Thể Tích', icon: React.createElement(Layers, { size: 16 }), color: 'text-indigo-700' },
+                                     { id: 'motion', label: 'Chuyển Động', icon: React.createElement(Timer, { size: 16 }), color: 'text-indigo-700' },
+                                     { id: 'quiz', label: 'Luyện Tập', icon: React.createElement(GraduationCap, { size: 16 }), color: 'text-purple-700' },
+                                     { id: 'game', label: 'Trò Chơi', icon: React.createElement(Gamepad2, { size: 16 }), color: 'text-orange-600' },
+                                     { id: 'bell', label: 'Chuông Vàng', icon: React.createElement(Bell, { size: 16 }), color: 'text-amber-600' },
+                                     { id: 'draw', label: 'Bảng Nháp', icon: React.createElement(PenTool, { size: 16 }), color: 'text-emerald-600' }
+                                    ].map(tab =>
+                                        React.createElement('button', {
+                                            key: tab.id,
+                                            onClick: () => setActiveTab(tab.id),
+                                            className: `px-3 py-1.5 rounded-lg transition-all flex items-center gap-2 font-bold whitespace-nowrap text-sm ${activeTab === tab.id ? `bg-white ${tab.color} shadow-lg scale-105` : 'text-white hover:bg-white/10'}`
+                                        }, tab.icon, tab.label)
+                                    )
+                                )
+                            ),
+                            React.createElement('button', {
+                                onClick: toggleFullScreen,
+                                className: "flex items-center gap-2 bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-xl backdrop-blur-md transition-all font-bold text-xs whitespace-nowrap border border-white/10"
+                            },
+                                isFullscreen ? React.createElement(Minimize, { size: 18 }) : React.createElement(Maximize, { size: 18 }),
+                                isFullscreen ? 'Thu nhỏ' : 'Toàn màn hình'
+                            )
+                        )
+                    )
+                ),
+                React.createElement('main', { className: "flex-1 container mx-auto p-2 md:p-4 pb-12" },
+                    React.createElement('div', { className: "bg-white rounded-[1.5rem] shadow-2xl border border-slate-200 overflow-hidden min-h-[80vh] flex flex-col" },
+                        activeTab === '2d' && React.createElement(Shape2DPanel),
+                        activeTab === '3d' && React.createElement(Shape3DPanel),
+                        activeTab === 'volume' && React.createElement(VolumePanel),
+                        activeTab === 'motion' && React.createElement(MotionPanel),
+                        activeTab === 'quiz' && React.createElement(QuizPanel),
+                        activeTab === 'game' && React.createElement(GamePanel),
+                        activeTab === 'bell' && React.createElement(GoldenBellGame),
+                        activeTab === 'draw' && React.createElement(DrawingBoard)
+                    )
+                )
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(React.createElement(App));
+    </script>
+</body>
+</html>

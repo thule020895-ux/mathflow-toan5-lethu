@@ -1,0 +1,98 @@
+:root {
+  --primary-green: #059669;
+  --primary-emerald: #10b981;
+  --primary-teal: #0d9488;
+  --accent-red: #e11d48;
+  --accent-orange: #ea580c;
+  --accent-purple: #9333ea;
+  --accent-yellow: #f59e0b;
+}
+
+body {
+  font-family: 'Quicksand', system-ui, -apple-system, sans-serif;
+  background-color: #f4faf6;
+  color: #1e293b;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Math Grid / Giấy kẻ ô ly Toán */
+.math-grid-bg {
+  background-color: #ffffff;
+  background-image: 
+    linear-gradient(to right, rgba(16, 185, 129, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(16, 185, 129, 0.08) 1px, transparent 1px),
+    linear-gradient(to right, rgba(16, 185, 129, 0.16) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(16, 185, 129, 0.16) 1px, transparent 1px);
+  background-size: 20px 20px, 20px 20px, 100px 100px, 100px 100px;
+}
+
+.math-grid-light {
+  background-color: #fcfdfa;
+  background-image: 
+    linear-gradient(to right, rgba(16, 185, 129, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(16, 185, 129, 0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Custom Scrollbars */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Hide scrollbar for tabs */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Card Depth and Soft Shadows */
+.card-shadow {
+  box-shadow: 0 4px 20px -2px rgba(14, 165, 233, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
+}
+
+.board-shadow {
+  box-shadow: 0 10px 30px -5px rgba(2, 132, 199, 0.1), 0 4px 10px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Mascot floating animation */
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.animate-mascot-float {
+  animation: floatSlow 3.5s ease-in-out infinite;
+}
+
+@keyframes waveArm {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(10deg);
+  }
+}
+
+.animate-mascot-wave {
+  transform-origin: bottom center;
+  animation: waveArm 2s ease-in-out infinite;
+}
