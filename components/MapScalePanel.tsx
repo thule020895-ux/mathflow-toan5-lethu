@@ -29,6 +29,9 @@ import confetti from 'canvas-confetti';
 // Ảnh Bản đồ Hành chính thật Việt Nam có Hoàng Sa & Trường Sa
 const VIETNAM_REAL_MAP_URL = "https://i.ibb.co/gFH16FkC/508492193-705086259146747-8303790510885120251-n.jpg";
 
+// Ảnh Bản vẽ Mặt bằng Thiết kế Trường học thực tế
+const SCHOOL_GROUND_PLAN_URL = "https://i.ibb.co/QFghcSjG/fc39f148-7d7b-4b20-911e-f144566fa347.jpg";
+
 interface RealMapCity {
   name: string;
   x: number; // Tọa độ chuẩn trên ảnh gốc 453 x 640
@@ -41,9 +44,9 @@ interface RealMapCity {
 const REAL_MAP_CITIES: Record<string, RealMapCity> = {
   'Hà Nội': { name: 'Hà Nội', x: 147, y: 104, labelAlign: 'left', badgeOffsetX: -52, badgeOffsetY: -4 },
   'Hải Phòng': { name: 'Hải Phòng', x: 177, y: 110, labelAlign: 'right', badgeOffsetX: 12, badgeOffsetY: -2 },
-  'Đà Nẵng': { name: 'Đà Nẵng', x: 236, y: 262, labelAlign: 'right', badgeOffsetX: 12, badgeOffsetY: 0 },
-  'TP. Hồ Chí Minh': { name: 'TP. Hồ Chí Minh', x: 186, y: 518, labelAlign: 'right', badgeOffsetX: 12, badgeOffsetY: 0 },
-  'Cần Thơ': { name: 'Cần Thơ', x: 152, y: 574, labelAlign: 'left', badgeOffsetX: -54, badgeOffsetY: 4 }
+  'Đà Nẵng': { name: 'Đà Nẵng', x: 244, y: 315, labelAlign: 'right', badgeOffsetX: 12, badgeOffsetY: -4 },
+  'TP. Hồ Chí Minh': { name: 'TP. Hồ Chí Minh', x: 182, y: 514, labelAlign: 'right', badgeOffsetX: 12, badgeOffsetY: 0 },
+  'Cần Thơ': { name: 'Cần Thơ', x: 143, y: 551, labelAlign: 'left', badgeOffsetX: -54, badgeOffsetY: 4 }
 };
 
 type ScaleTab = 'visual' | 'theory_types' | 'practice';
@@ -144,6 +147,7 @@ export const MapScalePanel: React.FC = () => {
   const [customMapCm, setCustomMapCm] = useState<number>(10.2);
   const [visualMode, setVisualMode] = useState<'vietnam' | 'school'>('vietnam');
   const [isMapModalOpen, setIsMapModalOpen] = useState<boolean>(false);
+  const [isSchoolModalOpen, setIsSchoolModalOpen] = useState<boolean>(false);
 
   // Trường học State
   const [schoolRealLength, setSchoolRealLength] = useState<number>(80); // 80 mét
@@ -617,103 +621,132 @@ export const MapScalePanel: React.FC = () => {
             {visualMode === 'school' && (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 
-                {/* Cột trái: Sơ đồ sân trường */}
-                <div className="lg:col-span-7 bg-white rounded-3xl p-5 border-2 border-amber-400 shadow-sm space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <School className="w-5 h-5 text-emerald-600" />
-                      <h3 className="font-black text-slate-800 text-sm sm:text-base">
-                        Bản Vẽ Mặt Bằng Khuôn Viên Trường Học
-                      </h3>
-                    </div>
-                    <span className="text-xs font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-200">
-                      Tỉ lệ: 1 : {schoolScale}
-                    </span>
-                  </div>
-
-                  {/* Khung mô phỏng bản vẽ */}
-                  <div className="relative w-full h-72 rounded-2xl bg-emerald-950 p-4 flex items-center justify-center border-2 border-slate-700 overflow-hidden">
-                    <div 
-                      className="bg-emerald-600/40 border-2 border-amber-400 rounded-xl relative flex flex-col items-center justify-center transition-all duration-300"
-                      style={{
-                        width: `${Math.min(380, (schoolRealLength / schoolScale) * 100 * 3.5)}px`,
-                        height: `${Math.min(220, (schoolRealWidth / schoolScale) * 100 * 3.5)}px`,
-                      }}
-                    >
-                      {/* Sân bóng / Cột cờ / Bồn hoa bên trong */}
-                      <div className="border border-white/40 rounded-lg w-3/4 h-3/4 flex flex-col items-center justify-center bg-emerald-500/20 text-white text-center p-2">
-                        <div className="w-4 h-4 rounded-full bg-amber-400 border border-white mb-1 shadow-xs" title="Cột cờ" />
-                        <span className="text-[11px] font-black text-amber-300">SÂN TRƯỜNG</span>
-                        <span className="text-[10px] text-white/80">
-                          Thực tế: {schoolRealLength}m × {schoolRealWidth}m
+                {/* Cột trái: Sơ đồ bản vẽ sân trường */}
+                <div className="lg:col-span-7 bg-white rounded-3xl p-5 border-2 border-amber-400 shadow-sm space-y-4 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <School className="w-5 h-5 text-emerald-600" />
+                        <h3 className="font-black text-slate-800 text-sm sm:text-base">
+                          Bản Vẽ Mặt Bằng Khuôn Viên Trường Học
+                        </h3>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
+                          Tỉ lệ: 1 : {schoolScale.toLocaleString('vi-VN')}
                         </span>
-                        <span className="text-[10px] text-emerald-200 font-bold">
-                          Bản vẽ: {(schoolRealLength * 100 / schoolScale).toFixed(1)}cm × {(schoolRealWidth * 100 / schoolScale).toFixed(1)}cm
-                        </span>
-                      </div>
-
-                      {/* Thước đo chiều dài (trên) */}
-                      <div className="absolute -top-6 left-0 right-0 flex items-center justify-center text-[10px] font-black text-amber-300">
-                        Dài trên bản vẽ: {(schoolRealLength * 100 / schoolScale).toFixed(1)} cm
-                      </div>
-
-                      {/* Thước đo chiều rộng (phải) */}
-                      <div className="absolute -right-20 top-0 bottom-0 flex items-center justify-center text-[10px] font-black text-amber-300 rotate-90">
-                        Rộng: {(schoolRealWidth * 100 / schoolScale).toFixed(1)} cm
+                        <button
+                          onClick={() => setIsSchoolModalOpen(true)}
+                          className="bg-white hover:bg-slate-50 text-slate-700 hover:text-amber-800 text-xs font-bold px-2.5 py-1 rounded-lg border border-slate-300 shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                          title="Xem bản vẽ gốc phóng to"
+                        >
+                          <Maximize2 size={13} className="text-amber-600" />
+                          <span className="hidden sm:inline">Xem bản vẽ gốc</span>
+                        </button>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Thanh trượt điều chỉnh kích thước thực tế */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                    <div>
-                      <div className="flex justify-between text-xs font-bold text-slate-700 mb-1">
-                        <span>Chiều dài thực tế:</span>
-                        <span className="text-emerald-700 font-black">{schoolRealLength} mét</span>
+                    {/* Khung mô phỏng bản vẽ thiết kế sân trường thực tế */}
+                    <div className="relative w-full rounded-2xl bg-amber-50/40 border-2 border-amber-400 overflow-hidden flex flex-col items-center justify-center p-3 shadow-inner">
+                      {/* Tiêu đề & Tỉ lệ quy đổi */}
+                      <div className="w-full flex items-center justify-between mb-2 px-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                          <span className="text-xs font-black text-slate-800">
+                            Bản thiết kế - Trường PTDTBT Tiểu học Hội Nga
+                          </span>
+                        </div>
+                        <div className="text-[11px] font-bold text-amber-800 bg-white px-2 py-0.5 rounded-md border border-amber-200 shadow-2xs">
+                          1 cm trên bản vẽ = {(schoolScale / 100).toFixed(0)} m thực tế
+                        </div>
                       </div>
-                      <input
-                        type="range"
-                        min="40"
-                        max="120"
-                        step="10"
-                        value={schoolRealLength}
-                        onChange={(e) => setSchoolRealLength(Number(e.target.value))}
-                        className="w-full accent-amber-500 cursor-pointer"
-                      />
-                    </div>
-                    <div>
-                      <div className="flex justify-between text-xs font-bold text-slate-700 mb-1">
-                        <span>Chiều rộng thực tế:</span>
-                        <span className="text-emerald-700 font-black">{schoolRealWidth} mét</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="20"
-                        max="80"
-                        step="5"
-                        value={schoolRealWidth}
-                        onChange={(e) => setSchoolRealWidth(Number(e.target.value))}
-                        className="w-full accent-amber-500 cursor-pointer"
-                      />
-                    </div>
-                  </div>
 
-                  {/* Chọn tỉ lệ bản vẽ sân trường */}
-                  <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
-                    <span className="text-xs font-bold text-slate-600">Tỉ lệ bản vẽ:</span>
-                    {[500, 1000, 2000].map((sc) => (
-                      <button
-                        key={sc}
-                        onClick={() => setSchoolScale(sc)}
-                        className={`px-3 py-1 rounded-lg text-xs font-bold border transition-all ${
-                          schoolScale === sc
-                            ? 'bg-amber-500 border-amber-500 text-white shadow-xs'
-                            : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-                        }`}
-                      >
-                        1 : {sc}
-                      </button>
-                    ))}
+                      {/* Vùng ảnh bản vẽ kèm thước đo tương tác */}
+                      <div className="relative w-full max-w-[560px] aspect-[640/478] rounded-xl overflow-hidden border border-slate-300 bg-white shadow-sm flex items-center justify-center">
+                        <img
+                          src={SCHOOL_GROUND_PLAN_URL}
+                          alt="Bản thiết kế mặt bằng trường học"
+                          className="w-full h-full object-contain select-none"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src = '/school_ground_plan.jpg';
+                          }}
+                        />
+
+                        {/* Thước đo chiều dài (trên ảnh) */}
+                        <div className="absolute top-2 left-3 right-3 bg-white/95 backdrop-blur-xs px-2.5 py-1.5 rounded-lg border border-amber-300 shadow-md flex items-center justify-between pointer-events-none">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-amber-700 font-black text-[11px]">↔ Chiều dài thực tế:</span>
+                            <span className="font-extrabold text-slate-900 text-xs">{schoolRealLength} m</span>
+                          </div>
+                          <div className="text-[11px] font-black text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200">
+                            📏 Trên bản vẽ: {(schoolRealLength * 100 / schoolScale).toFixed(1)} cm
+                          </div>
+                        </div>
+
+                        {/* Thước đo chiều rộng (dưới ảnh) */}
+                        <div className="absolute bottom-2 left-3 right-3 bg-white/95 backdrop-blur-xs px-2.5 py-1.5 rounded-lg border border-amber-300 shadow-md flex items-center justify-between pointer-events-none">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-emerald-700 font-black text-[11px]">↕ Chiều rộng thực tế:</span>
+                            <span className="font-extrabold text-slate-900 text-xs">{schoolRealWidth} m</span>
+                          </div>
+                          <div className="text-[11px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                            📏 Trên bản vẽ: {(schoolRealWidth * 100 / schoolScale).toFixed(1)} cm
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Thanh trượt điều chỉnh kích thước thực tế */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3">
+                      <div>
+                        <div className="flex justify-between text-xs font-bold text-slate-700 mb-1">
+                          <span>Chiều dài thực tế:</span>
+                          <span className="text-emerald-700 font-black">{schoolRealLength} mét</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="40"
+                          max="120"
+                          step="10"
+                          value={schoolRealLength}
+                          onChange={(e) => setSchoolRealLength(Number(e.target.value))}
+                          className="w-full accent-amber-500 cursor-pointer"
+                        />
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-xs font-bold text-slate-700 mb-1">
+                          <span>Chiều rộng thực tế:</span>
+                          <span className="text-emerald-700 font-black">{schoolRealWidth} mét</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="20"
+                          max="80"
+                          step="5"
+                          value={schoolRealWidth}
+                          onChange={(e) => setSchoolRealWidth(Number(e.target.value))}
+                          className="w-full accent-amber-500 cursor-pointer"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Chọn tỉ lệ bản vẽ sân trường */}
+                    <div className="flex items-center gap-2 pt-3 border-t border-slate-100">
+                      <span className="text-xs font-bold text-slate-600">Chọn tỉ lệ bản vẽ:</span>
+                      {[500, 1000, 2000].map((sc) => (
+                        <button
+                          key={sc}
+                          onClick={() => setSchoolScale(sc)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
+                            schoolScale === sc
+                              ? 'bg-amber-500 border-amber-500 text-white shadow-xs'
+                              : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                          }`}
+                        >
+                          1 : {sc.toLocaleString('vi-VN')}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
@@ -1214,6 +1247,60 @@ export const MapScalePanel: React.FC = () => {
               </div>
               <button
                 onClick={() => setIsMapModalOpen(false)}
+                className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-black transition-colors cursor-pointer"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal phóng to toàn cảnh Bản Thiết Kế Mặt Bằng Trường Học */}
+      {isSchoolModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-3xl w-full max-h-[92vh] flex flex-col shadow-2xl border-2 border-amber-400 overflow-hidden">
+            {/* Header modal */}
+            <div className="px-5 py-3.5 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <School className="w-5 h-5 text-slate-950" />
+                <div>
+                  <h3 className="font-black text-sm sm:text-base text-slate-950 leading-tight">
+                    Bản Thiết Kế - Trường PTDTBT Tiểu Học Hội Nga (Phân Hiệu 1)
+                  </h3>
+                  <p className="text-[11px] font-bold text-amber-950">
+                    Bản vẽ mặt bằng phân khu trường học tỉ lệ thực tế
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsSchoolModalOpen(false)}
+                className="p-1.5 rounded-xl bg-slate-950/10 hover:bg-slate-950/20 text-slate-950 transition-colors cursor-pointer"
+                title="Đóng xem bản vẽ"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Thân modal */}
+            <div className="flex-1 overflow-auto p-4 bg-[#f8fafc] flex items-center justify-center">
+              <img
+                src={SCHOOL_GROUND_PLAN_URL}
+                alt="Bản thiết kế mặt bằng trường học phóng to"
+                className="max-h-[75vh] w-auto object-contain rounded-2xl shadow-lg border border-slate-300 select-none"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = '/school_ground_plan.jpg';
+                }}
+              />
+            </div>
+
+            {/* Footer modal */}
+            <div className="px-5 py-3 bg-white border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
+              <div className="text-xs text-slate-600 font-medium">
+                Bản vẽ mặt bằng thiết kế gồm dãy nhà tầng, vườn rau, sân bóng, khu bán trú, văn phòng, nhà ăn...
+              </div>
+              <button
+                onClick={() => setIsSchoolModalOpen(false)}
                 className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-black transition-colors cursor-pointer"
               >
                 Đóng
