@@ -10,7 +10,7 @@ import {
 import GoldenBellGame from './GoldenBellGame';
 import ConquerPanel from './ConquerPanel';
 
-export type ConquerSubTab = 'bell' | 'challenge';
+export type ConquerSubTab = 'challenge' | 'bell';
 
 interface ConquerSubTabItem {
   id: ConquerSubTab;
@@ -22,18 +22,18 @@ interface ConquerSubTabItem {
 
 const CONQUER_SUB_TABS: ConquerSubTabItem[] = [
   {
-    id: 'bell',
-    label: 'Rung Chuông Vàng',
-    badge: 'Đấu trường vinh quang',
-    icon: <Bell size={18} />,
-    activeColor: 'bg-amber-500 text-white shadow-md shadow-amber-500/30'
-  },
-  {
     id: 'challenge',
     label: 'Thử Thách',
     badge: 'Đề thi học sinh giỏi',
     icon: <Trophy size={18} />,
     activeColor: 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/30'
+  },
+  {
+    id: 'bell',
+    label: 'Rung Chuông Vàng',
+    badge: 'Đấu trường vinh quang',
+    icon: <Bell size={18} />,
+    activeColor: 'bg-amber-500 text-white shadow-md shadow-amber-500/30'
   }
 ];
 
@@ -42,7 +42,7 @@ interface ConquerHubPanelProps {
 }
 
 export const ConquerHubPanel: React.FC<ConquerHubPanelProps> = ({ initialSubTab }) => {
-  const [subTab, setSubTab] = useState<ConquerSubTab>(initialSubTab || 'bell');
+  const [subTab, setSubTab] = useState<ConquerSubTab>(initialSubTab || 'challenge');
 
   React.useEffect(() => {
     if (initialSubTab) {

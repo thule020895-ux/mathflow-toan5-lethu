@@ -17,14 +17,14 @@ interface HomeLandingPanelProps {
   onNavigateTab: (tab: 'explore' | 'fun' | 'conquer') => void;
   onNavigateExploreTopic?: (topicId: ExploreTopicId) => void;
   onNavigateConquerSubTab?: (subTab: ConquerSubTab) => void;
-  onOpenChatbot?: () => void;
+  onOpenSearch?: () => void;
 }
 
 export const HomeLandingPanel: React.FC<HomeLandingPanelProps> = ({
   onNavigateTab,
   onNavigateExploreTopic,
   onNavigateConquerSubTab,
-  onOpenChatbot,
+  onOpenSearch,
 }) => {
   // Ảnh chân dung cố định của tác giả Cô giáo Lê Thị Thu (ĐÃ KHÓA CỐ ĐỊNH)
   const teacherPhoto = "https://i.ibb.co/zHLQGR6Y/1.png";
@@ -142,16 +142,17 @@ export const HomeLandingPanel: React.FC<HomeLandingPanelProps> = ({
             </div>
           </div>
 
-          {/* Nút bấm Kính lúp Trợ lý Toán AI (Google Gemini) */}
-          {onOpenChatbot && (
+          {/* Nút bấm Kính lúp Tìm kiếm nhanh nội dung trong app */}
+          {onOpenSearch && (
             <div className="pt-2">
               <button
-                onClick={onOpenChatbot}
+                onClick={onOpenSearch}
                 className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs sm:text-sm px-5 py-2.5 rounded-2xl shadow-lg shadow-amber-500/25 transition-all hover:scale-105 active:scale-95 border-2 border-amber-200 cursor-pointer"
+                title="Bấm để mở công cụ tìm kiếm nhanh tất cả nội dung trong MathFlow"
               >
                 <Search size={18} className="stroke-[2.5]" />
-                <span>Hỏi Đáp Bài Tập Trực Tiếp Với Trợ Lý Toán AI (Google Gemini)</span>
-                <Sparkles size={16} className="text-slate-950 animate-bounce" />
+                <span>Tìm Kiếm Nhanh Chuyên Đề & Bài Học Trong App</span>
+                <span className="hidden sm:inline text-[11px] bg-slate-900/15 px-2 py-0.5 rounded-md font-mono">Ctrl + K</span>
               </button>
             </div>
           )}
@@ -257,18 +258,18 @@ export const HomeLandingPanel: React.FC<HomeLandingPanelProps> = ({
 
             <div className="grid grid-cols-2 gap-2 mt-6">
               <button
-                onClick={() => handleConquerSubClick('bell')}
-                className="py-3 bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-900 font-black text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
-              >
-                <Bell size={14} />
-                <span>Chuông Vàng</span>
-              </button>
-              <button
                 onClick={() => handleConquerSubClick('challenge')}
-                className="py-3 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white font-black text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                className="py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 active:scale-95 text-white font-black text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
               >
                 <Trophy size={14} />
                 <span>Thử Thách</span>
+              </button>
+              <button
+                onClick={() => handleConquerSubClick('bell')}
+                className="py-3 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white font-black text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+              >
+                <Bell size={14} />
+                <span>Chuông Vàng</span>
               </button>
             </div>
           </div>

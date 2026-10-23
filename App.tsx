@@ -22,7 +22,7 @@ import ExplorePanel, { ExploreTopicId } from './components/ExplorePanel';
 import FunExperiencePanel from './components/FunExperiencePanel';
 import ConquerHubPanel, { ConquerSubTab } from './components/ConquerHubPanel';
 import AdminPanel from './components/AdminPanel';
-import MathChatbot from './components/MathChatbot';
+import AppSearchModal from './components/AppSearchModal';
 
 type TabId = 'home' | 'explore' | 'fun' | 'conquer' | 'admin';
 
@@ -37,10 +37,45 @@ interface NavItem {
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabId>('home');
   const [selectedExploreTopic, setSelectedExploreTopic] = useState<ExploreTopicId>('geom_measure');
-  const [selectedConquerSubTab, setSelectedConquerSubTab] = useState<ConquerSubTab>('bell');
+  const [selectedConquerSubTab, setSelectedConquerSubTab] = useState<ConquerSubTab>('challenge');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isChatbotOpen, setIsChatbotOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  // Lắng nghe phím tắt Ctrl+K hoặc Cmd+K để mở hộp thoại tìm kiếm nhanh
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsSearchOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const handleSearchNavigate = (
+    tab: TabId,
+    exploreTopicId?: ExploreTopicId,
+    conquerSubTab?: ConquerSubTab,
+    anchor?: string
+  ) => {
+    setActiveTab(tab);
+    if (exploreTopicId) {
+      setSelectedExploreTopic(exploreTopicId);
+    }
+    if (conquerSubTab) {
+      setSelectedConquerSubTab(conquerSubTab);
+    }
+    if (anchor) {
+      setTimeout(() => {
+        const el = document.getElementById(anchor);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 150);
+    }
+  };
 
   const { user, userProfile, isAdmin, loading, signOutUser } = useFirebase();
 
@@ -172,14 +207,15 @@ const App: React.FC = () => {
             {/* Khu vực hành động bên phải: Chatbot AI (Kính Lúp) / Login / Fullscreen / Mobile Toggle */}
             <div className="flex items-center gap-2 shrink-0">
               
-              {/* Nút Chatbot với biểu tượng Kính lúp (Search) */}
+              {/* Nút Tìm kiếm với biểu tượng Kính lúp (Search) */}
               <button
-                onClick={() => setIsChatbotOpen(true)}
+                onClick={() => setIsSearchOpen(true)}
                 className="flex items-center gap-1.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 active:scale-95 text-slate-950 px-3 py-1.5 rounded-xl font-black text-xs shadow-md shadow-amber-500/20 transition-all border border-amber-300 cursor-pointer"
-                title="Hỏi đáp bài tập trực tiếp với Trợ lý Toán AI (Google Gemini)"
+                title="Tìm kiếm nhanh nội dung trong app (Ctrl+K)"
               >
                 <SearchIcon size={16} className="text-slate-950 stroke-[2.5]" />
-                <span className="hidden sm:inline">Hỏi Toán AI</span>
+                <span className="hidden sm:inline">Tìm Kiếm</span>
+                <span className="hidden md:inline text-[10px] bg-slate-900/15 text-slate-950 px-1.5 py-0.5 rounded font-mono">⌘K</span>
               </button>
 
               {!user || user.isAnonymous ? (
@@ -310,7 +346,7 @@ const App: React.FC = () => {
                 setSelectedConquerSubTab(subTab);
                 setActiveTab('conquer');
               }}
-              onOpenChatbot={() => setIsChatbotOpen(true)}
+              onOpenSearch={() => setIsSearchOpen(true)}
             />
           )}
           {activeTab === 'explore' && <ExplorePanel initialTopicId={selectedExploreTopic} />}
@@ -320,22 +356,26 @@ const App: React.FC = () => {
         </div>
       </main>
 
-      {/* Nút bấm Kính Lúp Trợ Lý Toán AI nổi ở góc phải màn hình */}
+      {/* Nút bấm Kính Lúp Tìm kiếm nội dung trong app nổi ở góc phải màn hình */}
       <button
-        onClick={() => setIsChatbotOpen(true)}
+        onClick={() => setIsSearchOpen(true)}
         className="fixed bottom-6 right-6 z-30 bg-gradient-to-tr from-emerald-600 via-teal-600 to-amber-500 text-white p-3.5 sm:p-4 rounded-full shadow-2xl hover:shadow-emerald-500/40 border-2 border-white flex items-center justify-center transition-all hover:scale-110 active:scale-95 cursor-pointer group"
-        title="Kính lúp Trợ lý Toán AI (Google Gemini) - Bấm để hỏi bài ngay!"
+        title="Kính lúp Tìm kiếm nội dung trong app (Ctrl+K) - Bấm để tìm bài học, công cụ, trò chơi!"
       >
         <SearchIcon size={24} className="stroke-[2.5] text-white group-hover:rotate-12 transition-transform" />
         <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-amber-400 border-2 border-white rounded-full animate-ping" />
         <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-amber-400 border-2 border-white rounded-full" />
         <div className="absolute right-full mr-3 bg-slate-900/90 backdrop-blur-xs text-white text-xs font-bold px-3 py-1.5 rounded-xl whitespace-nowrap shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none hidden md:block">
-          🔍 Kính lúp Trợ lý Toán AI (Google Gemini)
+          🔍 Tìm kiếm nội dung trong app (Ctrl+K)
         </div>
       </button>
 
-      {/* Hộp thoại Chatbot Toán AI */}
-      <MathChatbot isOpen={isChatbotOpen} onClose={() => setIsChatbotOpen(false)} />
+      {/* Hộp thoại Tìm kiếm nội dung MathFlow */}
+      <AppSearchModal 
+        isOpen={isSearchOpen} 
+        onClose={() => setIsSearchOpen(false)} 
+        onNavigate={handleSearchNavigate} 
+      />
 
       {/* Chân trang nền trắng với dòng chữ động nổi bật "Học chủ động - Vững tư duy" */}
       <footer className="w-full bg-white border-t border-emerald-100/80 py-5 sm:py-6 px-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs select-none max-w-[1600px] mx-auto">
@@ -356,11 +396,11 @@ const App: React.FC = () => {
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setIsChatbotOpen(true)}
+            onClick={() => setIsSearchOpen(true)}
             className="text-xs font-bold text-emerald-800 hover:text-emerald-950 flex items-center gap-1.5 hover:underline cursor-pointer"
           >
             <SearchIcon size={14} className="text-amber-500" />
-            <span>Kính lúp Trợ lý Toán AI (Gemini)</span>
+            <span>Tìm kiếm nội dung trong app (Ctrl+K)</span>
           </button>
         </div>
 

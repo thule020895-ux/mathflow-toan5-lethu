@@ -20,10 +20,31 @@ import {
   Building,
   School,
   Shuffle,
-  ChevronRight
+  ChevronRight,
+  X
 } from 'lucide-react';
 import MascotCompanion from './MascotCompanion';
 import confetti from 'canvas-confetti';
+
+// Ảnh Bản đồ Hành chính thật Việt Nam có Hoàng Sa & Trường Sa
+const VIETNAM_REAL_MAP_URL = "https://i.ibb.co/gFH16FkC/508492193-705086259146747-8303790510885120251-n.jpg";
+
+interface RealMapCity {
+  name: string;
+  x: number; // Tọa độ chuẩn trên ảnh gốc 453 x 640
+  y: number;
+  labelAlign: 'left' | 'right';
+  badgeOffsetX: number;
+  badgeOffsetY: number;
+}
+
+const REAL_MAP_CITIES: Record<string, RealMapCity> = {
+  'Hà Nội': { name: 'Hà Nội', x: 147, y: 104, labelAlign: 'left', badgeOffsetX: -52, badgeOffsetY: -4 },
+  'Hải Phòng': { name: 'Hải Phòng', x: 177, y: 110, labelAlign: 'right', badgeOffsetX: 12, badgeOffsetY: -2 },
+  'Đà Nẵng': { name: 'Đà Nẵng', x: 236, y: 262, labelAlign: 'right', badgeOffsetX: 12, badgeOffsetY: 0 },
+  'TP. Hồ Chí Minh': { name: 'TP. Hồ Chí Minh', x: 186, y: 518, labelAlign: 'right', badgeOffsetX: 12, badgeOffsetY: 0 },
+  'Cần Thơ': { name: 'Cần Thơ', x: 152, y: 574, labelAlign: 'left', badgeOffsetX: -54, badgeOffsetY: 4 }
+};
 
 type ScaleTab = 'visual' | 'theory_types' | 'practice';
 
@@ -122,6 +143,7 @@ export const MapScalePanel: React.FC = () => {
   const [selectedPairIndex, setSelectedPairIndex] = useState<number>(0);
   const [customMapCm, setCustomMapCm] = useState<number>(10.2);
   const [visualMode, setVisualMode] = useState<'vietnam' | 'school'>('vietnam');
+  const [isMapModalOpen, setIsMapModalOpen] = useState<boolean>(false);
 
   // Trường học State
   const [schoolRealLength, setSchoolRealLength] = useState<number>(80); // 80 mét
@@ -285,7 +307,7 @@ export const MapScalePanel: React.FC = () => {
                       <div className="flex items-center gap-2">
                         <MapPin className="w-5 h-5 text-rose-500 animate-bounce" />
                         <h3 className="font-black text-slate-800 text-sm sm:text-base">
-                          Mô phỏng Thước đo trên Bản đồ Việt Nam
+                          Mô phỏng Thước đo trên Bản đồ Thật Việt Nam
                         </h3>
                       </div>
                       <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -293,120 +315,186 @@ export const MapScalePanel: React.FC = () => {
                       </span>
                     </div>
 
-                    {/* Bản đồ SVG trực quan */}
-                    <div className="relative w-full h-80 rounded-2xl bg-gradient-to-b from-sky-50 via-teal-50/40 to-emerald-50 border-2 border-slate-200 overflow-hidden flex items-center justify-center">
-                      <svg className="w-full h-full" viewBox="0 0 500 320">
-                        {/* Lưới tọa độ bản đồ */}
-                        <defs>
-                          <pattern id="grid-pattern" width="40" height="40" patternUnits="userSpaceOnUse">
-                            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#cbd5e1" strokeWidth="0.6" strokeDasharray="2 2" />
-                          </pattern>
-                        </defs>
-                        <rect width="500" height="320" fill="url(#grid-pattern)" />
+                    {/* Bản đồ Hành chính Thật Việt Nam kèm lớp đo lường tương tác */}
+                    <div className="relative w-full h-[520px] sm:h-[580px] rounded-3xl bg-[#edf0f2] border-2 border-amber-400 overflow-hidden flex items-center justify-center p-2 shadow-inner group">
+                      {/* Huy hiệu ghi chú bản đồ thật & chủ quyền biển đảo */}
+                      <div className="absolute top-3 left-3 z-10 bg-white/95 backdrop-blur-xs px-3 py-1.5 rounded-xl border border-amber-300 shadow-sm flex items-center gap-2 pointer-events-none">
+                        <span className="text-base select-none">🇻🇳</span>
+                        <div>
+                          <div className="text-[11px] font-black text-slate-800 leading-tight">
+                            Bản Đồ Hành Chính Thật Việt Nam
+                          </div>
+                          <div className="text-[9px] font-bold text-amber-700">
+                            Đầy đủ các tỉnh & Quần đảo Hoàng Sa, Trường Sa
+                          </div>
+                        </div>
+                      </div>
 
-                        {/* Dải đất hình chữ S tượng trưng */}
-                        <path
-                          d="M 180,30 Q 230,50 210,100 T 260,160 Q 280,210 240,260 T 190,290"
-                          fill="none"
-                          stroke="#10b981"
-                          strokeWidth="24"
-                          strokeLinecap="round"
-                          opacity="0.35"
+                      {/* Nút xem bản đồ gốc phóng to */}
+                      <button
+                        onClick={() => setIsMapModalOpen(true)}
+                        className="absolute top-3 right-3 z-10 bg-white/95 hover:bg-white text-slate-700 hover:text-amber-800 text-xs font-bold px-2.5 py-1.5 rounded-xl border border-slate-300 shadow-sm flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                        title="Xem toàn cảnh bản đồ hành chính thật phóng to"
+                      >
+                        <Maximize2 size={14} className="text-amber-600" />
+                        <span className="hidden sm:inline">Xem bản đồ gốc</span>
+                      </button>
+
+                      <div className="relative h-full aspect-[453/640] max-w-full flex items-center justify-center">
+                        {/* Ảnh Bản Đồ Thật Nước Cộng hòa Xã hội Chủ nghĩa Việt Nam */}
+                        <img
+                          src={VIETNAM_REAL_MAP_URL}
+                          alt="Bản đồ hành chính thật Việt Nam"
+                          className="w-full h-full object-contain select-none rounded-xl"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src = '/vietnam_real_map.jpg';
+                          }}
                         />
-                        <path
-                          d="M 180,30 Q 230,50 210,100 T 260,160 Q 280,210 240,260 T 190,290"
-                          fill="none"
-                          stroke="#059669"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                          strokeDasharray="4 2"
-                        />
 
-                        {/* Điểm mốc các thành phố */}
-                        {/* Hà Nội */}
-                        <circle cx="190" cy="55" r="7" fill="#ef4444" stroke="#ffffff" strokeWidth="2" />
-                        <text x="205" y="60" fontSize="11" fontWeight="bold" fill="#1e293b">Hà Nội</text>
+                        {/* Lớp phủ tương tác SVG khớp tuyệt đối tọa độ 453 x 640 của ảnh thật */}
+                        <svg
+                          className="absolute inset-0 w-full h-full pointer-events-auto"
+                          viewBox="0 0 453 640"
+                          preserveAspectRatio="xMidYMid meet"
+                        >
+                          {/* Đường nối đo lường tuyến đường đang chọn */}
+                          {(() => {
+                            const cityA = REAL_MAP_CITIES[currentPair.nameA];
+                            const cityB = REAL_MAP_CITIES[currentPair.nameB];
+                            if (!cityA || !cityB) return null;
 
-                        {/* Hải Phòng */}
-                        <circle cx="230" cy="65" r="5" fill="#f59e0b" stroke="#ffffff" strokeWidth="1.5" />
-                        <text x="240" y="70" fontSize="10" fontWeight="bold" fill="#334155">Hải Phòng</text>
+                            const midX = (cityA.x + cityB.x) / 2;
+                            const midY = (cityA.y + cityB.y) / 2;
+                            let bx = midX - 65;
+                            let by = midY - 16;
+                            if (selectedPairIndex === 0) { bx = midX - 65; by = midY - 32; }
+                            else if (selectedPairIndex === 1) { bx = midX - 70; by = midY - 6; }
+                            else if (selectedPairIndex === 2) { bx = midX + 10; by = midY - 6; }
+                            else if (selectedPairIndex === 3) { bx = midX - 65; by = midY - 26; }
+                            else if (selectedPairIndex === 4) { bx = midX - 75; by = midY - 14; }
 
-                        {/* Huế / Đà Nẵng */}
-                        <circle cx="245" cy="145" r="6" fill="#3b82f6" stroke="#ffffff" strokeWidth="2" />
-                        <text x="260" y="150" fontSize="11" fontWeight="bold" fill="#1e293b">Đà Nẵng</text>
+                            return (
+                              <g>
+                                {/* Vệt phát sáng ngoài */}
+                                <line
+                                  x1={cityA.x}
+                                  y1={cityA.y}
+                                  x2={cityB.x}
+                                  y2={cityB.y}
+                                  stroke="#f43f5e"
+                                  strokeWidth="7"
+                                  strokeLinecap="round"
+                                  opacity="0.35"
+                                />
+                                {/* Đường nét đứt khảo sát */}
+                                <line
+                                  x1={cityA.x}
+                                  y1={cityA.y}
+                                  x2={cityB.x}
+                                  y2={cityB.y}
+                                  stroke="#e11d48"
+                                  strokeWidth="2.5"
+                                  strokeLinecap="round"
+                                  strokeDasharray="5 3"
+                                />
 
-                        {/* TP. Hồ Chí Minh */}
-                        <circle cx="235" cy="245" r="7" fill="#ef4444" stroke="#ffffff" strokeWidth="2" />
-                        <text x="250" y="250" fontSize="11" fontWeight="bold" fill="#1e293b">TP. Hồ Chí Minh</text>
+                                {/* Hộp thẻ hiển thị số đo thực tế */}
+                                <g transform={`translate(${bx}, ${by})`}>
+                                  <rect
+                                    x="0"
+                                    y="0"
+                                    width="135"
+                                    height="32"
+                                    rx="7"
+                                    fill="#ffffff"
+                                    fillOpacity="0.96"
+                                    stroke="#e11d48"
+                                    strokeWidth="1.8"
+                                    filter="drop-shadow(0 2px 5px rgba(0,0,0,0.2))"
+                                  />
+                                  <text x="8" y="14" fontSize="9.5" fontWeight="900" fill="#be123c">
+                                    📏 Đo được: {calculatedMapDistanceCm} cm
+                                  </text>
+                                  <text x="8" y="26" fontSize="8" fontWeight="bold" fill="#0f172a">
+                                    Thực tế: {currentPair.realDistanceKm} km
+                                  </text>
+                                </g>
+                              </g>
+                            );
+                          })()}
 
-                        {/* Cần Thơ */}
-                        <circle cx="205" cy="275" r="5" fill="#10b981" stroke="#ffffff" strokeWidth="1.5" />
-                        <text x="145" y="280" fontSize="10" fontWeight="bold" fill="#334155">Cần Thơ</text>
+                          {/* Điểm mốc các thành phố chính trên bản đồ thật */}
+                          {Object.values(REAL_MAP_CITIES).map((city) => {
+                            const isEndpoint = currentPair.nameA === city.name || currentPair.nameB === city.name;
+                            return (
+                              <g key={city.name} className="cursor-pointer">
+                                {isEndpoint ? (
+                                  <>
+                                    <circle cx={city.x} cy={city.y} r="10" fill="#e11d48" opacity="0.4" className="animate-ping" />
+                                    <circle cx={city.x} cy={city.y} r="6" fill="#e11d48" stroke="#ffffff" strokeWidth="2" />
+                                    <circle cx={city.x} cy={city.y} r="2" fill="#ffffff" />
+                                    <rect
+                                      x={city.x + city.badgeOffsetX}
+                                      y={city.y + city.badgeOffsetY}
+                                      width={city.name.length * 6.8 + 14}
+                                      height="18"
+                                      rx="4"
+                                      fill="#881337"
+                                      fillOpacity="0.95"
+                                      stroke="#ffffff"
+                                      strokeWidth="1"
+                                    />
+                                    <text
+                                      x={city.x + city.badgeOffsetX + 6}
+                                      y={city.y + city.badgeOffsetY + 12}
+                                      fontSize="9.5"
+                                      fontWeight="900"
+                                      fill="#ffffff"
+                                    >
+                                      {city.name}
+                                    </text>
+                                  </>
+                                ) : (
+                                  <>
+                                    <circle cx={city.x} cy={city.y} r="3.5" fill="#0284c7" stroke="#ffffff" strokeWidth="1.2" />
+                                  </>
+                                )}
+                              </g>
+                            );
+                          })}
 
-                        {/* Đoạn thẳng đo khoảng cách giữa 2 điểm đang chọn */}
-                        {selectedPairIndex === 0 && (
-                          <g>
-                            <line x1="190" y1="55" x2="230" y2="65" stroke="#ef4444" strokeWidth="3" strokeDasharray="3 3" />
-                            <rect x="180" y="78" width="130" height="24" rx="6" fill="#ffffff" stroke="#ef4444" strokeWidth="1.5" />
-                            <text x="188" y="94" fontSize="10" fontWeight="bold" fill="#b91c1c">Đo được: {calculatedMapDistanceCm} cm</text>
+                          {/* Thước đo tỉ lệ (Scale bar) chuẩn đặt tại vùng biển thoáng */}
+                          <g transform="translate(255, 395)">
+                            <rect
+                              x="0"
+                              y="0"
+                              width="180"
+                              height="44"
+                              rx="8"
+                              fill="#ffffff"
+                              fillOpacity="0.95"
+                              stroke="#cbd5e1"
+                              strokeWidth="1.5"
+                            />
+                            <text x="12" y="16" fontSize="9.5" fontWeight="900" fill="#0f172a">
+                              Tỉ lệ 1 : {scaleDenominator.toLocaleString('vi-VN')}
+                            </text>
+                            <rect x="12" y="22" width="70" height="6" fill="#0f172a" />
+                            <rect x="82" y="22" width="70" height="6" fill="#ffffff" stroke="#0f172a" strokeWidth="0.8" />
+                            <text x="10" y="38" fontSize="8" fontWeight="bold" fill="#475569">0</text>
+                            <text x="75" y="38" fontSize="8" fontWeight="bold" fill="#475569">{(scaleDenominator / 100000).toFixed(0)} km</text>
+                            <text x="142" y="38" fontSize="8" fontWeight="bold" fill="#475569">{(scaleDenominator * 2 / 100000).toFixed(0)} km</text>
                           </g>
-                        )}
 
-                        {selectedPairIndex === 1 && (
-                          <g>
-                            <line x1="190" y1="55" x2="245" y2="145" stroke="#ef4444" strokeWidth="3" strokeDasharray="4 3" />
-                            <rect x="160" y="115" width="135" height="24" rx="6" fill="#ffffff" stroke="#ef4444" strokeWidth="1.5" />
-                            <text x="168" y="131" fontSize="10" fontWeight="bold" fill="#b91c1c">Đo được: {calculatedMapDistanceCm} cm</text>
+                          {/* La bàn chỉ hướng Bắc tại góc biển */}
+                          <g transform="translate(405, 40)">
+                            <circle cx="15" cy="15" r="14" fill="#ffffff" fillOpacity="0.9" stroke="#94a3b8" strokeWidth="1" />
+                            <polygon points="15,4 19,15 15,13 11,15" fill="#ef4444" />
+                            <polygon points="15,26 19,15 15,17 11,15" fill="#94a3b8" />
+                            <text x="12" y="2" fontSize="9" fontWeight="black" fill="#ef4444">N</text>
                           </g>
-                        )}
-
-                        {selectedPairIndex === 2 && (
-                          <g>
-                            <line x1="245" y1="145" x2="235" y2="245" stroke="#ef4444" strokeWidth="3" strokeDasharray="4 3" />
-                            <rect x="180" y="185" width="135" height="24" rx="6" fill="#ffffff" stroke="#ef4444" strokeWidth="1.5" />
-                            <text x="188" y="201" fontSize="10" fontWeight="bold" fill="#b91c1c">Đo được: {calculatedMapDistanceCm} cm</text>
-                          </g>
-                        )}
-
-                        {selectedPairIndex === 3 && (
-                          <g>
-                            <line x1="235" y1="245" x2="205" y2="275" stroke="#ef4444" strokeWidth="3" strokeDasharray="3 3" />
-                            <rect x="150" y="235" width="130" height="24" rx="6" fill="#ffffff" stroke="#ef4444" strokeWidth="1.5" />
-                            <text x="158" y="251" fontSize="10" fontWeight="bold" fill="#b91c1c">Đo được: {calculatedMapDistanceCm} cm</text>
-                          </g>
-                        )}
-
-                        {selectedPairIndex === 4 && (
-                          <g>
-                            <line x1="190" y1="55" x2="235" y2="245" stroke="#dc2626" strokeWidth="3.5" strokeDasharray="5 3" />
-                            <rect x="220" y="130" width="140" height="24" rx="6" fill="#ffffff" stroke="#dc2626" strokeWidth="1.5" />
-                            <text x="228" y="146" fontSize="10" fontWeight="bold" fill="#991b1b">Đo được: {calculatedMapDistanceCm} cm</text>
-                          </g>
-                        )}
-
-                        {/* Thước đo tỉ lệ góc bản đồ (Scale bar) */}
-                        <g transform="translate(320, 270)">
-                          <rect x="0" y="0" width="160" height="38" rx="6" fill="#ffffff" stroke="#cbd5e1" strokeWidth="1" />
-                          <text x="10" y="16" fontSize="9" fontWeight="bold" fill="#475569">
-                            Tỉ lệ: 1 : {scaleDenominator.toLocaleString('vi-VN')}
-                          </text>
-                          <line x1="10" y1="26" x2="150" y2="26" stroke="#0f172a" strokeWidth="3" />
-                          <line x1="10" y1="22" x2="10" y2="30" stroke="#0f172a" strokeWidth="2" />
-                          <line x1="80" y1="22" x2="80" y2="30" stroke="#0f172a" strokeWidth="2" />
-                          <line x1="150" y1="22" x2="150" y2="30" stroke="#0f172a" strokeWidth="2" />
-                          <text x="6" y="36" fontSize="8" fill="#64748b">0</text>
-                          <text x="65" y="36" fontSize="8" fill="#64748b">{(scaleDenominator / 100000).toFixed(0)}km</text>
-                          <text x="135" y="36" fontSize="8" fill="#64748b">{(scaleDenominator * 2 / 100000).toFixed(0)}km</text>
-                        </g>
-
-                        {/* La bàn chỉ hướng Bắc */}
-                        <g transform="translate(440, 45)">
-                          <circle cx="15" cy="15" r="14" fill="#ffffff" stroke="#94a3b8" strokeWidth="1" />
-                          <polygon points="15,4 19,15 15,13 11,15" fill="#ef4444" />
-                          <polygon points="15,26 19,15 15,17 11,15" fill="#94a3b8" />
-                          <text x="12" y="2" fontSize="9" fontWeight="black" fill="#ef4444">N</text>
-                        </g>
-                      </svg>
+                        </svg>
+                      </div>
                     </div>
 
                     {/* Bộ chọn tuyến đường thực tế */}
@@ -1080,6 +1168,60 @@ export const MapScalePanel: React.FC = () => {
         )}
 
       </div>
+
+      {/* Modal phóng to toàn cảnh Bản đồ Hành chính Thật Việt Nam */}
+      {isMapModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[92vh] flex flex-col shadow-2xl border-2 border-amber-400 overflow-hidden">
+            {/* Header modal */}
+            <div className="px-5 py-3.5 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <span className="text-xl">🇻🇳</span>
+                <div>
+                  <h3 className="font-black text-sm sm:text-base text-slate-950 leading-tight">
+                    Bản Đồ Hành Chính Nước Cộng Hòa Xã Hội Chủ Nghĩa Việt Nam
+                  </h3>
+                  <p className="text-[11px] font-bold text-amber-950">
+                    Bản đồ thật chi tiết các tỉnh thành & 2 Quần đảo Hoàng Sa, Trường Sa
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsMapModalOpen(false)}
+                className="p-1.5 rounded-xl bg-slate-950/10 hover:bg-slate-950/20 text-slate-950 transition-colors cursor-pointer"
+                title="Đóng xem bản đồ"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Thân modal chứa ảnh bản đồ thật độ nét cao */}
+            <div className="flex-1 overflow-auto p-4 bg-[#f1f4f6] flex items-center justify-center">
+              <img
+                src={VIETNAM_REAL_MAP_URL}
+                alt="Bản đồ hành chính thật Nước Cộng hòa Xã hội Chủ nghĩa Việt Nam"
+                className="max-h-[75vh] w-auto object-contain rounded-2xl shadow-lg border border-slate-300 select-none"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = '/vietnam_real_map.jpg';
+                }}
+              />
+            </div>
+
+            {/* Footer modal */}
+            <div className="px-5 py-3 bg-white border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
+              <div className="text-xs text-slate-600 font-medium">
+                Hình ảnh bản đồ thật dùng để trực quan hóa bài toán <span className="font-bold text-amber-700">Tỉ lệ bản đồ</span> lớp 5.
+              </div>
+              <button
+                onClick={() => setIsMapModalOpen(false)}
+                className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-black transition-colors cursor-pointer"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
