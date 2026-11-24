@@ -11,7 +11,9 @@ import {
   Scale, 
   Calculator,
   Shuffle,
-  BookOpen
+  BookOpen,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import MascotCompanion from './MascotCompanion';
 
@@ -28,6 +30,7 @@ export const SumDifferencePanel: React.FC = () => {
   const [userLarger, setUserLarger] = useState<string>('');
   const [userSmaller, setUserSmaller] = useState<string>('');
   const [practiceResult, setPracticeResult] = useState<{ isChecked: boolean; isCorrect: boolean } | null>(null);
+  const [showDiagramAnswer, setShowDiagramAnswer] = useState<boolean>(false);
 
   // Kiểm tra số liệu mẫu ban đầu
   const isInitialData = () => {
@@ -50,6 +53,7 @@ export const SumDifferencePanel: React.FC = () => {
     setUserLarger('');
     setUserSmaller('');
     setPracticeResult(null);
+    setShowDiagramAnswer(false);
   };
 
   const handleResetToInitial = () => {
@@ -58,6 +62,7 @@ export const SumDifferencePanel: React.FC = () => {
     setUserLarger('');
     setUserSmaller('');
     setPracticeResult(null);
+    setShowDiagramAnswer(false);
   };
 
   const handleCheckAnswer = () => {
@@ -82,6 +87,7 @@ export const SumDifferencePanel: React.FC = () => {
     setUserLarger('');
     setUserSmaller('');
     setPracticeResult(null);
+    setShowDiagramAnswer(false);
   };
 
   // Tính chiều rộng tỉ lệ thanh biểu đồ sơ đồ đoạn thẳng
@@ -117,16 +123,34 @@ export const SumDifferencePanel: React.FC = () => {
 
         {/* Khối trực quan hóa sơ đồ đoạn thẳng */}
         <div className="mb-6 bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/90 shadow-xs">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
               <BookOpen size={16} className="text-indigo-600" />
               Sơ đồ đoạn thẳng trực quan mô phỏng bài toán
             </span>
-            <span className="text-xs font-black text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-200">
-              Tổng = {sum} | Hiệu = {diff}
-            </span>
+            <div className="flex items-center gap-2">
+              {!isInitialData() && (
+                <button
+                  onClick={() => setShowDiagramAnswer(prev => !prev)}
+                  className={`px-2.5 py-1 rounded-full text-xs font-extrabold border flex items-center gap-1 transition-all cursor-pointer ${
+                    showDiagramAnswer || practiceResult?.isCorrect
+                      ? 'bg-emerald-600 text-white border-emerald-500'
+                      : 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100'
+                  }`}
+                >
+                  {showDiagramAnswer || practiceResult?.isCorrect ? <EyeOff size={13} /> : <Eye size={13} />}
+                  {showDiagramAnswer || practiceResult?.isCorrect ? 'Ẩn đáp án' : 'Hiện đáp án'}
+                </button>
+              )}
+              <span className="text-xs font-black text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-200">
+                Tổng = {sum} | Hiệu = {diff}
+              </span>
+            </div>
           </div>
 
+          {(() => {
+            const canSeeValues = isInitialData() || showDiagramAnswer || Boolean(practiceResult?.isCorrect);
+            return (
           <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-4">
             {/* Đoạn thẳng số lớn */}
             <div className="flex items-center gap-3">
@@ -138,7 +162,7 @@ export const SumDifferencePanel: React.FC = () => {
                   className="h-8 bg-indigo-500 text-white font-bold text-xs flex items-center justify-between px-3 rounded-xl shadow-xs transition-all duration-300 relative"
                   style={{ width: `${largerPercent}%` }}
                 >
-                  <span>{correctLarger}</span>
+                  <span>{canSeeValues ? correctLarger : 'Số lớn = ?'}</span>
                   <span className="text-[10px] bg-indigo-700/80 px-2 py-0.5 rounded-md">
                     Chênh lệch: +{diff}
                   </span>
@@ -156,7 +180,7 @@ export const SumDifferencePanel: React.FC = () => {
                   className="h-8 bg-emerald-500 text-white font-bold text-xs flex items-center justify-start px-3 rounded-xl shadow-xs transition-all duration-300"
                   style={{ width: `${smallerPercent}%` }}
                 >
-                  <span>{correctSmaller}</span>
+                  <span>{canSeeValues ? correctSmaller : 'Số bé = ?'}</span>
                 </div>
                 {/* Đoạn chênh lệch nét đứt */}
                 <div 
@@ -174,6 +198,8 @@ export const SumDifferencePanel: React.FC = () => {
               <span className="font-bold text-indigo-900">Tổng của cả hai số là: {sum}</span>
             </div>
           </div>
+            );
+          })()}
         </div>
 
         {/* 2 Cột: Điều khiển & Bài giải mẫu vs Bảng giải tương tác */}

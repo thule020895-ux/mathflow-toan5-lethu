@@ -11,7 +11,9 @@ import {
   Calculator,
   Shuffle,
   Percent,
-  BookOpen
+  BookOpen,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import MascotCompanion from './MascotCompanion';
 
@@ -32,6 +34,7 @@ export const PercentagePanel: React.FC = () => {
   // State học sinh làm bài tập tương tác
   const [userAnswer, setUserAnswer] = useState<string>('');
   const [practiceResult, setPracticeResult] = useState<{ isChecked: boolean; isCorrect: boolean } | null>(null);
+  const [showVisualAnswer, setShowVisualAnswer] = useState<boolean>(false);
 
   // Kiểm tra số liệu mẫu ban đầu
   const isInitialData = () => {
@@ -67,6 +70,7 @@ export const PercentagePanel: React.FC = () => {
 
     setUserAnswer('');
     setPracticeResult(null);
+    setShowVisualAnswer(false);
   };
 
   const handleResetToInitial = () => {
@@ -76,6 +80,7 @@ export const PercentagePanel: React.FC = () => {
 
     setUserAnswer('');
     setPracticeResult(null);
+    setShowVisualAnswer(false);
   };
 
   const handleCheckAnswer = () => {
@@ -97,6 +102,7 @@ export const PercentagePanel: React.FC = () => {
   const handleRetry = () => {
     setUserAnswer('');
     setPracticeResult(null);
+    setShowVisualAnswer(false);
   };
 
   // Phần trăm để hiển thị thanh trực quan
@@ -122,7 +128,7 @@ export const PercentagePanel: React.FC = () => {
           {/* Sub-tabs */}
           <div className="flex flex-wrap gap-1.5 p-1 bg-slate-100 rounded-2xl border border-slate-200">
             <button
-              onClick={() => { setActiveType('find_rate'); setUserAnswer(''); setPracticeResult(null); }}
+              onClick={() => { setActiveType('find_rate'); setUserAnswer(''); setPracticeResult(null); setShowVisualAnswer(false); }}
               className={`px-3 py-2 rounded-xl text-xs font-black transition-all ${
                 activeType === 'find_rate'
                   ? 'bg-rose-600 text-white shadow-md shadow-rose-600/30'
@@ -132,7 +138,7 @@ export const PercentagePanel: React.FC = () => {
               Dạng 1: Tìm tỉ số % của hai số
             </button>
             <button
-              onClick={() => { setActiveType('find_value'); setUserAnswer(''); setPracticeResult(null); }}
+              onClick={() => { setActiveType('find_value'); setUserAnswer(''); setPracticeResult(null); setShowVisualAnswer(false); }}
               className={`px-3 py-2 rounded-xl text-xs font-black transition-all ${
                 activeType === 'find_value'
                   ? 'bg-rose-600 text-white shadow-md shadow-rose-600/30'
@@ -142,7 +148,7 @@ export const PercentagePanel: React.FC = () => {
               Dạng 2: Tìm a% của một số
             </button>
             <button
-              onClick={() => { setActiveType('find_whole'); setUserAnswer(''); setPracticeResult(null); }}
+              onClick={() => { setActiveType('find_whole'); setUserAnswer(''); setPracticeResult(null); setShowVisualAnswer(false); }}
               className={`px-3 py-2 rounded-xl text-xs font-black transition-all ${
                 activeType === 'find_whole'
                   ? 'bg-rose-600 text-white shadow-md shadow-rose-600/30'
@@ -155,36 +161,58 @@ export const PercentagePanel: React.FC = () => {
         </div>
 
         {/* KHỐI TRỰC QUAN HÓA THANH TỈ LỆ % */}
-        <div className="mb-6 bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/90 shadow-xs">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-              <BookOpen size={16} className="text-rose-600" />
-              Thanh trực quan tỉ lệ phần trăm (0% → 100%)
-            </span>
-            <span className="text-xs font-black text-rose-700 bg-rose-50 px-2.5 py-1 rounded-full border border-rose-200 font-mono">
-              Tỉ lệ: {visualPercent.toFixed(1)}%
-            </span>
-          </div>
+        {(() => {
+          const isRateHidden = activeType === 'find_rate' && !isInitialData() && !showVisualAnswer && !practiceResult?.isCorrect;
+          return (
+            <div className="mb-6 bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/90 shadow-xs">
+              <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                  <BookOpen size={16} className="text-rose-600" />
+                  Thanh trực quan tỉ lệ phần trăm (0% → 100%)
+                </span>
+                <div className="flex items-center gap-2">
+                  {activeType === 'find_rate' && !isInitialData() && (
+                    <button
+                      onClick={() => setShowVisualAnswer(prev => !prev)}
+                      className={`px-2.5 py-1 rounded-full text-xs font-extrabold border flex items-center gap-1 transition-all cursor-pointer ${
+                        !isRateHidden
+                          ? 'bg-emerald-600 text-white border-emerald-500'
+                          : 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100'
+                      }`}
+                    >
+                      {!isRateHidden ? <EyeOff size={13} /> : <Eye size={13} />}
+                      {!isRateHidden ? 'Ẩn đáp án' : 'Hiện đáp án'}
+                    </button>
+                  )}
+                  <span className="text-xs font-black text-rose-700 bg-rose-50 px-2.5 py-1 rounded-full border border-rose-200 font-mono">
+                    Tỉ lệ: {isRateHidden ? '? %' : `${visualPercent.toFixed(1)}%`}
+                  </span>
+                </div>
+              </div>
 
-          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
-            <div className="w-full bg-slate-200 h-8 rounded-xl overflow-hidden relative border border-slate-300">
-              <div 
-                className="bg-gradient-to-r from-rose-500 to-amber-500 h-full flex items-center justify-end pr-2 text-white font-black text-xs transition-all duration-500"
-                style={{ width: `${visualPercent}%` }}
-              >
-                {visualPercent >= 10 && `${visualPercent.toFixed(1)}%`}
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                <div className="w-full bg-slate-200 h-8 rounded-xl overflow-hidden relative border border-slate-300">
+                  <div 
+                    className={`h-full flex items-center justify-end pr-2 text-white font-black text-xs transition-all duration-500 ${
+                      isRateHidden ? 'bg-gradient-to-r from-amber-400 to-orange-400' : 'bg-gradient-to-r from-rose-500 to-amber-500'
+                    }`}
+                    style={{ width: isRateHidden ? '50%' : `${visualPercent}%` }}
+                  >
+                    {isRateHidden ? '? %' : (visualPercent >= 10 && `${visualPercent.toFixed(1)}%`)}
+                  </div>
+                </div>
+
+                <div className="flex justify-between text-[11px] font-bold text-slate-400">
+                  <span>0% (0)</span>
+                  <span>25%</span>
+                  <span>50%</span>
+                  <span>75%</span>
+                  <span>100% (Toàn bộ)</span>
+                </div>
               </div>
             </div>
-
-            <div className="flex justify-between text-[11px] font-bold text-slate-400">
-              <span>0% (0)</span>
-              <span>25%</span>
-              <span>50%</span>
-              <span>75%</span>
-              <span>100% (Toàn bộ)</span>
-            </div>
-          </div>
-        </div>
+          );
+        })()}
 
         {/* 2 CỘT: DỮ LIỆU & BÀI MẪU VS BẢNG TƯƠNG TÁC */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">

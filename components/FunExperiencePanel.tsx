@@ -41,7 +41,7 @@ export const FunExperiencePanel: React.FC = () => {
               }`}
             >
               <GraduationCap size={16} className={subTab === 'quiz' ? 'text-blue-700' : 'text-blue-200'} />
-              <span>Luyện Tập Chuyên Đề</span>
+              <span>Luyện Tập Toán 5</span>
             </button>
 
             <button

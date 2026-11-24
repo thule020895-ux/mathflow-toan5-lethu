@@ -1,28 +1,49 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Bell, Trophy, Timer, RotateCcw, Play, Heart, 
-  CheckCircle2, XCircle, User, Star, ArrowRight,
-  Zap, Award, Medal, Crown, List, LogIn, Info
+import {
+  Bell,
+  Trophy,
+  Timer,
+  RotateCcw,
+  Play,
+  CheckCircle2,
+  XCircle,
+  User,
+  Star,
+  Crown,
+  LogIn,
+  Info,
+  Scissors,
+  GraduationCap,
+  ShieldAlert,
+  Camera,
+  RefreshCw,
+  Award,
+  ArrowLeft,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { 
-  collection, 
-  addDoc, 
-  setDoc, 
-  doc, 
-  getDoc, 
-  onSnapshot, 
-  query, 
-  orderBy, 
-  limit,
+import {
+  collection,
+  addDoc,
+  setDoc,
+  doc,
+  getDoc,
+  onSnapshot,
+  query,
+  orderBy,
   serverTimestamp,
-  increment
+  increment,
 } from 'firebase/firestore';
-import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { db, auth } from '../firebase';
 import { useFirebase } from './FirebaseProvider';
+import {
+  GOLDEN_BELL_STAGES,
+  STAGE_QUESTION_SETS,
+  RESCUE_QUESTIONS,
+  GoldenBellQuestion,
+  RescueQuestion,
+} from './goldenBellData';
+import { GoldenBellIllustration } from './GoldenBellIllustrations';
 
 enum OperationType {
   CREATE = 'create',
@@ -37,7 +58,11 @@ interface FirestoreErrorInfo {
   error: string;
   operationType: OperationType;
   path: string | null;
-  authInfo: any;
+  authInfo: {
+    userId?: string;
+    email?: string | null;
+    emailVerified?: boolean;
+  };
 }
 
 function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
@@ -49,18 +74,10 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
       emailVerified: auth.currentUser?.emailVerified,
     },
     operationType,
-    path
+    path,
   };
   console.error('Firestore Error: ', JSON.stringify(errInfo));
   throw new Error(JSON.stringify(errInfo));
-}
-
-interface Question {
-  id: string;
-  type: 'multiple' | 'boolean' | 'fill';
-  question: string;
-  options?: string[];
-  answer: string | boolean;
 }
 
 interface LeaderboardEntry {
@@ -69,417 +86,748 @@ interface LeaderboardEntry {
   date: string;
 }
 
-const QUESTION_SETS: Record<number, Question[]> = {
-    1: [
-        { id: '1-1', type: 'multiple', question: 'Chữ số 5 trong số 17,352 có giá trị là bao nhiêu?', options: ['5', '0,5', '0,05', '0,005'], answer: '0,05' },
-        { id: '1-2', type: 'multiple', question: 'Số thập phân 4,08 được đọc như thế nào?', options: ['Bốn phẩy tám', 'Bốn phẩy không tám', 'Bốn phẩy tám mươi', 'Bốn không tám'], answer: 'Bốn phẩy không tám' },
-        { id: '1-3', type: 'multiple', question: 'Phân số nào sau đây bằng 0,5?', options: ['1/4', '1/2', '2/3', '3/4'], answer: '1/2' },
-        { id: '1-4', type: 'multiple', question: '1 km bằng bao nhiêu mét?', options: ['10 m', '100 m', '1000 m', '10000 m'], answer: '1000 m' },
-        { id: '1-5', type: 'multiple', question: 'Hình nào dưới đây có bốn cạnh bằng nhau?', options: ['Hình chữ nhật', 'Hình vuông', 'Hình thang', 'Hình tam giác'], answer: 'Hình vuông' },
-        { id: '1-6', type: 'multiple', question: '5 m² bằng bao nhiêu đề-xi-mét vuông?', options: ['50 dm²', '500 dm²', '5000 dm²', '50000 dm²'], answer: '500 dm²' },
-        { id: '1-7', type: 'multiple', question: 'Hãy tính: 0,6 × 10 = ?', options: ['0,06', '6', '60', '0,6'], answer: '6' },
-        { id: '1-8', type: 'multiple', question: '1 giờ 30 phút bằng bao nhiêu phút?', options: ['60 phút', '75 phút', '90 phút', '120 phút'], answer: '90 phút' },
-        { id: '1-9', type: 'multiple', question: 'Trong các số sau, số nào lớn nhất?', options: ['3,45', '3,405', '3,54', '3,504'], answer: '3,54' },
-        { id: '1-10', type: 'multiple', question: 'Kết quả của phép tính 25 × 8 là:', options: ['150', '200', '250', '300'], answer: '200' },
-        { id: '1-11', type: 'multiple', question: 'Tính nhanh: 48 + 52 + 37 + 63 = ?', options: ['180', '190', '200', '210'], answer: '200' },
-        { id: '1-12', type: 'multiple', question: '3/4 của 20 là bao nhiêu?', options: ['12', '14', '15', '16'], answer: '15' },
-        { id: '1-13', type: 'multiple', question: 'Một hình chữ nhật có chiều dài 10 m và chiều rộng 5 m. Diện tích của nó là:', options: ['15 m²', '50 m²', '25 m²', '30 m²'], answer: '50 m²' },
-        { id: '1-14', type: 'multiple', question: 'Số thập phân nào bằng với phân số 1/4?', options: ['0,1', '0,2', '0,25', '0,5'], answer: '0,25' },
-        { id: '1-15', type: 'multiple', question: 'Hãy tính: 1,5 + 2,5 = ?', options: ['3,0', '3,5', '4,0', '4,5'], answer: '4,0' },
-        { id: '1-16', type: 'multiple', question: 'Một lớp học có 30 học sinh, trong đó 1/3 là học sinh giỏi. Số học sinh giỏi là:', options: ['5', '10', '15', '20'], answer: '10' },
-        { id: '1-17', type: 'multiple', question: 'Hình vuông có cạnh 5 cm thì chu vi là:', options: ['10 cm', '15 cm', '20 cm', '25 cm'], answer: '20 cm' },
-        { id: '1-18', type: 'multiple', question: '0,5 kg đường có giá 10 000 đồng. Vậy 1 kg đường giá bao nhiêu?', options: ['15 000 đồng', '20 000 đồng', '25 000 đồng', '30 000 đồng'], answer: '20 000 đồng' },
-        { id: '1-19', type: 'multiple', question: 'Một xe máy đi với vận tốc 40 km/giờ. Trong 2 giờ xe máy đi được quãng đường là:', options: ['20 km', '60 km', '80 km', '100 km'], answer: '80 km' },
-        { id: '1-20', type: 'multiple', question: 'Một mảnh đất hình chữ nhật có chiều dài 20 m, chiều rộng 10 m. Diện tích mảnh đất là:', options: ['30 m²', '100 m²', '200 m²', '300 m²'], answer: '200 m²' }
-    ],
-    2: [
-        { id: '2-1', type: 'multiple', question: 'Chữ số 7 trong số 25,741 có giá trị là bao nhiêu?', options: ['7', '0,7', '0,07', '0,007'], answer: '0,7' },
-        { id: '2-2', type: 'multiple', question: 'Số thập phân 0,05 được đọc là:', options: ['Không phẩy năm', 'Không phẩy không năm', 'Năm phần mười', 'Năm'], answer: 'Không phẩy không năm' },
-        { id: '2-3', type: 'multiple', question: 'Phân số nào bằng 0,75?', options: ['1/2', '2/3', '3/4', '4/5'], answer: '3/4' },
-        { id: '2-4', type: 'multiple', question: '1 tấn bằng bao nhiêu ki-lô-gam?', options: ['10 kg', '100 kg', '1000 kg', '10000 kg'], answer: '1000 kg' },
-        { id: '2-5', type: 'multiple', question: 'Hình nào có 3 cạnh?', options: ['Hình vuông', 'Hình chữ nhật', 'Hình tam giác', 'Hình tròn'], answer: 'Hình tam giác' },
-        { id: '2-6', type: 'multiple', question: '2 m² bằng bao nhiêu xăng-ti-mét vuông?', options: ['200 cm²', '2000 cm²', '20000 cm²', '200000 cm²'], answer: '20000 cm²' },
-        { id: '2-7', type: 'multiple', question: 'Hãy tính: 1,2 × 10 = ?', options: ['0,12', '12', '120', '1,2'], answer: '12' },
-        { id: '2-8', type: 'multiple', question: '2 giờ 15 phút bằng bao nhiêu phút?', options: ['120 phút', '135 phút', '150 phút', '165 phút'], answer: '135 phút' },
-        { id: '2-9', type: 'multiple', question: 'Số nhỏ nhất trong các số sau là:', options: ['0,5', '0,05', '0,505', '0,055'], answer: '0,05' },
-        { id: '2-10', type: 'multiple', question: 'Kết quả của phép tính 15 × 4 là:', options: ['40', '50', '60', '70'], answer: '60' },
-        { id: '2-11', type: 'multiple', question: 'Tính: 125 + 75 + 50 = ?', options: ['200', '225', '250', '275'], answer: '250' },
-        { id: '2-12', type: 'multiple', question: '2/5 của 50 là bao nhiêu?', options: ['10', '20', '25', '30'], answer: '20' },
-        { id: '2-13', type: 'multiple', question: 'Một hình vuông có cạnh 4 m. Diện tích của nó là:', options: ['8 m²', '12 m²', '16 m²', '20 m²'], answer: '16 m²' },
-        { id: '2-14', type: 'multiple', question: 'Số thập phân nào bằng 1/2?', options: ['0,2', '0,4', '0,5', '0,6'], answer: '0,5' },
-        { id: '2-15', type: 'multiple', question: 'Hãy tính: 5,5 - 2,5 = ?', options: ['2,0', '2,5', '3,0', '3,5'], answer: '3,0' },
-        { id: '2-16', type: 'multiple', question: 'Một lớp có 40 học sinh, 1/4 là học sinh giỏi. Số học sinh giỏi là:', options: ['5', '10', '15', '20'], answer: '10' },
-        { id: '2-17', type: 'multiple', question: 'Hình chữ nhật có dài 6 cm, rộng 4 cm thì chu vi là:', options: ['10 cm', '20 cm', '24 cm', '28 cm'], answer: '20 cm' },
-        { id: '2-18', type: 'multiple', question: 'Mua 2 kg gạo hết 30 000 đồng. Vậy 1 kg gạo giá bao nhiêu?', options: ['10 000 đồng', '15 000 đồng', '20 000 đồng', '25 000 đồng'], answer: '15 000 đồng' },
-        { id: '2-19', type: 'multiple', question: 'Một người đi bộ với vận tốc 5 km/giờ. Trong 3 giờ người đó đi được:', options: ['10 km', '12 km', '15 km', '18 km'], answer: '15 km' },
-        { id: '2-20', type: 'multiple', question: 'Một bể nước hình lập phương có cạnh 2 m. Thể tích bể là:', options: ['4 m³', '6 m³', '8 m³', '10 m³'], answer: '8 m³' }
-    ],
-    3: [
-        { id: '3-1', type: 'multiple', question: 'Chữ số 9 trong số 12,349 có giá trị là bao nhiêu?', options: ['9', '0,9', '0,09', '0,009'], answer: '0,009' },
-        { id: '3-2', type: 'multiple', question: 'Số thập phân 2,5 đọc là:', options: ['Hai phẩy năm', 'Hai phẩy không năm', 'Hai năm', 'Hai mươi lăm'], answer: 'Hai phẩy năm' },
-        { id: '3-3', type: 'multiple', question: 'Phân số nào bằng 0,2?', options: ['1/2', '1/4', '1/5', '1/10'], answer: '1/5' },
-        { id: '3-4', type: 'multiple', question: '1 mét bằng bao nhiêu xăng-ti-mét?', options: ['10 cm', '100 cm', '1000 cm', '10000 cm'], answer: '100 cm' },
-        { id: '3-5', type: 'multiple', question: 'Hình nào có các cạnh đối diện song song và bằng nhau?', options: ['Hình tam giác', 'Hình thang', 'Hình chữ nhật', 'Hình tròn'], answer: 'Hình chữ nhật' },
-        { id: '3-6', type: 'multiple', question: '3 dm² bằng bao nhiêu xăng-ti-mét vuông?', options: ['30 cm²', '300 cm²', '3000 cm²', '30000 cm²'], answer: '300 cm²' },
-        { id: '3-7', type: 'multiple', question: 'Hãy tính: 0,45 × 100 = ?', options: ['4,5', '45', '450', '0,045'], answer: '45' },
-        { id: '3-8', type: 'multiple', question: '1 ngày bằng bao nhiêu giờ?', options: ['12 giờ', '24 giờ', '36 giờ', '48 giờ'], answer: '24 giờ' },
-        { id: '3-9', type: 'multiple', question: 'Số lớn nhất trong các số 0,9; 0,89; 0,91; 0,899 là:', options: ['0,9', '0,89', '0,91', '0,899'], answer: '0,91' },
-        { id: '3-10', type: 'multiple', question: 'Kết quả của phép tính 12 × 5 là:', options: ['50', '55', '60', '65'], answer: '60' },
-        { id: '3-11', type: 'multiple', question: 'Tính: 250 - 150 + 100 = ?', options: ['100', '150', '200', '250'], answer: '200' },
-        { id: '3-12', type: 'multiple', question: '3/5 của 30 là bao nhiêu?', options: ['12', '15', '18', '21'], answer: '18' },
-        { id: '3-13', type: 'multiple', question: 'Một hình chữ nhật có chiều dài 8 cm, chiều rộng 6 cm. Diện tích là:', options: ['14 cm²', '24 cm²', '28 cm²', '48 cm²'], answer: '48 cm²' },
-        { id: '3-14', type: 'multiple', question: 'Số thập phân nào bằng 4/5?', options: ['0,4', '0,6', '0,8', '0,9'], answer: '0,8' },
-        { id: '3-15', type: 'multiple', question: 'Hãy tính: 0,5 + 0,7 = ?', options: ['1,0', '1,1', '1,2', '1,3'], answer: '1,2' },
-        { id: '3-16', type: 'multiple', question: 'Một lớp có 35 học sinh, 20% là học sinh giỏi. Số học sinh giỏi là:', options: ['5', '7', '9', '11'], answer: '7' },
-        { id: '3-17', type: 'multiple', question: 'Hình vuông có chu vi 16 cm thì cạnh là:', options: ['2 cm', '4 cm', '6 cm', '8 cm'], answer: '4 cm' },
-        { id: '3-18', type: 'multiple', question: 'Mua 5 quyển vở hết 25 000 đồng. Vậy 1 quyển vở giá bao nhiêu?', options: ['4 000 đồng', '5 000 đồng', '6 000 đồng', '7 000 đồng'], answer: '5 000 đồng' },
-        { id: '3-19', type: 'multiple', question: 'Một ô tô đi với vận tốc 60 km/giờ. Trong 1,5 giờ ô tô đi được:', options: ['80 km', '90 km', '100 km', '120 km'], answer: '90 km' },
-        { id: '3-20', type: 'multiple', question: 'Một thửa ruộng hình chữ nhật có chiều dài 15 m, chiều rộng 12 m. Biết rằng 1 m² thu được 2 kg lúa. Hỏi cả thửa ruộng thu được bao nhiêu ki-lô-gam lúa?', options: ['300 kg', '320 kg', '340 kg', '360 kg'], answer: '360 kg' }
-    ],
-    4: [
-        { id: '4-1', type: 'multiple', question: 'Chữ số 3 trong số 8,734 có giá trị là bao nhiêu?', options: ['3', '0,3', '0,03', '0,003'], answer: '0,03' },
-        { id: '4-2', type: 'multiple', question: 'Số 6,04 đọc là:', options: ['Sáu phẩy bốn', 'Sáu phẩy không bốn', 'Sáu phẩy bốn mươi', 'Sáu không bốn'], answer: 'Sáu phẩy không bốn' },
-        { id: '4-3', type: 'multiple', question: 'Phân số nào bằng 0,2?', options: ['1/5', '1/2', '2/3', '3/4'], answer: '1/5' },
-        { id: '4-4', type: 'multiple', question: '1 kg =', options: ['10 g', '100 g', '1000 g', '10000 g'], answer: '1000 g' },
-        { id: '4-5', type: 'multiple', question: 'Hình có 2 cặp cạnh song song:', options: ['Hình chữ nhật', 'Hình tam giác', 'Hình thang', 'Hình tròn'], answer: 'Hình chữ nhật' },
-        { id: '4-6', type: 'multiple', question: '9 m² =', options: ['90 dm²', '900 dm²', '9000 dm²', '90000 dm²'], answer: '900 dm²' },
-        { id: '4-7', type: 'multiple', question: '0,7 × 10 =', options: ['0,07', '7', '70', '0,7'], answer: '7' },
-        { id: '4-8', type: 'multiple', question: '2,5 giờ =', options: ['120 phút', '130 phút', '140 phút', '150 phút'], answer: '150 phút' },
-        { id: '4-9', type: 'multiple', question: 'Số lớn nhất là:', options: ['6,35', '6,305', '6,53', '6,503'], answer: '6,53' },
-        { id: '4-10', type: 'multiple', question: '25 × 12 =', options: ['250', '275', '300', '325'], answer: '300' },
-        { id: '4-11', type: 'multiple', question: '25 + 75 + 48 + 52 =', options: ['180', '190', '200', '210'], answer: '200' },
-        { id: '4-12', type: 'multiple', question: '4/5 của 20:', options: ['12', '14', '16', '18'], answer: '16' },
-        { id: '4-13', type: 'multiple', question: 'Hình chữ nhật 10 m × 9 m:', options: ['80 m²', '90 m²', '100 m²', '110 m²'], answer: '90 m²' },
-        { id: '4-14', type: 'multiple', question: '1,8 km =', options: ['180 m', '1800 m', '18000 m', '18 m'], answer: '1800 m' },
-        { id: '4-15', type: 'multiple', question: '1,6 + 0,4 =', options: ['1,8', '2', '2,2', '2,4'], answer: '2' },
-        { id: '4-16', type: 'multiple', question: 'Lớp 35 HS, 1/7 giỏi:', options: ['4', '5', '6', '7'], answer: '5' },
-        { id: '4-17', type: 'multiple', question: 'Hình vuông diện tích 36 cm²:', options: ['5 cm', '6 cm', '7 cm', '8 cm'], answer: '6 cm' },
-        { id: '4-18', type: 'multiple', question: '0,5 kg đường giá 12 000 đồng. 1 kg:', options: ['18 000', '20 000', '24 000', '25 000'], answer: '24 000' },
-        { id: '4-19', type: 'multiple', question: 'Xe chạy 30 km/giờ trong 1,5 giờ:', options: ['40 km', '45 km', '50 km', '55 km'], answer: '45 km' },
-        { id: '4-20', type: 'multiple', question: 'Mảnh đất 16 m × 10 m. 1 m² thu 2 kg rau:', options: ['280 kg', '300 kg', '320 kg', '340 kg'], answer: '320 kg' }
-    ],
-    5: [
-        { id: '5-1', type: 'multiple', question: 'Chữ số 8 trong số 15,284:', options: ['8', '0,8', '0,08', '0,008'], answer: '0,08' },
-        { id: '5-2', type: 'multiple', question: 'Số 9,02 đọc là:', options: ['Chín phẩy hai', 'Chín phẩy không hai', 'Chín phẩy hai mươi', 'Chín không hai'], answer: 'Chín phẩy không hai' },
-        { id: '5-3', type: 'multiple', question: 'Phân số bằng 0,4:', options: ['2/5', '1/3', '3/4', '4/5'], answer: '2/5' },
-        { id: '5-4', type: 'multiple', question: '1 ha =', options: ['100 m²', '1000 m²', '10000 m²', '100000 m²'], answer: '10000 m²' },
-        { id: '5-5', type: 'multiple', question: 'Hình có 1 cặp cạnh song song:', options: ['Hình thang', 'Hình vuông', 'Hình chữ nhật', 'Hình tam giác'], answer: 'Hình thang' },
-        { id: '5-6', type: 'multiple', question: '6 m² =', options: ['60 dm²', '600 dm²', '6000 dm²', '60000 dm²'], answer: '600 dm²' },
-        { id: '5-7', type: 'multiple', question: '0,5 × 10 =', options: ['0,05', '5', '50', '0,5'], answer: '5' },
-        { id: '5-8', type: 'multiple', question: '3 giờ =', options: ['120 phút', '150 phút', '180 phút', '200 phút'], answer: '180 phút' },
-        { id: '5-9', type: 'multiple', question: 'Số lớn nhất:', options: ['7,45', '7,405', '7,54', '7,504'], answer: '7,54' },
-        { id: '5-10', type: 'multiple', question: '25 × 16 =', options: ['300', '350', '400', '450'], answer: '400' },
-        { id: '5-11', type: 'multiple', question: '35 + 65 + 27 + 73 =', options: ['180', '190', '200', '210'], answer: '200' },
-        { id: '5-12', type: 'multiple', question: '2/3 của 18:', options: ['10', '11', '12', '13'], answer: '12' },
-        { id: '5-13', type: 'multiple', question: 'Hình chữ nhật 12 m × 7 m:', options: ['70 m²', '80 m²', '84 m²', '90 m²'], answer: '84 m²' },
-        { id: '5-14', type: 'multiple', question: '6,5 km =', options: ['650 m', '6500 m', '65000 m', '65 m'], answer: '6500 m' },
-        { id: '5-15', type: 'multiple', question: '2,3 + 1,7 =', options: ['3', '4', '4,5', '5'], answer: '4' },
-        { id: '5-16', type: 'multiple', question: 'Lớp 28 HS, 1/4 giỏi:', options: ['6', '7', '8', '9'], answer: '7' },
-        { id: '5-17', type: 'multiple', question: 'Hình vuông diện tích 100 cm²:', options: ['8 cm', '9 cm', '10 cm', '11 cm'], answer: '10 cm' },
-        { id: '5-18', type: 'multiple', question: '0,2 kg chè giá 10 000 đồng. 1 kg:', options: ['40 000', '45 000', '50 000', '60 000'], answer: '50 000' },
-        { id: '5-19', type: 'multiple', question: 'Xe đi 50 km/giờ trong 1,2 giờ:', options: ['55 km', '60 km', '65 km', '70 km'], answer: '60 km' },
-        { id: '5-20', type: 'multiple', question: 'Ruộng 20 m × 15 m. 1 m² thu 3 kg lúa:', options: ['800 kg', '850 kg', '900 kg', '950 kg'], answer: '900 kg' }
-    ]
-};
+type QuestionOutcome = 'pending' | 'current' | 'correct' | 'rescued' | 'wrong';
+
+function normalizeNumericAnswer(value: string): string {
+  return value.trim().toLowerCase().replace(/\s+/g, '').replace(/\./g, ',');
+}
+
+function getAwardTitle(correctCount: number): {
+  title: string;
+  subtitle: string;
+  sealText: string;
+} {
+  if (correctCount >= 19) {
+    return {
+      title: 'Trạng nguyên Nhí',
+      subtitle: 'Xuất sắc rung vang Chuông Vàng Toán học lớp 5!',
+      sealText: 'TRẠNG NGUYÊN',
+    };
+  }
+  if (correctCount >= 16) {
+    return {
+      title: 'Bảng nhãn Xuất sắc',
+      subtitle: 'Tư duy vững vàng, bản lĩnh chinh phục đỉnh cao!',
+      sealText: 'BẢNG NHÃN',
+    };
+  }
+  if (correctCount >= 12) {
+    return {
+      title: 'Thám hoa Tài năng',
+      subtitle: 'Nền tảng kiến thức chắc chắn và tốc độ ấn tượng!',
+      sealText: 'THÁM HOA',
+    };
+  }
+  if (correctCount >= 8) {
+    return {
+      title: 'Tiến sĩ Chăm chỉ',
+      subtitle: 'Tinh thần vượt khó đáng khen ngợi, hãy tiến xa hơn nữa!',
+      sealText: 'TIẾN SĨ',
+    };
+  }
+  return {
+    title: 'Sĩ tử Triển vọng',
+    subtitle: 'Khởi đầu tự tin trên hành trình chinh phục Toán lớp 5!',
+    sealText: 'SĨ TỬ',
+  };
+}
+
+function getQuestionTimeLimit(question?: GoldenBellQuestion): number {
+  if (!question) return 20;
+  if (question.timeLimit) return question.timeLimit;
+  if (question.type === 'boolean') return 10;
+  if (question.type === 'fill') return 20;
+  return 25;
+}
+
+const MILESTONES = [5, 10, 15, 20];
 
 const GoldenBellGame: React.FC = () => {
   const [gameState, setGameState] = useState<'start' | 'playing' | 'round_summary'>('start');
   const [playerName, setPlayerName] = useState('');
+  const [nameError, setNameError] = useState('');
   const [currentRound, setCurrentRound] = useState(1);
-  const [questions, setQuestions] = useState<Question[]>([]);
+  const [questions, setQuestions] = useState<GoldenBellQuestion[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [outcomes, setOutcomes] = useState<QuestionOutcome[]>(Array(20).fill('pending'));
   const [roundScore, setRoundScore] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [wrongCount, setWrongCount] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(20);
+  const [timeLeft, setTimeLeft] = useState(25);
   const [userAnswer, setUserAnswer] = useState<string>('');
   const [showFeedback, setShowFeedback] = useState<'correct' | 'wrong' | null>(null);
-  const { user } = useFirebase();
-  
+  const [feedbackDetail, setFeedbackDetail] = useState<string>('');
+  const [eliminatedAt, setEliminatedAt] = useState<number | null>(null);
+
+  // 3 Quyền trợ giúp (mỗi quyền 1 lần / lượt chơi)
+  const [used5050, setUsed5050] = useState(false);
+  const [usedHint, setUsedHint] = useState(false);
+  const [usedStar, setUsedStar] = useState(false);
+  const [hiddenOptions, setHiddenOptions] = useState<string[]>([]);
+  const [activeHintText, setActiveHintText] = useState<string | null>(null);
+  const [starActiveForCurrent, setStarActiveForCurrent] = useState(false);
+
+  // Cơ chế Câu hỏi Giải cứu (10 giây, tối đa 1 lần / lượt chơi)
+  const [rescueUsed, setRescueUsed] = useState(false);
+  const [rescueModalOpen, setRescueModalOpen] = useState(false);
+  const [activeRescueQuestion, setActiveRescueQuestion] = useState<RescueQuestion | null>(null);
+  const [rescueTimeLeft, setRescueTimeLeft] = useState(10);
+  const [rescueResult, setRescueResult] = useState<'success' | 'fail' | null>(null);
+
+  // Lưu ảnh Giấy chứng nhận
+  const [saveNotice, setSaveNotice] = useState<string | null>(null);
+
+  const { user, openLoginModal } = useFirebase();
+
   const [leaderboards, setLeaderboards] = useState<Record<string, LeaderboardEntry[]>>({
-    round1: [], round2: [], round3: [], round4: [], round5: []
+    round1: [],
+    round2: [],
+    round3: [],
+    round4: [],
+    round5: [],
   });
 
-  const timerRef = useRef<any>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const rescueTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const transitionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const currentStage = GOLDEN_BELL_STAGES.find((s) => s.id === currentRound) || GOLDEN_BELL_STAGES[0];
+  const currentQ = questions[currentQuestionIndex];
 
   useEffect(() => {
     if (!user) return;
 
-    const unsubscribers = [1, 2, 3, 4, 5].map(round => {
-      const q = query(
-        collection(db, 'scores'),
-        orderBy('score', 'desc'),
-        limit(10)
-      );
-      
-      return onSnapshot(q, (snapshot) => {
-        const roundScores: Record<number, LeaderboardEntry[]> = { 1: [], 2: [], 3: [], 4: [], 5: [] };
-        
-        // Note: Firestore query above doesn't filter by round because we want a global top 10 or per round top 10.
-        // The user wants per round leaderboards.
-        // Let's refine the query to be per round.
-      }, (error) => {
-        handleFirestoreError(error, OperationType.LIST, 'scores');
-      });
-    });
+    const roundUnsubscribers = [1, 2, 3, 4, 5].map((roundNum) => {
+      const q = query(collection(db, 'scores'), orderBy('score', 'desc'));
 
-    // Actually, let's just listen to all scores and filter locally for simplicity in this small app,
-    // or better, create 5 listeners.
-    
-    const roundUnsubscribers = [1, 2, 3, 4, 5].map(roundNum => {
-      const q = query(
-        collection(db, 'scores'),
-        // We can't easily filter by round AND order by score without composite index,
-        // but for small data we can just get all and filter.
-        // However, let's try to be efficient.
-        orderBy('score', 'desc')
-      );
+      return onSnapshot(
+        q,
+        (snapshot) => {
+          const allScores = snapshot.docs.map((d) => d.data() as any);
+          const roundData = allScores
+            .filter((s) => s.round === roundNum)
+            .slice(0, 10)
+            .map((s) => ({
+              name: s.name,
+              score: s.score,
+              date: s.date,
+            }));
 
-      return onSnapshot(q, (snapshot) => {
-        const allScores = snapshot.docs.map(doc => doc.data() as any);
-        const roundData = allScores
-          .filter(s => s.round === roundNum)
-          .slice(0, 10)
-          .map(s => ({
-            name: s.name,
-            score: s.score,
-            date: s.date
+          setLeaderboards((prev) => ({
+            ...prev,
+            [`round${roundNum}`]: roundData,
           }));
-        
-        setLeaderboards(prev => ({
-          ...prev,
-          [`round${roundNum}`]: roundData
-        }));
-      }, (error) => {
-        handleFirestoreError(error, OperationType.LIST, 'scores');
-      });
+        },
+        (error) => {
+          handleFirestoreError(error, OperationType.LIST, 'scores');
+        }
+      );
     });
 
-    return () => roundUnsubscribers.forEach(unsub => unsub());
+    return () => roundUnsubscribers.forEach((unsub) => unsub());
   }, [user]);
 
-  const updateLeaderboard = async (round: number, name: string, score: number) => {
-    if (!user) return;
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (rescueTimerRef.current) clearInterval(rescueTimerRef.current);
+      if (transitionTimeoutRef.current) clearTimeout(transitionTimeoutRef.current);
+    };
+  }, []);
 
-    const studentName = name.trim() || 'Học sinh ẩn danh';
-    const dateStr = new Date().toLocaleDateString('vi-VN');
-    const isoDate = new Date().toISOString();
+  const updateLeaderboard = useCallback(
+    async (round: number, name: string, score: number) => {
+      if (!user) return;
 
-    try {
-      // Save Score
-      await addDoc(collection(db, 'scores'), {
-        name: studentName,
-        score: score,
-        round: round,
-        date: dateStr,
-        timestamp: serverTimestamp()
-      });
+      const studentName = name.trim() || 'Học sinh ẩn danh';
+      const dateStr = new Date().toLocaleDateString('vi-VN');
+      const isoDate = new Date().toISOString();
 
-      // Record Attendance
-      // We use a slug of the name as ID for attendance to count plays per student name
-      const studentId = studentName.toLowerCase().replace(/\s+/g, '_');
-      const attendanceRef = doc(db, 'attendance', studentId);
-      const attendanceDoc = await getDoc(attendanceRef);
-
-      if (attendanceDoc.exists()) {
-        await setDoc(attendanceRef, {
+      try {
+        await addDoc(collection(db, 'scores'), {
           name: studentName,
-          count: increment(1),
-          lastPlayed: isoDate
-        }, { merge: true });
-      } else {
-        await setDoc(attendanceRef, {
-          name: studentName,
-          count: 1,
-          lastPlayed: isoDate
+          score,
+          round,
+          date: dateStr,
+          timestamp: serverTimestamp(),
         });
+
+        const studentId = studentName.toLowerCase().replace(/\s+/g, '_');
+        const attendanceRef = doc(db, 'attendance', studentId);
+        const attendanceDoc = await getDoc(attendanceRef);
+
+        if (attendanceDoc.exists()) {
+          await setDoc(
+            attendanceRef,
+            {
+              name: studentName,
+              count: increment(1),
+              lastPlayed: isoDate,
+            },
+            { merge: true }
+          );
+        } else {
+          await setDoc(attendanceRef, {
+            name: studentName,
+            count: 1,
+            lastPlayed: isoDate,
+          });
+        }
+      } catch (error) {
+        handleFirestoreError(error, OperationType.WRITE, 'scores/attendance');
       }
-    } catch (error) {
-      handleFirestoreError(error, OperationType.WRITE, 'scores/attendance');
-    }
-  };
+    },
+    [user]
+  );
 
-  const login = () => {
-    const provider = new GoogleAuthProvider();
-    signInWithPopup(auth, provider).catch(err => {
-      console.error("Login error:", err);
-    });
-  };
-
-  const generateQuestions = useCallback((round: number) => {
-    const set = QUESTION_SETS[round] || [];
-    return set.map(q => ({
+  const generateQuestions = useCallback((round: number): GoldenBellQuestion[] => {
+    const set = STAGE_QUESTION_SETS[round] || STAGE_QUESTION_SETS[1];
+    return set.map((q) => ({
       ...q,
-      options: q.options ? [...q.options].sort(() => Math.random() - 0.5) : []
+      options: q.options ? [...q.options].sort(() => Math.random() - 0.5) : undefined,
     }));
   }, []);
 
+  const finishGame = useCallback(
+    (finalScore: number, stoppedAtQuestion: number | null) => {
+      setEliminatedAt(stoppedAtQuestion);
+      updateLeaderboard(currentRound, playerName, finalScore);
+      setGameState('round_summary');
+      if (stoppedAtQuestion === null) {
+        confetti({
+          particleCount: 90,
+          spread: 85,
+          origin: { y: 0.55 },
+        });
+      }
+    },
+    [currentRound, playerName, updateLeaderboard]
+  );
+
+  const advanceToNextQuestion = useCallback(
+    (latestScore: number) => {
+      if (currentQuestionIndex < questions.length - 1) {
+        const nextIdx = currentQuestionIndex + 1;
+        setCurrentQuestionIndex(nextIdx);
+        setTimeLeft(getQuestionTimeLimit(questions[nextIdx]));
+        setUserAnswer('');
+        setShowFeedback(null);
+        setFeedbackDetail('');
+        setHiddenOptions([]);
+        setActiveHintText(null);
+        setStarActiveForCurrent(false);
+        setOutcomes((prev) => {
+          const updated = [...prev];
+          if (updated[nextIdx] === 'pending') updated[nextIdx] = 'current';
+          return updated;
+        });
+      } else {
+        finishGame(latestScore, null);
+      }
+    },
+    [currentQuestionIndex, questions, finishGame]
+  );
+
   const startNewGame = () => {
     if (!playerName.trim()) {
-      alert('Vui lòng nhập tên của em trước khi bắt đầu!');
+      setNameError('Vui lòng nhập tên của em trước khi bắt đầu!');
       return;
     }
+    setNameError('');
+    const builtQuestions = generateQuestions(currentRound);
+    const initOutcomes: QuestionOutcome[] = Array(builtQuestions.length).fill('pending');
+    initOutcomes[0] = 'current';
+
+    setQuestions(builtQuestions);
+    setOutcomes(initOutcomes);
     setRoundScore(0);
     setCorrectCount(0);
     setWrongCount(0);
     setCurrentQuestionIndex(0);
-    setQuestions(generateQuestions(currentRound));
-    setGameState('playing');
-    setTimeLeft(20);
+    setTimeLeft(getQuestionTimeLimit(builtQuestions[0]));
     setUserAnswer('');
     setShowFeedback(null);
+    setFeedbackDetail('');
+    setEliminatedAt(null);
+
+    setUsed5050(false);
+    setUsedHint(false);
+    setUsedStar(false);
+    setHiddenOptions([]);
+    setActiveHintText(null);
+    setStarActiveForCurrent(false);
+
+    setRescueUsed(false);
+    setRescueModalOpen(false);
+    setActiveRescueQuestion(null);
+    setRescueResult(null);
+    setSaveNotice(null);
+
+    setGameState('playing');
   };
 
-  const handleNextQuestion = useCallback(() => {
-    if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(prev => prev + 1);
-      setTimeLeft(20);
-      setUserAnswer('');
-      setShowFeedback(null);
-    } else {
-      updateLeaderboard(currentRound, playerName, roundScore);
-      setGameState('round_summary');
-    }
-  }, [currentQuestionIndex, questions.length, currentRound, roundScore, playerName, leaderboards]);
-
+  // Đồng hồ câu hỏi chính
   useEffect(() => {
-    if (gameState === 'playing' && timeLeft > 0 && !showFeedback) {
+    if (gameState !== 'playing' || showFeedback || rescueModalOpen) return;
+    if (timeLeft > 0) {
       timerRef.current = setInterval(() => {
-        setTimeLeft(prev => prev - 1);
+        setTimeLeft((prev) => prev - 1);
       }, 1000);
-    } else if (timeLeft === 0 && gameState === 'playing') {
+    } else if (timeLeft === 0) {
       handleAnswer(null);
     }
-    return () => clearInterval(timerRef.current);
-  }, [gameState, timeLeft, showFeedback]);
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [gameState, timeLeft, showFeedback, rescueModalOpen]);
 
-  const handleAnswer = (ans: any) => {
-    if (showFeedback) return;
+  // Đồng hồ Modal Câu hỏi Giải cứu (10 giây)
+  useEffect(() => {
+    if (!rescueModalOpen || rescueResult !== null) return;
+    if (rescueTimeLeft > 0) {
+      rescueTimerRef.current = setInterval(() => {
+        setRescueTimeLeft((prev) => prev - 1);
+      }, 1000);
+    } else if (rescueTimeLeft === 0) {
+      handleRescueAnswer(null);
+    }
+    return () => {
+      if (rescueTimerRef.current) clearInterval(rescueTimerRef.current);
+    };
+  }, [rescueModalOpen, rescueTimeLeft, rescueResult]);
 
-    const currentQ = questions[currentQuestionIndex];
+  const openRescueChallenge = () => {
+    const picked = RESCUE_QUESTIONS[Math.floor(Math.random() * RESCUE_QUESTIONS.length)];
+    const shuffled: RescueQuestion = {
+      ...picked,
+      options: [...picked.options].sort(() => Math.random() - 0.5),
+    };
+    setActiveRescueQuestion(shuffled);
+    setRescueTimeLeft(10);
+    setRescueResult(null);
+    setRescueModalOpen(true);
+  };
+
+  const handleAnswer = (ans: string | boolean | null) => {
+    if (showFeedback || rescueModalOpen || !currentQ) return;
+
     let isCorrect = false;
-
-    if (currentQ.type === 'multiple' || currentQ.type === 'fill') {
-      isCorrect = ans?.toString().trim() === currentQ.answer.toString();
+    if (currentQ.type === 'multiple') {
+      isCorrect = ans !== null && ans.toString().trim() === currentQ.answer.toString().trim();
+    } else if (currentQ.type === 'fill') {
+      isCorrect =
+        ans !== null &&
+        normalizeNumericAnswer(ans.toString()) === normalizeNumericAnswer(currentQ.answer.toString());
     } else if (currentQ.type === 'boolean') {
       isCorrect = ans === currentQ.answer;
     }
 
     if (isCorrect) {
-      setRoundScore(prev => prev + 10);
-      setCorrectCount(prev => prev + 1);
-      setShowFeedback('correct');
-      confetti({
-        particleCount: 40,
-        spread: 70,
-        origin: { y: 0.6 }
+      const gained = starActiveForCurrent ? 20 : 10;
+      const updatedScore = roundScore + gained;
+      setRoundScore(updatedScore);
+      setCorrectCount((prev) => prev + 1);
+      setOutcomes((prev) => {
+        const next = [...prev];
+        next[currentQuestionIndex] = 'correct';
+        return next;
       });
+      setShowFeedback('correct');
+      setFeedbackDetail(
+        starActiveForCurrent ? `+${gained} điểm (Ngôi sao hy vọng nhân đôi!)` : `+${gained} điểm`
+      );
+      confetti({
+        particleCount: starActiveForCurrent ? 70 : 35,
+        spread: 70,
+        origin: { y: 0.6 },
+      });
+
+      transitionTimeoutRef.current = setTimeout(() => {
+        advanceToNextQuestion(updatedScore);
+      }, 1350);
     } else {
-      setWrongCount(prev => prev + 1);
-      setShowFeedback('wrong');
+      setWrongCount((prev) => prev + 1);
+      setOutcomes((prev) => {
+        const next = [...prev];
+        next[currentQuestionIndex] = 'wrong';
+        return next;
+      });
+
+      if (!rescueUsed) {
+        // Mở Câu hỏi Giải cứu 10 giây thay vì dừng ngay
+        setShowFeedback('wrong');
+        setFeedbackDetail('Chưa chính xác! Chuẩn bị mở Câu hỏi Giải cứu...');
+        transitionTimeoutRef.current = setTimeout(() => {
+          setShowFeedback(null);
+          openRescueChallenge();
+        }, 1100);
+      } else {
+        const rightText =
+          currentQ.type === 'boolean'
+            ? currentQ.answer
+              ? 'Đúng'
+              : 'Sai'
+            : `${currentQ.answer}${currentQ.unit ? ` ${currentQ.unit}` : ''}`;
+        setShowFeedback('wrong');
+        setFeedbackDetail(`Đáp án đúng là: ${rightText}`);
+        transitionTimeoutRef.current = setTimeout(() => {
+          finishGame(roundScore, currentQuestionIndex + 1);
+        }, 1600);
+      }
     }
-
-    setTimeout(() => {
-      handleNextQuestion();
-    }, 1500);
   };
 
-  const roundThemes: Record<number, any> = {
-    1: { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-800', accent: 'bg-blue-500' },
-    2: { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-800', accent: 'bg-emerald-500' },
-    3: { bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-800', accent: 'bg-purple-500' },
-    4: { bg: 'bg-rose-50', border: 'border-rose-200', text: 'text-rose-800', accent: 'bg-rose-500' },
-    5: { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-800', accent: 'bg-amber-500' }
+  const handleRescueAnswer = (selected: string | null) => {
+    if (!activeRescueQuestion || rescueResult !== null) return;
+    const isSuccess = selected !== null && selected === activeRescueQuestion.answer;
+    setRescueUsed(true);
+
+    if (isSuccess) {
+      setRescueResult('success');
+      setOutcomes((prev) => {
+        const next = [...prev];
+        next[currentQuestionIndex] = 'rescued';
+        return next;
+      });
+      confetti({
+        particleCount: 55,
+        spread: 75,
+        origin: { y: 0.55 },
+      });
+      transitionTimeoutRef.current = setTimeout(() => {
+        setRescueModalOpen(false);
+        setRescueResult(null);
+        advanceToNextQuestion(roundScore);
+      }, 1300);
+    } else {
+      setRescueResult('fail');
+      transitionTimeoutRef.current = setTimeout(() => {
+        setRescueModalOpen(false);
+        setRescueResult(null);
+        finishGame(roundScore, currentQuestionIndex + 1);
+      }, 1500);
+    }
   };
 
-  const theme = roundThemes[currentRound] || roundThemes[1];
+  // Xử lý 3 Quyền trợ giúp
+  const handleUse5050 = () => {
+    if (used5050 || !currentQ || currentQ.type !== 'multiple' || !currentQ.options || showFeedback) return;
+    const wrongChoices = currentQ.options.filter((opt) => opt !== currentQ.answer.toString());
+    const pickedToHide = [...wrongChoices].sort(() => Math.random() - 0.5).slice(0, 2);
+    setHiddenOptions(pickedToHide);
+    setUsed5050(true);
+  };
+
+  const handleUseMathFlowHint = () => {
+    if (usedHint || !currentQ || showFeedback) return;
+    setActiveHintText(currentQ.hint);
+    setUsedHint(true);
+  };
+
+  const handleUseHopeStar = () => {
+    if (usedStar || starActiveForCurrent || showFeedback) return;
+    setStarActiveForCurrent(true);
+    setUsedStar(true);
+  };
+
+  // Tạo ảnh PNG Giấy chứng nhận Trạng nguyên Toán học
+  const handleDownloadCertificate = () => {
+    const award = getAwardTitle(correctCount);
+    const canvas = document.createElement('canvas');
+    canvas.width = 1600;
+    canvas.height = 1060;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Nền giấy kem ấm
+    const bgGrad = ctx.createLinearGradient(0, 0, 1600, 1060);
+    bgGrad.addColorStop(0, '#FFFDF5');
+    bgGrad.addColorStop(1, '#FEF7E0');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, 1600, 1060);
+
+    // Viền ngoài vàng kim
+    ctx.strokeStyle = '#D97706';
+    ctx.lineWidth = 18;
+    ctx.strokeRect(36, 36, 1528, 988);
+
+    // Viền trong mảnh
+    ctx.strokeStyle = '#F59E0B';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(64, 64, 1472, 932);
+
+    // Hoa văn góc
+    const drawCorner = (x: number, y: number, sx: number, sy: number) => {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(sx, sy);
+      ctx.strokeStyle = '#B45309';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(0, 60);
+      ctx.lineTo(0, 0);
+      ctx.lineTo(60, 0);
+      ctx.stroke();
+      ctx.fillStyle = '#F59E0B';
+      ctx.beginPath();
+      ctx.arc(16, 16, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    };
+    drawCorner(82, 82, 1, 1);
+    drawCorner(1518, 82, -1, 1);
+    drawCorner(82, 978, 1, -1);
+    drawCorner(1518, 978, -1, -1);
+
+    // Tiêu đề đầu
+    ctx.fillStyle = '#B45309';
+    ctx.font = '700 28px Quicksand, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('MATHFLOW TOÁN 5 · ĐẤU TRƯỜNG RUNG CHUÔNG VÀNG', 800, 145);
+
+    ctx.fillStyle = '#92400E';
+    ctx.font = '800 54px Quicksand, sans-serif';
+    ctx.fillText('GIẤY CHỨNG NHẬN', 800, 225);
+
+    ctx.fillStyle = '#D97706';
+    ctx.font = '800 34px Quicksand, sans-serif';
+    ctx.fillText('TRẠNG NGUYÊN TOÁN HỌC', 800, 275);
+
+    // Đường kẻ phân cách
+    ctx.strokeStyle = '#FCD34D';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(460, 305);
+    ctx.lineTo(1140, 305);
+    ctx.stroke();
+
+    // Trân trọng trao tặng
+    ctx.fillStyle = '#475569';
+    ctx.font = '600 26px Quicksand, sans-serif';
+    ctx.fillText('Trân trọng vinh danh em học sinh:', 800, 368);
+
+    // Tên học sinh
+    ctx.fillStyle = '#0F172A';
+    ctx.font = '800 64px Quicksand, sans-serif';
+    ctx.fillText((playerName.trim() || 'Học sinh').toUpperCase(), 800, 448);
+
+    // Danh hiệu
+    ctx.fillStyle = '#B45309';
+    ctx.font = '800 38px Quicksand, sans-serif';
+    ctx.fillText(`Danh hiệu: ${award.title}`, 800, 520);
+
+    ctx.fillStyle = '#475569';
+    ctx.font = '600 24px Quicksand, sans-serif';
+    ctx.fillText(award.subtitle, 800, 566);
+
+    // Khung thông số thành tích
+    ctx.fillStyle = '#FFFFFF';
+    ctx.strokeStyle = '#FDE68A';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.roundRect(190, 620, 1220, 175, 24);
+    ctx.fill();
+    ctx.stroke();
+
+    const cols = [
+      { label: 'CHẶNG THI ĐÃ THAM GIA', value: `${currentStage.shortTitle}: ${currentStage.title}`, x: 430 },
+      { label: 'SỐ CÂU ĐÚNG', value: `${correctCount} / 20 câu`, x: 870 },
+      { label: 'TỔNG ĐIỂM', value: `${roundScore} điểm`, x: 1200 },
+    ];
+    cols.forEach((c) => {
+      ctx.fillStyle = '#64748B';
+      ctx.font = '700 18px Quicksand, sans-serif';
+      ctx.fillText(c.label, c.x, 675);
+      ctx.fillStyle = '#0F172A';
+      ctx.font = '800 30px Quicksand, sans-serif';
+      ctx.fillText(c.value, c.x, 735);
+    });
+
+    // Ngày tháng & Con dấu
+    const dateStr = new Date().toLocaleDateString('vi-VN');
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#475569';
+    ctx.font = '600 22px Quicksand, sans-serif';
+    ctx.fillText(`Ngày chứng nhận: ${dateStr}`, 190, 890);
+    ctx.fillStyle = '#92400E';
+    ctx.font = '700 24px Quicksand, sans-serif';
+    ctx.fillText('Hội đồng Đấu trường MathFlow', 190, 932);
+
+    // Con dấu tròn đỏ vàng bên phải
+    ctx.save();
+    ctx.translate(1285, 895);
+    ctx.strokeStyle = '#DC2626';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.arc(0, 0, 74, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, 62, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = '#DC2626';
+    ctx.textAlign = 'center';
+    ctx.font = '800 16px Quicksand, sans-serif';
+    ctx.fillText('CHỨNG NHẬN', 0, -14);
+    ctx.font = '800 20px Quicksand, sans-serif';
+    ctx.fillText(award.sealText, 0, 14);
+    ctx.font = '700 13px Quicksand, sans-serif';
+    ctx.fillText('MATHFLOW TOÁN 5', 0, 38);
+    ctx.restore();
+
+    const link = document.createElement('a');
+    link.download = `Giay_Chung_Nhan_${(playerName.trim() || 'Hoc_Sinh').replace(/\s+/g, '_')}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+
+    setSaveNotice('Đã tải Giấy chứng nhận thành tích về máy!');
+    setTimeout(() => setSaveNotice(null), 4000);
+  };
+
+  const awardInfo = getAwardTitle(correctCount);
+  const currentTimeLimit = getQuestionTimeLimit(currentQ);
 
   return (
-    <div className={`h-full flex flex-col ${theme.bg} math-grid-light overflow-hidden relative transition-colors duration-500`}>
+    <div
+      className={`h-full flex flex-col ${
+        gameState === 'start' ? 'bg-[#F4FAF6]' : currentStage.themeBg
+      } math-grid-light overflow-hidden relative transition-colors duration-500`}
+    >
       <AnimatePresence mode="wait">
+        {/* MÀN HÌNH BẮT ĐẦU — Giữ nguyên giao diện tông vàng kim - kem ấm áp */}
         {gameState === 'start' && (
-          <motion.div 
+          <motion.div
             key="start"
-            initial={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0, scale: 0.97 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 1.05 }}
+            exit={{ opacity: 0, scale: 1.02 }}
             className="flex-1 flex flex-col items-center justify-center p-4 md:p-6 z-10 custom-scrollbar overflow-y-auto"
           >
-            <div className="bg-white p-6 md:p-10 rounded-3xl shadow-xl border-4 border-amber-200 max-w-2xl w-full text-center card-shadow">
-              <div className="bg-amber-100 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-inner">
-                <Bell size={40} className="text-amber-600 animate-bounce" />
+            <div className="bg-white p-5 sm:p-8 rounded-3xl shadow-xl border-4 border-amber-200 max-w-2xl w-full text-center card-shadow">
+              <div className="bg-amber-100 w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-inner">
+                <Bell size={34} className="text-amber-600" />
               </div>
-              <h1 className="text-4xl md:text-5xl font-black text-amber-800 mb-4 uppercase tracking-tighter">RUNG CHUÔNG VÀNG</h1>
-              <p className="text-slate-600 mb-8 font-medium italic">Vượt qua 20 câu hỏi để trở thành trạng nguyên toán học!</p>
-              
-              <div className="mb-8 text-left">
-                <label className="block text-sm font-black text-slate-500 uppercase tracking-widest mb-2 ml-2">Tên của em là gì?</label>
+
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-amber-800 mb-2 uppercase tracking-tight">
+                RUNG CHUÔNG VÀNG
+              </h1>
+              <p className="text-slate-600 mb-5 text-sm sm:text-base font-medium italic">
+                Vượt qua 20 câu hỏi để trở thành trạng nguyên toán học!
+              </p>
+
+              {/* Ô nhập tên */}
+              <div className="mb-5 text-left">
+                <label className="block text-xs sm:text-sm font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">
+                  Tên của em là gì?
+                </label>
                 <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-                  <input 
-                    type="text" 
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={19} />
+                  <input
+                    type="text"
                     value={playerName}
-                    onChange={(e) => setPlayerName(e.target.value)}
+                    onChange={(e) => {
+                      setPlayerName(e.target.value);
+                      if (nameError) setNameError('');
+                    }}
+                    onKeyDown={(e) => e.key === 'Enter' && startNewGame()}
                     placeholder="Nhập tên tại đây..."
-                    className="w-full bg-slate-100 border-4 border-transparent focus:border-amber-400 rounded-2xl py-4 pl-12 pr-4 text-xl font-bold text-slate-700 outline-none transition-all"
+                    className="w-full bg-slate-100 border-2 border-transparent focus:border-amber-400 rounded-2xl py-3.5 pl-11 pr-4 text-lg font-bold text-slate-700 outline-none transition-all"
                   />
                 </div>
+                {nameError && (
+                  <p className="mt-1.5 ml-1 text-xs font-bold text-rose-600">{nameError}</p>
+                )}
               </div>
 
-              <div className="mb-8 text-left">
-                <label className="block text-sm font-black text-slate-500 uppercase tracking-widest mb-2 ml-2">Chọn Mã đề:</label>
-                <div className="grid grid-cols-5 gap-2">
-                  {[1, 2, 3, 4, 5].map(r => (
-                    <button 
-                      key={r} 
-                      onClick={() => setCurrentRound(r)}
-                      className={`py-3 rounded-xl font-bold transition-all ${currentRound === r ? 'bg-amber-500 text-white shadow-lg scale-105' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
-                    >
-                      MÃ {r}
-                    </button>
-                  ))}
+              {/* 5 Chặng thi thực tế - gọn trên điện thoại */}
+              <div className="mb-5 text-left">
+                <label className="block text-xs sm:text-sm font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">
+                  Chọn chặng chinh phục:
+                </label>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                  {GOLDEN_BELL_STAGES.map((stage, idx) => {
+                    const isSelected = currentRound === stage.id;
+                    const isFifth = idx === GOLDEN_BELL_STAGES.length - 1;
+                    return (
+                      <button
+                        key={stage.id}
+                        type="button"
+                        onClick={() => setCurrentRound(stage.id)}
+                        className={`px-2.5 py-2 rounded-xl text-center transition-all border flex flex-col items-center justify-center min-h-[48px] ${
+                          isFifth ? 'col-span-2 md:col-span-1' : ''
+                        } ${
+                          isSelected
+                            ? 'bg-amber-500 border-amber-500 text-white shadow-md shadow-amber-200'
+                            : 'bg-slate-100 border-transparent text-slate-700 hover:bg-amber-50 hover:border-amber-200'
+                        }`}
+                      >
+                        <span
+                          className={`text-[10px] font-extrabold uppercase tracking-wider leading-none mb-1 ${
+                            isSelected ? 'text-amber-100' : 'text-amber-700'
+                          }`}
+                        >
+                          {stage.shortTitle}
+                        </span>
+                        <span className="text-xs font-extrabold leading-tight">
+                          {stage.title}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
+                <p className="mt-2 ml-1 text-[11px] sm:text-xs font-semibold text-slate-500">
+                  {currentStage.shortTitle}: {currentStage.title} · {currentStage.subtitle}
+                </p>
               </div>
 
-              <button 
+              <button
+                type="button"
                 onClick={startNewGame}
-                className="w-full bg-amber-500 hover:bg-amber-600 text-white py-5 rounded-2xl text-2xl font-black shadow-xl shadow-amber-200 transition-all flex items-center justify-center gap-3 group"
+                className="w-full bg-amber-500 hover:bg-amber-600 text-white py-4 rounded-2xl text-xl sm:text-2xl font-black shadow-xl shadow-amber-200 transition-all flex items-center justify-center gap-3 group"
               >
                 BẮT ĐẦU CHƠI
                 <Play fill="currentColor" className="group-hover:translate-x-1 transition-transform" />
               </button>
 
               {!user && (
-                <div className="mt-6 p-4 bg-rose-50 border-2 border-rose-200 rounded-2xl">
-                  <p className="text-rose-700 font-bold mb-3 flex items-center justify-center gap-2">
+                <div className="mt-6 p-4 bg-rose-50 border border-rose-200 rounded-2xl">
+                  <p className="text-rose-700 font-bold mb-3 flex items-center justify-center gap-2 text-sm">
                     <Info size={18} />
-                    Vui lòng đăng nhập để lưu kết quả thi!
+                    Đăng nhập để lưu điểm lên Bảng Vàng của lớp (vẫn chơi ngay được không cần đăng nhập)
                   </p>
-                  <button 
-                    onClick={login}
-                    className="bg-rose-500 hover:bg-rose-600 text-white px-6 py-2 rounded-xl font-bold flex items-center gap-2 mx-auto transition-all"
+                  <button
+                    type="button"
+                    onClick={openLoginModal}
+                    className="bg-rose-500 hover:bg-rose-600 text-white px-6 py-2 rounded-xl font-bold flex items-center gap-2 mx-auto transition-all text-sm"
                   >
-                    <LogIn size={18} /> Đăng nhập ngay
+                    <LogIn size={17} /> Đăng nhập ngay
                   </button>
                 </div>
               )}
 
               {leaderboards[`round${currentRound}`]?.length > 0 && (
-                <div className="mt-12">
+                <div className="mt-10">
                   <h3 className="text-lg font-black text-slate-800 uppercase mb-4 flex items-center justify-center gap-2">
                     <Trophy size={20} className="text-amber-500" />
-                    BẢNG VÀNG MÃ ĐỀ {currentRound}
+                    Bảng vàng {currentStage.shortTitle}: {currentStage.title}
                   </h3>
                   <div className="bg-slate-50 rounded-2xl p-4 max-h-48 overflow-y-auto border border-slate-100">
                     {leaderboards[`round${currentRound}`].map((entry, idx) => (
-                      <div key={idx} className="flex justify-between items-center py-2 border-b border-slate-200 last:border-0">
+                      <div
+                        key={idx}
+                        className="flex justify-between items-center py-2 border-b border-slate-200 last:border-0"
+                      >
                         <div className="flex items-center gap-3">
-                          <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${idx === 0 ? 'bg-yellow-400 text-white' : 'bg-slate-200 text-slate-500'}`}>
+                          <span
+                            className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                              idx === 0 ? 'bg-yellow-400 text-white' : 'bg-slate-200 text-slate-600'
+                            }`}
+                          >
                             {idx + 1}
                           </span>
                           <span className="font-bold text-slate-700">{entry.name}</span>
                         </div>
-                        <span className="font-black text-amber-600">{entry.score} điểm</span>
+                        <span className="font-black text-amber-600 tabular-nums">{entry.score} điểm</span>
                       </div>
                     ))}
                   </div>
@@ -489,175 +837,532 @@ const GoldenBellGame: React.FC = () => {
           </motion.div>
         )}
 
-        {gameState === 'playing' && (
-          <motion.div 
+        {/* MÀN HÌNH THI ĐẤU */}
+        {gameState === 'playing' && currentQ && (
+          <motion.div
             key="playing"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="flex-1 flex flex-col z-10"
+            className="flex-1 flex flex-col z-10 overflow-y-auto"
           >
-            <div className={`bg-white p-4 border-b-4 ${theme.border} flex justify-between items-center shadow-md`}>
-              <div className="flex items-center gap-4">
-                <div className={`${theme.accent} text-white px-4 py-2 rounded-xl font-black text-sm shadow-lg`}>
-                  MÃ ĐỀ {currentRound}
+            {/* Thanh thông tin trên cùng */}
+            <div className={`bg-white px-4 py-3 border-b-2 ${currentStage.themeBorder} shadow-sm`}>
+              <div className="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <button
+                    type="button"
+                    onClick={() => setGameState('start')}
+                    className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors shrink-0"
+                    title="Quay lại chọn chặng"
+                  >
+                    <ArrowLeft size={18} />
+                  </button>
+                  <div className={`${currentStage.themeAccent} text-white px-3.5 py-1.5 rounded-xl font-extrabold text-xs md:text-sm whitespace-nowrap shrink-0`}>
+                    {currentStage.shortTitle}: {currentStage.title}
+                  </div>
+                  <div className="flex items-center gap-1.5 text-slate-800 font-extrabold text-sm truncate">
+                    <User size={16} className="text-amber-600 shrink-0" />
+                    <span className="truncate">{playerName}</span>
+                  </div>
                 </div>
-                <div className="text-slate-400 font-bold text-sm">
-                  Câu {currentQuestionIndex + 1}/20
+
+                <div className="flex items-center gap-3 sm:gap-5">
+                  <div className="flex items-center gap-1.5 text-sm font-extrabold text-emerald-700 tabular-nums">
+                    <CheckCircle2 className="text-emerald-500" size={18} />
+                    <span>{correctCount} đúng</span>
+                  </div>
+                  <div className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-slate-600">
+                    <ShieldAlert size={16} className={rescueUsed ? 'text-slate-400' : 'text-amber-600'} />
+                    <span>{rescueUsed ? 'Đã dùng giải cứu' : 'Còn 1 lần giải cứu'}</span>
+                  </div>
+                  <div className="bg-slate-900 text-white px-4 py-1.5 rounded-xl font-black text-sm md:text-base tabular-nums">
+                    {roundScore} điểm
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="text-emerald-500" size={20} />
-                  <span className="font-black text-emerald-600">{correctCount}</span>
+              {/* Thanh tiến trình 20 câu hỏi với 4 mốc quan trọng (Câu 5, 10, 15, 20) */}
+              <div className="max-w-5xl mx-auto mt-3">
+                <div className="grid grid-cols-10 md:grid-cols-[repeat(20,minmax(0,1fr))] gap-1">
+                  {outcomes.map((status, idx) => {
+                    const qNum = idx + 1;
+                    const isMilestone = MILESTONES.includes(qNum);
+                    const isCurrent = idx === currentQuestionIndex;
+
+                    let cellClass = 'bg-slate-100 text-slate-500 border-slate-200';
+                    if (status === 'correct') cellClass = 'bg-emerald-500 text-white border-emerald-600';
+                    else if (status === 'rescued') cellClass = 'bg-amber-400 text-amber-950 border-amber-500';
+                    else if (status === 'wrong') cellClass = 'bg-rose-500 text-white border-rose-600';
+                    else if (isCurrent) cellClass = 'bg-amber-500 text-white border-amber-600 ring-2 ring-amber-300';
+                    else if (isMilestone) cellClass = 'bg-amber-50 text-amber-700 border-amber-300';
+
+                    return (
+                      <div
+                        key={qNum}
+                        title={isMilestone ? `Mốc quan trọng: Câu ${qNum}` : `Câu ${qNum}`}
+                        className={`h-7 rounded-lg border text-[11px] font-extrabold flex items-center justify-center tabular-nums transition-all ${cellClass}`}
+                      >
+                        {isMilestone && status === 'pending' && !isCurrent ? (
+                          <span className="flex items-center gap-0.5">
+                            {qNum}
+                          </span>
+                        ) : (
+                          qNum
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-                <div className="flex items-center gap-2">
-                  <XCircle className="text-rose-500" size={20} />
-                  <span className="font-black text-rose-600">{wrongCount}</span>
-                </div>
-                <div className="bg-slate-900 text-white px-6 py-2 rounded-xl font-black shadow-xl">
-                  {roundScore} ĐIỂM
+                <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 mt-1 px-0.5">
+                  <span>Câu {currentQuestionIndex + 1} / 20</span>
+                  <span>Mốc quan trọng: Câu 5 · Câu 10 · Câu 15 · Câu 20</span>
                 </div>
               </div>
             </div>
 
-            <div className="h-2 bg-slate-100 w-full">
-              <motion.div 
-                initial={{ width: '100%' }}
-                animate={{ width: `${(timeLeft / 20) * 100}%` }}
-                className={`h-full ${timeLeft < 5 ? 'bg-rose-500' : theme.accent} transition-colors`}
+            {/* Thanh đồng hồ đếm ngược */}
+            <div className="h-2.5 bg-slate-200 w-full shrink-0">
+              <div
+                style={{ width: `${(timeLeft / currentTimeLimit) * 100}%` }}
+                className={`h-full transition-all duration-500 ${
+                  timeLeft <= 5 ? 'bg-rose-500' : currentStage.themeAccent
+                }`}
               />
             </div>
 
-            <div className="flex-1 flex flex-col items-center justify-center p-6">
+            {/* Khu vực câu hỏi chính */}
+            <div className="flex-1 flex flex-col items-center justify-center p-4 md:p-6">
               <div className="w-full max-w-4xl">
-                <motion.div 
-                  key={questions[currentQuestionIndex].id}
-                  initial={{ x: 50, opacity: 0 }}
+                {/* Hàng trạng thái câu + đồng hồ + 3 quyền trợ giúp */}
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                  <div className="flex items-center gap-3 text-sm font-extrabold text-slate-700">
+                    <span className="bg-white border border-slate-200 px-3.5 py-1.5 rounded-xl shadow-xs">
+                      {currentQ.type === 'multiple' && 'Trắc nghiệm 4 lựa chọn'}
+                      {currentQ.type === 'fill' && 'Bảng con tốc độ · Nhập số'}
+                      {currentQ.type === 'boolean' && 'Phán đoán Đúng / Sai · 10 giây'}
+                    </span>
+                    <span
+                      className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border font-black tabular-nums ${
+                        timeLeft <= 5
+                          ? 'bg-rose-50 border-rose-300 text-rose-700'
+                          : 'bg-white border-slate-200 text-slate-800'
+                      }`}
+                    >
+                      <Timer size={16} /> {timeLeft} giây
+                    </span>
+                  </div>
+
+                  {/* 3 Nút Quyền Trợ Giúp */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleUse5050}
+                      disabled={used5050 || currentQ.type !== 'multiple' || !!showFeedback}
+                      className={`px-3.5 py-2 rounded-xl text-xs md:text-sm font-extrabold border transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                        used5050 || currentQ.type !== 'multiple'
+                          ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+                          : 'bg-white text-slate-800 border-amber-300 hover:bg-amber-50 shadow-xs'
+                      }`}
+                    >
+                      <Scissors size={15} className="text-amber-600" />
+                      50/50
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleUseMathFlowHint}
+                      disabled={usedHint || !!showFeedback}
+                      className={`px-3.5 py-2 rounded-xl text-xs md:text-sm font-extrabold border transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                        usedHint
+                          ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+                          : 'bg-white text-slate-800 border-sky-300 hover:bg-sky-50 shadow-xs'
+                      }`}
+                    >
+                      <GraduationCap size={16} className="text-sky-600" />
+                      Hỏi Trợ lý MathFlow
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleUseHopeStar}
+                      disabled={usedStar || starActiveForCurrent || !!showFeedback}
+                      className={`px-3.5 py-2 rounded-xl text-xs md:text-sm font-extrabold border transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                        starActiveForCurrent
+                          ? 'bg-amber-500 text-white border-amber-600 shadow-md'
+                          : usedStar
+                          ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+                          : 'bg-white text-slate-800 border-amber-300 hover:bg-amber-50 shadow-xs'
+                      }`}
+                    >
+                      <Star size={15} fill={starActiveForCurrent ? 'currentColor' : 'none'} className={starActiveForCurrent ? 'text-white' : 'text-amber-500'} />
+                      {starActiveForCurrent ? 'Đang nhân đôi điểm' : 'Ngôi sao hy vọng'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Thẻ đề bài */}
+                <motion.div
+                  key={currentQ.id}
+                  initial={{ x: 24, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
-                  className={`bg-white p-10 rounded-[3rem] shadow-xl border-4 ${theme.border} mb-8 text-center relative overflow-hidden`}
+                  className={`bg-white p-6 md:p-8 rounded-3xl shadow-lg border-2 ${
+                    starActiveForCurrent ? 'border-amber-400 ring-4 ring-amber-100' : currentStage.themeBorder
+                  } mb-5 text-center relative overflow-hidden`}
                 >
                   <AnimatePresence>
                     {showFeedback && (
-                      <motion.div 
+                      <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className={`absolute inset-0 flex items-center justify-center z-20 backdrop-blur-sm ${showFeedback === 'correct' ? 'bg-emerald-500/20' : 'bg-rose-500/20'}`}
+                        className={`absolute inset-0 flex flex-col items-center justify-center z-20 backdrop-blur-sm px-4 ${
+                          showFeedback === 'correct' ? 'bg-emerald-500/20' : 'bg-rose-500/20'
+                        }`}
                       >
                         <motion.div
-                          initial={{ scale: 0 }}
+                          initial={{ scale: 0.7 }}
                           animate={{ scale: 1 }}
-                          className={`p-6 rounded-full bg-white shadow-2xl ${showFeedback === 'correct' ? 'text-emerald-500' : 'text-rose-500'}`}
+                          className={`px-7 py-5 rounded-3xl bg-white shadow-2xl border-2 flex flex-col items-center gap-2 ${
+                            showFeedback === 'correct'
+                              ? 'border-emerald-300 text-emerald-600'
+                              : 'border-rose-300 text-rose-600'
+                          }`}
                         >
-                          {showFeedback === 'correct' ? <CheckCircle2 size={80} /> : <XCircle size={80} />}
+                          {showFeedback === 'correct' ? (
+                            <CheckCircle2 size={56} />
+                          ) : (
+                            <XCircle size={56} />
+                          )}
+                          <p className="text-xl font-black">
+                            {showFeedback === 'correct' ? 'Chính xác!' : 'Chưa đúng rồi!'}
+                          </p>
+                          {feedbackDetail && (
+                            <p className="text-sm font-bold text-slate-700">{feedbackDetail}</p>
+                          )}
                         </motion.div>
                       </motion.div>
                     )}
                   </AnimatePresence>
 
-                  <h2 className="text-3xl md:text-4xl font-black text-slate-800 leading-tight">
-                    {questions[currentQuestionIndex].question}
+                  <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-800 leading-snug">
+                    Câu {currentQuestionIndex + 1}: {currentQ.question}
                   </h2>
+
+                  {currentQ.svg && <GoldenBellIllustration spec={currentQ.svg} />}
+
+                  {/* Gợi ý từ Trợ lý MathFlow (chỉ hiện khi bấm nút) */}
+                  {activeHintText && (
+                    <div className="mt-4 bg-sky-50 border border-sky-200 rounded-2xl p-3.5 text-left flex items-start gap-3">
+                      <GraduationCap size={20} className="text-sky-600 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-xs font-extrabold text-sky-800 uppercase tracking-wide mb-0.5">
+                          Gợi ý hướng tư duy từ Trợ lý MathFlow
+                        </p>
+                        <p className="text-sm font-semibold text-slate-700">{activeHintText}</p>
+                      </div>
+                    </div>
+                  )}
                 </motion.div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {questions[currentQuestionIndex].type === 'multiple' && questions[currentQuestionIndex].options?.map((opt, idx) => (
+                {/* Khu vực trả lời theo 3 định dạng */}
+                {currentQ.type === 'multiple' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                    {currentQ.options?.map((opt, idx) => {
+                      const isRemoved = hiddenOptions.includes(opt);
+                      const letter = ['A', 'B', 'C', 'D'][idx];
+                      return (
+                        <button
+                          key={opt}
+                          type="button"
+                          disabled={isRemoved || !!showFeedback}
+                          onClick={() => handleAnswer(opt)}
+                          className={`p-5 rounded-2xl border-2 text-lg md:text-xl font-extrabold transition-all flex items-center gap-4 text-left ${
+                            isRemoved
+                              ? 'bg-slate-100 border-slate-200 text-slate-300 line-through cursor-not-allowed opacity-55'
+                              : `bg-white border-slate-200 text-slate-800 hover:border-amber-400 hover:bg-amber-50/60 shadow-sm`
+                          }`}
+                        >
+                          <span
+                            className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black shrink-0 ${
+                              isRemoved ? 'bg-slate-200 text-slate-400' : 'bg-amber-100 text-amber-800'
+                            }`}
+                          >
+                            {letter}
+                          </span>
+                          <span className="flex-1">{opt}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {currentQ.type === 'boolean' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <button
-                      key={idx}
-                      onClick={() => handleAnswer(opt)}
-                      className={`bg-white hover:${theme.bg} border-4 border-white hover:${theme.border} p-6 rounded-2xl text-2xl font-black text-slate-700 shadow-lg transition-all text-center`}
+                      type="button"
+                      disabled={!!showFeedback}
+                      onClick={() => handleAnswer(true)}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white py-6 px-8 rounded-2xl text-2xl font-black shadow-md transition-all flex items-center justify-center gap-3"
                     >
-                      {opt}
+                      <CheckCircle2 size={28} />
+                      ĐÚNG
                     </button>
-                  ))}
+                    <button
+                      type="button"
+                      disabled={!!showFeedback}
+                      onClick={() => handleAnswer(false)}
+                      className="bg-rose-600 hover:bg-rose-700 text-white py-6 px-8 rounded-2xl text-2xl font-black shadow-md transition-all flex items-center justify-center gap-3"
+                    >
+                      <XCircle size={28} />
+                      SAI
+                    </button>
+                  </div>
+                )}
 
-                  {questions[currentQuestionIndex].type === 'boolean' && (
-                    <>
-                      <button
-                        onClick={() => handleAnswer(true)}
-                        className="bg-emerald-500 hover:bg-emerald-600 text-white p-8 rounded-2xl text-3xl font-black shadow-lg transition-all"
-                      >
-                        ĐÚNG
-                      </button>
-                      <button
-                        onClick={() => handleAnswer(false)}
-                        className="bg-rose-500 hover:bg-rose-600 text-white p-8 rounded-2xl text-3xl font-black shadow-lg transition-all"
-                      >
-                        SAI
-                      </button>
-                    </>
-                  )}
-
-                  {questions[currentQuestionIndex].type === 'fill' && (
-                    <div className="col-span-full flex flex-col items-center gap-4">
-                      <input 
+                {currentQ.type === 'fill' && (
+                  <div className="bg-slate-800 border-4 border-amber-700/70 rounded-3xl p-6 shadow-xl flex flex-col items-center gap-4">
+                    <p className="text-xs font-extrabold uppercase tracking-widest text-amber-300">
+                      Bảng con tốc độ · Viết nhanh kết quả của em
+                    </p>
+                    <div className="flex items-center justify-center gap-3 w-full max-w-md">
+                      <input
                         type="text"
                         value={userAnswer}
                         onChange={(e) => setUserAnswer(e.target.value)}
-                        placeholder="Nhập kết quả..."
-                        className={`w-full max-w-md bg-white border-4 ${theme.border} rounded-2xl py-6 px-8 text-4xl font-black text-center text-slate-700 outline-none shadow-xl`}
-                        onKeyDown={(e) => e.key === 'Enter' && handleAnswer(userAnswer)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && userAnswer.trim()) handleAnswer(userAnswer);
+                        }}
+                        placeholder="Nhập số..."
+                        autoFocus
+                        className="flex-1 bg-white border-2 border-amber-300 rounded-2xl py-4 px-5 text-3xl font-black text-center text-slate-800 outline-none focus:ring-4 focus:ring-amber-300/50 tabular-nums"
                       />
-                      <button 
-                        onClick={() => handleAnswer(userAnswer)}
-                        className={`${theme.accent} text-white px-12 py-4 rounded-2xl text-xl font-black shadow-lg transition-all`}
-                      >
-                        GỬI ĐÁP ÁN
-                      </button>
+                      {currentQ.unit && (
+                        <span className="bg-amber-100 text-amber-900 px-4 py-4 rounded-2xl text-xl font-black whitespace-nowrap shrink-0">
+                          {currentQ.unit}
+                        </span>
+                      )}
                     </div>
-                  )}
-                </div>
+                    <button
+                      type="button"
+                      disabled={!userAnswer.trim() || !!showFeedback}
+                      onClick={() => handleAnswer(userAnswer)}
+                      className="bg-amber-500 hover:bg-amber-600 disabled:bg-slate-600 text-white px-10 py-3.5 rounded-2xl text-lg font-black shadow-lg transition-all"
+                    >
+                      Giơ bảng chốt đáp án
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </motion.div>
         )}
 
+        {/* MÀN HÌNH VINH DANH & GIẤY CHỨNG NHẬN */}
         {gameState === 'round_summary' && (
-          <motion.div 
+          <motion.div
             key="round_summary"
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="flex-1 flex flex-col items-center justify-center p-6 z-10"
+            className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 z-10 overflow-y-auto"
           >
-            <div className="bg-white p-12 rounded-[3rem] shadow-2xl border-8 border-amber-400 max-w-2xl w-full text-center">
-              <div className="relative inline-block mb-8">
-                <Crown size={100} className="text-yellow-400 drop-shadow-lg" />
-              </div>
-              
-              <h2 className="text-4xl font-black text-slate-800 mb-2 uppercase tracking-tighter">KẾT THÚC MÃ ĐỀ {currentRound}!</h2>
-              <p className="text-2xl text-amber-600 font-black mb-8 uppercase">{playerName}</p>
-              
-              <div className="bg-slate-900 text-white p-8 rounded-[2rem] mb-12 shadow-2xl">
-                <p className="text-sm font-black text-white/40 uppercase tracking-widest mb-2">Điểm số đạt được</p>
-                <p className="text-7xl font-black text-yellow-400">{roundScore}</p>
-                <div className="flex justify-center gap-8 mt-6 pt-6 border-t border-white/10">
-                  <div>
-                    <p className="text-[10px] font-black text-white/40 uppercase">Số câu đúng</p>
-                    <p className="text-2xl font-black text-emerald-400">{correctCount}</p>
+            <div className="max-w-3xl w-full space-y-5">
+              {/* Giấy chứng nhận Trạng nguyên Toán học */}
+              <div className="bg-[#FFFDF5] rounded-3xl p-5 sm:p-8 md:p-10 shadow-2xl border-[6px] border-amber-400 relative overflow-hidden">
+                <div className="border-2 border-amber-300 rounded-2xl p-5 sm:p-8 text-center relative">
+                  {/* Hoa văn góc SVG */}
+                  <svg className="w-7 h-7 text-amber-600 absolute top-2.5 left-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M2 12V2h10" />
+                  </svg>
+                  <svg className="w-7 h-7 text-amber-600 absolute top-2.5 right-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M22 12V2H12" />
+                  </svg>
+                  <svg className="w-7 h-7 text-amber-600 absolute bottom-2.5 left-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M2 12v10h10" />
+                  </svg>
+                  <svg className="w-7 h-7 text-amber-600 absolute bottom-2.5 right-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M22 12v10H12" />
+                  </svg>
+
+                  <div className="w-16 h-16 rounded-2xl bg-amber-100 border border-amber-300 flex items-center justify-center mx-auto mb-3 text-amber-600">
+                    <Crown size={36} />
                   </div>
-                  <div>
-                    <p className="text-[10px] font-black text-white/40 uppercase">Số câu sai</p>
-                    <p className="text-2xl font-black text-rose-400">{wrongCount}</p>
+
+                  <p className="text-xs font-extrabold uppercase tracking-widest text-amber-700">
+                    MathFlow Toán 5 · Đấu trường Rung Chuông Vàng
+                  </p>
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-amber-900 mt-1 tracking-tight">
+                    GIẤY CHỨNG NHẬN TRẠNG NGUYÊN TOÁN HỌC
+                  </h2>
+
+                  <div className="w-40 h-0.5 bg-amber-300 mx-auto my-4" />
+
+                  <p className="text-sm font-semibold text-slate-600">Trân trọng chứng nhận em học sinh:</p>
+                  <p className="text-2xl sm:text-4xl font-black text-slate-900 uppercase mt-1 mb-3">
+                    {playerName || 'Học sinh'}
+                  </p>
+
+                  <div className="inline-flex items-center gap-2 bg-amber-100 border border-amber-300 text-amber-900 px-5 py-2 rounded-xl font-black text-lg mb-2">
+                    <Award size={22} className="text-amber-600" />
+                    <span>Danh hiệu: {awardInfo.title}</span>
+                  </div>
+                  <p className="text-sm font-semibold text-slate-600 mb-6">{awardInfo.subtitle}</p>
+
+                  {/* Bảng 3 chỉ số chính trên Giấy chứng nhận */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-white border border-amber-200 rounded-2xl p-4 mb-5">
+                    <div>
+                      <p className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Chặng thi</p>
+                      <p className="text-base font-black text-slate-800 mt-1">
+                        {currentStage.shortTitle}: {currentStage.title}
+                      </p>
+                    </div>
+                    <div className="sm:border-x border-amber-100 px-2">
+                      <p className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Số câu đúng</p>
+                      <p className="text-2xl font-black text-emerald-600 mt-0.5 tabular-nums">
+                        {correctCount} / 20
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Tổng điểm đạt được</p>
+                      <p className="text-2xl font-black text-amber-600 mt-0.5 tabular-nums">
+                        {roundScore} điểm
+                      </p>
+                    </div>
+                  </div>
+
+                  {eliminatedAt !== null && (
+                    <p className="text-xs font-bold text-rose-700 mb-4">
+                      Hành trình tạm dừng tại Câu {eliminatedAt} · Hãy thử sức lại để chạm mốc Câu 20 nhé!
+                    </p>
+                  )}
+
+                  <div className="flex flex-wrap items-center justify-between gap-4 pt-3 border-t border-amber-200/80 text-left">
+                    <div>
+                      <p className="text-xs font-semibold text-slate-500">
+                        Ngày cấp: {new Date().toLocaleDateString('vi-VN')}
+                      </p>
+                      <p className="text-sm font-extrabold text-amber-900">Hội đồng Đấu trường MathFlow</p>
+                    </div>
+                    <div className="w-20 h-20 rounded-full border-4 border-rose-600/80 flex flex-col items-center justify-center text-rose-700 font-black text-[10px] leading-tight rotate-[-8deg] bg-rose-50/60">
+                      <span>CHỨNG NHẬN</span>
+                      <span className="text-xs text-rose-600">{awardInfo.sealText}</span>
+                      <span>TOÁN 5</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <button 
-                  onClick={startNewGame}
-                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 py-4 rounded-2xl text-xl font-black transition-all flex items-center justify-center gap-2"
+              {saveNotice && (
+                <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl px-4 py-3 text-center text-sm font-extrabold">
+                  {saveNotice}
+                </div>
+              )}
+
+              {/* Các nút hành động */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <button
+                  type="button"
+                  onClick={handleDownloadCertificate}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white py-4 px-5 rounded-2xl text-base font-black shadow-lg transition-all flex items-center justify-center gap-2"
                 >
-                  <RotateCcw size={20} /> CHƠI LẠI
+                  <Camera size={20} /> Lưu / Chụp thành tích
                 </button>
-                <button 
+                <button
+                  type="button"
                   onClick={() => setGameState('start')}
-                  className="bg-amber-500 hover:bg-amber-600 text-white py-4 rounded-2xl text-xl font-black shadow-lg transition-all flex items-center justify-center gap-2"
+                  className="bg-amber-500 hover:bg-amber-600 text-white py-4 px-5 rounded-2xl text-base font-black shadow-lg transition-all flex items-center justify-center gap-2"
                 >
-                  CHỌN MÃ KHÁC
+                  <RefreshCw size={20} /> Thử sức chặng khác
+                </button>
+                <button
+                  type="button"
+                  onClick={startNewGame}
+                  className="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 py-4 px-5 rounded-2xl text-base font-black transition-all flex items-center justify-center gap-2"
+                >
+                  <RotateCcw size={19} /> Thi lại chặng này
                 </button>
               </div>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* MODAL CÂU HỎI GIẢI CỨU (10 GIÂY) */}
+      <AnimatePresence>
+        {rescueModalOpen && activeRescueQuestion && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 16 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 16 }}
+              className="bg-white border-4 border-amber-400 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl text-center"
+            >
+              <div className="w-16 h-16 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto mb-3">
+                <ShieldAlert size={34} />
+              </div>
+              <p className="text-xs font-black uppercase tracking-widest text-amber-700">
+                Quyền Giải cứu Duy nhất · Thời gian 10 giây
+              </p>
+              <h3 className="text-2xl font-black text-slate-900 mt-1 mb-2">
+                CÂU HỎI GIẢI CỨU TÍNH NHANH
+              </h3>
+              <p className="text-sm font-semibold text-slate-600 mb-4">
+                Trả lời đúng câu hỏi này để được hồi sinh và tiếp tục chinh phục Chuông Vàng!
+              </p>
+
+              {/* Đồng hồ 10 giây */}
+              <div className="mb-4">
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 font-black text-lg tabular-nums">
+                  <Timer size={18} /> {rescueTimeLeft} giây
+                </div>
+                <div className="h-2 bg-slate-100 rounded-full overflow-hidden mt-2">
+                  <div
+                    style={{ width: `${(rescueTimeLeft / 10) * 100}%` }}
+                    className="h-full bg-rose-500 transition-all duration-500"
+                  />
+                </div>
+              </div>
+
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-5">
+                <p className="text-xl sm:text-2xl font-black text-slate-900">
+                  {activeRescueQuestion.question}
+                </p>
+              </div>
+
+              {rescueResult === null ? (
+                <div className="grid grid-cols-2 gap-3">
+                  {activeRescueQuestion.options.map((opt) => (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => handleRescueAnswer(opt)}
+                      className="bg-white hover:bg-amber-50 border-2 border-slate-200 hover:border-amber-400 py-4 px-3 rounded-2xl text-xl font-black text-slate-800 transition-all"
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              ) : rescueResult === 'success' ? (
+                <div className="bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-2xl p-4 font-black text-lg flex items-center justify-center gap-2">
+                  <CheckCircle2 size={24} className="text-emerald-600" />
+                  Hồi sinh thành công! Tiến lên câu tiếp theo!
+                </div>
+              ) : (
+                <div className="bg-rose-50 border border-rose-300 text-rose-800 rounded-2xl p-4 font-black text-base flex flex-col items-center gap-1">
+                  <div className="flex items-center gap-2">
+                    <XCircle size={22} className="text-rose-600" />
+                    <span>Giải cứu chưa thành công!</span>
+                  </div>
+                  <span className="text-sm font-bold text-slate-700">
+                    Đáp án đúng là: {activeRescueQuestion.answer}
+                  </span>
+                </div>
+              )}
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

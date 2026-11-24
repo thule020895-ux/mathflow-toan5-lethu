@@ -17,7 +17,13 @@ import {
   XCircle, 
   Lightbulb, 
   ArrowRight,
-  MoveHorizontal
+  MoveHorizontal,
+  Ruler,
+  Scissors,
+  Play,
+  Eye,
+  SlidersHorizontal,
+  X
 } from 'lucide-react';
 import { ShapeType } from '../types';
 import MascotCompanion from './MascotCompanion';
@@ -28,6 +34,8 @@ const INITIAL_2D_PARAMS = {
   trapezoid: { base: 12, height: 8, baseSmall: 8 },
   circle: { radius: 5 }
 };
+
+const CIRCLE_SLICE_OPTIONS = [4, 8, 16, 32, 64] as const;
 
 // Component hiển thị phân số chuẩn Toán học
 const Fraction: React.FC<{ num: React.ReactNode; den: React.ReactNode; className?: string }> = ({ num, den, className = "" }) => (
@@ -44,86 +52,163 @@ const getShapeConfig = (shape: ShapeType, mode: number) => {
   if (shape === 'triangle') {
     if (mode === 1) {
       // 1. Tam giác nhọn
-      // A=(0,0), B=(200,0), C=(140,-160)
-      // M trên BC = (170, -80) => 2M = (340, -160)
       return {
-        points: "0,0 200,0 140,-160",
-        targetDX: 340,
-        targetDY: -160,
-        separatedPos1: { x: 110, y: 310 },
-        separatedPos2: { x: 650, y: 150 },
-        snappedPos1: { x: 210, y: 310 },
-        snappedPos2: { x: 550, y: 150 },
-        altitudeX: 140,
-        altitudeBottomX: 140,
+        originX: 280,
+        originY: 325,
+        baseWidth: 200,
+        heightPx: 160,
+        apexX: 130,
+        apexY: -160,
+        points: "0,0 200,0 130,-160",
+        leftPiecePoints: "0,0 130,-160 0,-160",
+        rightPiecePoints: "200,0 200,-160 130,-160",
+        leftInitOffset: { x: -165, y: 0 },
+        rightInitOffset: { x: 115, y: 0 },
+        needsTwoPieces: true,
+        targetDX: 0,
+        targetDY: 0,
+        separatedPos1: { x: 280, y: 325 },
+        separatedPos2: { x: 280, y: 325 },
+        snappedPos1: { x: 280, y: 325 },
+        snappedPos2: { x: 280, y: 325 },
+        altitudeX: 130,
+        altitudeBottomX: 130,
         isAltitudeOutside: false
       };
     }
     if (mode === 2) {
       // 2. Tam giác tù (chiều cao rơi ra ngoài cạnh đáy)
-      // A=(0,0), B=(200,0), C=(-60,-160)
-      // M trên BC = (70, -80) => 2M = (140, -160)
       return {
-        points: "0,0 200,0 -60,-160",
-        targetDX: 140,
-        targetDY: -160,
-        separatedPos1: { x: 150, y: 310 },
-        separatedPos2: { x: 610, y: 150 },
-        snappedPos1: { x: 280, y: 310 },
-        snappedPos2: { x: 420, y: 150 },
+        originX: 310,
+        originY: 325,
+        baseWidth: 190,
+        heightPx: 160,
+        apexX: -60,
+        apexY: -160,
+        points: "0,0 190,0 -60,-160",
+        leftPiecePoints: "",
+        rightPiecePoints: "190,0 130,-160 -60,-160",
+        leftInitOffset: { x: 0, y: 0 },
+        rightInitOffset: { x: 105, y: -20 },
+        needsTwoPieces: false,
+        targetDX: 0,
+        targetDY: 0,
+        separatedPos1: { x: 310, y: 325 },
+        separatedPos2: { x: 310, y: 325 },
+        snappedPos1: { x: 310, y: 325 },
+        snappedPos2: { x: 310, y: 325 },
         altitudeX: -60,
         altitudeBottomX: -60,
         isAltitudeOutside: true
       };
     }
-    // 3. Tam giác vuông
-    // A=(0,0), B=(200,0), C=(200,-160)
-    // M trên BC = (200, -80) => 2M = (400, -160)
+    if (mode === 3) {
+      // 3. Tam giác vuông
+      return {
+        originX: 280,
+        originY: 325,
+        baseWidth: 200,
+        heightPx: 160,
+        apexX: 0,
+        apexY: -160,
+        points: "0,0 200,0 0,-160",
+        leftPiecePoints: "",
+        rightPiecePoints: "200,0 200,-160 0,-160",
+        leftInitOffset: { x: 0, y: 0 },
+        rightInitOffset: { x: 120, y: -15 },
+        needsTwoPieces: false,
+        targetDX: 0,
+        targetDY: 0,
+        separatedPos1: { x: 280, y: 325 },
+        separatedPos2: { x: 280, y: 325 },
+        snappedPos1: { x: 280, y: 325 },
+        snappedPos2: { x: 280, y: 325 },
+        altitudeX: 0,
+        altitudeBottomX: 0,
+        isAltitudeOutside: false
+      };
+    }
+    // 4. Tam giác đều (cạnh 200px, chiều cao ~ 173px)
     return {
-      points: "0,0 200,0 200,-160",
-      targetDX: 400,
-      targetDY: -160,
-      separatedPos1: { x: 110, y: 310 },
-      separatedPos2: { x: 650, y: 150 },
-      snappedPos1: { x: 180, y: 310 },
-      snappedPos2: { x: 580, y: 150 },
-      altitudeX: 200,
-      altitudeBottomX: 200,
+      originX: 280,
+      originY: 330,
+      baseWidth: 200,
+      heightPx: 173,
+      apexX: 100,
+      apexY: -173,
+      points: "0,0 200,0 100,-173",
+      leftPiecePoints: "0,0 100,-173 0,-173",
+      rightPiecePoints: "200,0 200,-173 100,-173",
+      leftInitOffset: { x: -150, y: 0 },
+      rightInitOffset: { x: 130, y: 0 },
+      needsTwoPieces: true,
+      targetDX: 0,
+      targetDY: 0,
+      separatedPos1: { x: 280, y: 330 },
+      separatedPos2: { x: 280, y: 330 },
+      snappedPos1: { x: 280, y: 330 },
+      snappedPos2: { x: 280, y: 330 },
+      altitudeX: 100,
+      altitudeBottomX: 100,
       isAltitudeOutside: false
     };
   }
 
   if (shape === 'trapezoid') {
     if (mode === 1) {
-      // 1. Hình thang thường
-      // A=(0,0), B=(250,0), C=(200,-160), D=(50,-160)
-      // M trên BC = ((250+200)/2, -80) = (225, -80) => 2M = (450, -160)
+      // 1. Hình thang thường: tách bằng 2 đường cao thành 1 Hình chữ nhật + 2 Tam giác vuông
+      // Gốc tọa độ (245, 325): A=(0,0), B=(250,0), C=(200,-160), D=(50,-160)
       return {
+        originX: 245,
+        originY: 325,
+        baseWidth: 250,
+        smallBaseWidth: 150,
+        heightPx: 160,
         points: "0,0 250,0 200,-160 50,-160",
-        targetDX: 450,
-        targetDY: -160,
-        separatedPos1: { x: 80, y: 310 },
-        separatedPos2: { x: 680, y: 150 },
-        snappedPos1: { x: 155, y: 310 },
-        snappedPos2: { x: 605, y: 150 },
+        leftAltX: 50,
+        rightAltX: 200,
+        rectPoints: "50,0 200,0 200,-160 50,-160",
+        triLeftPoints: "0,0 50,0 50,-160",
+        triRightPoints: "200,0 250,0 200,-160",
+        targetRectOffset: { x: -230, y: 0 },     // [295..445] -> [65..215]
+        targetTriLeftOffset: { x: 280, y: 0 },   // [245..295] -> [525..575]
+        targetTriRightOffset: { x: 130, y: 0 },  // [445..495] -> [575..625]
+        targetDX: 0,
+        targetDY: 0,
+        separatedPos1: { x: 245, y: 325 },
+        separatedPos2: { x: 245, y: 325 },
+        snappedPos1: { x: 245, y: 325 },
+        snappedPos2: { x: 245, y: 325 },
         altitudeX: 50,
         altitudeBottomX: 50,
         isAltitudeOutside: false
       };
     }
-    // 2. Hình thang vuông
-    // A=(0,0), B=(250,0), C=(250,-160), D=(100,-160)
-    // M trên BC = (250, -80) => 2M = (500, -160)
+    // 2. Hình thang vuông: góc vuông tại A và D; kẻ 1 đường cao từ C xuống đáy tách thành 1 Hình chữ nhật + 1 Tam giác vuông
+    // Gốc tọa độ (245, 325): A=(0,0), B=(250,0), C=(150,-160), D=(0,-160)
     return {
-      points: "0,0 250,0 250,-160 100,-160",
-      targetDX: 500,
-      targetDY: -160,
-      separatedPos1: { x: 80, y: 310 },
-      separatedPos2: { x: 680, y: 150 },
-      snappedPos1: { x: 130, y: 310 },
-      snappedPos2: { x: 630, y: 150 },
-      altitudeX: 100,
-      altitudeBottomX: 100,
+      originX: 245,
+      originY: 325,
+      baseWidth: 250,
+      smallBaseWidth: 150,
+      heightPx: 160,
+      points: "0,0 250,0 150,-160 0,-160",
+      leftAltX: 0,
+      rightAltX: 150,
+      rectPoints: "0,0 150,0 150,-160 0,-160",
+      triLeftPoints: "",
+      triRightPoints: "150,0 250,0 150,-160",
+      targetRectOffset: { x: -180, y: 0 },     // [245..395] -> [65..215]
+      targetTriLeftOffset: { x: 0, y: 0 },
+      targetTriRightOffset: { x: 130, y: 0 },  // [395..495] -> [525..625]
+      targetDX: 0,
+      targetDY: 0,
+      separatedPos1: { x: 245, y: 325 },
+      separatedPos2: { x: 245, y: 325 },
+      snappedPos1: { x: 245, y: 325 },
+      snappedPos2: { x: 245, y: 325 },
+      altitudeX: 150,
+      altitudeBottomX: 150,
       isAltitudeOutside: false
     };
   }
@@ -145,7 +230,7 @@ const getShapeConfig = (shape: ShapeType, mode: number) => {
 
 const Shape2DPanel: React.FC = () => {
   const [selectedShape, setSelectedShape] = useState<ShapeType>('triangle');
-  const [demoMode, setDemoMode] = useState<1 | 2 | 3>(1); 
+  const [demoMode, setDemoMode] = useState<1 | 2 | 3 | 4>(1); 
   const [params, setParams] = useState({
     base: 12,
     height: 8,
@@ -159,15 +244,52 @@ const Shape2DPanel: React.FC = () => {
   const [userCircumInput, setUserCircumInput] = useState('');
   const [practiceResult, setPracticeResult] = useState<{ isChecked: boolean; isCorrect: boolean } | null>(null);
 
-  // Vị trí tọa độ 2 mảnh
-  const initialConfig = getShapeConfig(selectedShape, demoMode);
-  const [pos1, setPos1] = useState(initialConfig.separatedPos1);
-  const [pos2, setPos2] = useState(initialConfig.separatedPos2);
-  
-  const [activeShape, setActiveShape] = useState<1 | 2 | null>(null);
-  const [isSnapped, setIsSnapped] = useState(false);
-  const dragStartOffset = useRef({ x: 0, y: 0 });
   const containerRef = useRef<SVGSVGElement>(null);
+
+  // --- Trạng thái riêng cho Hình tam giác: Người dùng tự kẻ chiều cao + Kéo thả ghép thành Hình chữ nhật ---
+  const [isAltitudeDrawn, setIsAltitudeDrawn] = useState(false);
+  const [isDrawingAltitude, setIsDrawingAltitude] = useState(false);
+  const [isClickDrawMode, setIsClickDrawMode] = useState(false);
+  const [drawPt, setDrawPt] = useState<{ x: number; y: number } | null>(null);
+  const [drawHint, setDrawHint] = useState<string | null>(null);
+  const drawStartRef = useRef<{ x: number; y: number } | null>(null);
+
+  // Trạng thái các mảnh ghép tam giác thành hình chữ nhật
+  const [leftPieceOffset, setLeftPieceOffset] = useState({ x: -165, y: 0 });
+  const [rightPieceOffset, setRightPieceOffset] = useState({ x: 115, y: 0 });
+  const [leftPieceSnapped, setLeftPieceSnapped] = useState(false);
+  const [rightPieceSnapped, setRightPieceSnapped] = useState(false);
+  // Bước 3 cho Tam giác tù: kéo phần nhô bên trái sang phải thành hình chữ nhật
+  const [obtuseShiftOffset, setObtuseShiftOffset] = useState({ x: 0, y: 0 });
+  const [obtuseShifted, setObtuseShifted] = useState(false);
+  const [activeTriPiece, setActiveTriPiece] = useState<'left' | 'right' | 'obtuseShift' | null>(null);
+  const triDragOffset = useRef({ x: 0, y: 0 });
+
+  // --- Trạng thái riêng cho Hình thang: Tự kẻ chiều cao + Chia thành Hình chữ nhật & Tam giác vuông ---
+  const [trapLeftAltDrawn, setTrapLeftAltDrawn] = useState(false);
+  const [trapRightAltDrawn, setTrapRightAltDrawn] = useState(false);
+  const [activeTrapApex, setActiveTrapApex] = useState<'left' | 'right' | null>(null);
+  const [trapClickApex, setTrapClickApex] = useState<'left' | 'right' | null>(null);
+  const [trapDrawPt, setTrapDrawPt] = useState<{ x: number; y: number } | null>(null);
+  const [trapDrawHint, setTrapDrawHint] = useState<string | null>(null);
+  const trapDrawStartRef = useRef<{ x: number; y: number } | null>(null);
+
+  const [trapRectOffset, setTrapRectOffset] = useState({ x: 0, y: 0 });
+  const [trapTriLeftOffset, setTrapTriLeftOffset] = useState({ x: 0, y: 0 });
+  const [trapTriRightOffset, setTrapTriRightOffset] = useState({ x: 0, y: 0 });
+  const [trapRectSnapped, setTrapRectSnapped] = useState(false);
+  const [trapTriLeftSnapped, setTrapTriLeftSnapped] = useState(false);
+  const [trapTriRightSnapped, setTrapTriRightSnapped] = useState(false);
+  const [activeTrapPiece, setActiveTrapPiece] = useState<'rect' | 'triLeft' | 'triRight' | null>(null);
+  const trapDragOffset = useRef({ x: 0, y: 0 });
+
+  // --- Trạng thái riêng cho Hình tròn: Khám phá Diện tích (cắt 4/8/16/32/64 phần ghép hình chữ nhật) ---
+  const [circleSliceIdx, setCircleSliceIdx] = useState<number>(2); // mặc định 16 phần (mốc index 2)
+  const [circleMergeProgress, setCircleMergeProgress] = useState<number>(0); // 0% -> 100%
+  const [isCircleAnimating, setIsCircleAnimating] = useState<boolean>(false);
+  const [showCircleHints, setShowCircleHints] = useState<boolean>(true);
+  const [showCircleFormulaModal, setShowCircleFormulaModal] = useState<boolean>(false);
+  const circleSlices = CIRCLE_SLICE_OPTIONS[circleSliceIdx] ?? 16;
 
   // Kiểm tra xem hiện tại có phải số liệu ban đầu (mặc định) hay không
   const isInitialData = () => {
@@ -205,11 +327,69 @@ const Shape2DPanel: React.FC = () => {
   // Cập nhật vị trí khi đổi hình hoặc chế độ
   useEffect(() => {
     const cfg = getShapeConfig(selectedShape, demoMode);
-    setPos1(cfg.separatedPos1);
-    setPos2(cfg.separatedPos2);
-    setIsSnapped(false);
-    setActiveShape(null);
+
+    // Reset trạng thái khám phá Hình tam giác
+    setIsAltitudeDrawn(false);
+    setIsDrawingAltitude(false);
+    setIsClickDrawMode(false);
+    setDrawPt(null);
+    setDrawHint(null);
+    setLeftPieceOffset(cfg.leftInitOffset || { x: -165, y: 0 });
+    setRightPieceOffset(cfg.rightInitOffset || { x: 115, y: 0 });
+    setLeftPieceSnapped(false);
+    setRightPieceSnapped(false);
+    setObtuseShiftOffset({ x: 0, y: 0 });
+    setObtuseShifted(false);
+    setActiveTriPiece(null);
+
+    // Reset trạng thái khám phá Hình thang
+    setTrapLeftAltDrawn(selectedShape === 'trapezoid' && demoMode === 2);
+    setTrapRightAltDrawn(false);
+    setActiveTrapApex(null);
+    setTrapClickApex(null);
+    setTrapDrawPt(null);
+    setTrapDrawHint(null);
+    setTrapRectOffset({ x: 0, y: 0 });
+    setTrapTriLeftOffset({ x: 0, y: 0 });
+    setTrapTriRightOffset({ x: 0, y: 0 });
+    setTrapRectSnapped(false);
+    setTrapTriLeftSnapped(false);
+    setTrapTriRightSnapped(false);
+    setActiveTrapPiece(null);
+
+    // Reset trạng thái khám phá Hình tròn
+    setIsCircleAnimating(false);
+    setShowCircleFormulaModal(false);
+    if (selectedShape !== 'circle' || demoMode === 1) {
+      setCircleMergeProgress(0);
+    }
   }, [selectedShape, demoMode]);
+
+  // Animation mượt 0% <-> 100% khi bấm nút "Cắt và ghép thành hình mới"
+  useEffect(() => {
+    if (!isCircleAnimating) return;
+    let rafId: number;
+    let startTime: number | null = null;
+    const startVal = circleMergeProgress;
+    const targetVal = startVal >= 99 ? 0 : 100;
+    const duration = Math.max(450, Math.abs(targetVal - startVal) * 14);
+
+    const tick = (ts: number) => {
+      if (startTime === null) startTime = ts;
+      const elapsed = ts - startTime;
+      const ratio = Math.min(1, elapsed / duration);
+      const nextVal = Math.round(startVal + (targetVal - startVal) * ratio);
+      setCircleMergeProgress(nextVal);
+      if (ratio < 1) {
+        rafId = requestAnimationFrame(tick);
+      } else {
+        setIsCircleAnimating(false);
+      }
+    };
+
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [isCircleAnimating]);
 
   const calculateArea = () => {
     switch (selectedShape) {
@@ -245,98 +425,429 @@ const Shape2DPanel: React.FC = () => {
     return pt.matrixTransform(ctm.inverse());
   };
 
-  const handleMouseDown = (shapeId: 1 | 2, e: React.MouseEvent | React.TouchEvent) => {
+  const isTriangleRectComplete =
+    selectedShape === 'triangle' &&
+    isAltitudeDrawn &&
+    (demoMode === 1 || demoMode === 4
+      ? leftPieceSnapped && rightPieceSnapped
+      : demoMode === 3
+        ? rightPieceSnapped
+        : rightPieceSnapped && obtuseShifted);
+
+  const isTrapAltComplete =
+    selectedShape === 'trapezoid' &&
+    (demoMode === 1 ? trapLeftAltDrawn && trapRightAltDrawn : trapRightAltDrawn);
+
+  const isTrapExploreComplete =
+    isTrapAltComplete &&
+    trapRectSnapped &&
+    trapTriRightSnapped &&
+    (demoMode === 1 ? trapTriLeftSnapped : true);
+
+  // Xử lý kéo thả vẽ chiều cao và ghép mảnh cho Hình tam giác
+  const handleApexPointerDown = (e: React.MouseEvent | React.TouchEvent) => {
+    if (selectedShape !== 'triangle' || isAltitudeDrawn) return;
+    e.stopPropagation();
+    const pt = getSVGPoint(e);
+    if (!pt) return;
+    const cfg = getShapeConfig('triangle', demoMode);
+    const apexSvgX = (cfg.originX ?? 280) + (cfg.apexX ?? 130);
+    const apexSvgY = (cfg.originY ?? 325) + (cfg.apexY ?? -160);
+    drawStartRef.current = { x: pt.x, y: pt.y };
+    setIsDrawingAltitude(true);
+    setDrawPt({ x: apexSvgX, y: apexSvgY });
+    setDrawHint(null);
+  };
+
+  const handleTriPiecePointerDown = (
+    piece: 'left' | 'right' | 'obtuseShift',
+    e: React.MouseEvent | React.TouchEvent
+  ) => {
+    if (selectedShape !== 'triangle' || !isAltitudeDrawn) return;
+    if (piece === 'left' && leftPieceSnapped) return;
+    if (piece === 'right' && rightPieceSnapped) return;
+    if (piece === 'obtuseShift' && (!rightPieceSnapped || obtuseShifted)) return;
+    e.stopPropagation();
     const pt = getSVGPoint(e);
     if (!pt) return;
 
-    if (isSnapped) {
-      setActiveShape(1);
-      dragStartOffset.current = {
-        x: pt.x - pos1.x,
-        y: pt.y - pos1.y
-      };
-    } else {
-      setActiveShape(shapeId);
-      const currentPos = shapeId === 1 ? pos1 : pos2;
-      dragStartOffset.current = {
-        x: pt.x - currentPos.x,
-        y: pt.y - currentPos.y
-      };
+    const currentOffset =
+      piece === 'left'
+        ? leftPieceOffset
+        : piece === 'right'
+          ? rightPieceOffset
+          : obtuseShiftOffset;
+
+    setActiveTriPiece(piece);
+    triDragOffset.current = {
+      x: pt.x - currentOffset.x,
+      y: pt.y - currentOffset.y
+    };
+  };
+
+  // Xử lý kéo thả vẽ chiều cao & tách mảnh cho Hình thang
+  const handleTrapApexPointerDown = (
+    side: 'left' | 'right',
+    e: React.MouseEvent | React.TouchEvent
+  ) => {
+    if (selectedShape !== 'trapezoid') return;
+    if (side === 'left' && (demoMode === 2 || trapLeftAltDrawn)) return;
+    if (side === 'right' && trapRightAltDrawn) return;
+    e.stopPropagation();
+    const pt = getSVGPoint(e);
+    if (!pt) return;
+
+    const cfg = getShapeConfig('trapezoid', demoMode);
+    const ox = cfg.originX ?? 245;
+    const oy = cfg.originY ?? 325;
+    const hp = cfg.heightPx ?? 160;
+    const apexLocalX = side === 'left' ? (cfg.leftAltX ?? 50) : (cfg.rightAltX ?? 200);
+    trapDrawStartRef.current = { x: pt.x, y: pt.y };
+    setActiveTrapApex(side);
+    setTrapClickApex(null);
+    setTrapDrawPt({ x: ox + apexLocalX, y: oy - hp });
+    setTrapDrawHint(null);
+  };
+
+  const handleTrapPiecePointerDown = (
+    piece: 'rect' | 'triLeft' | 'triRight',
+    e: React.MouseEvent | React.TouchEvent
+  ) => {
+    if (selectedShape !== 'trapezoid' || !isTrapAltComplete) return;
+    if (piece === 'rect' && trapRectSnapped) return;
+    if (piece === 'triLeft' && (demoMode === 2 || trapTriLeftSnapped)) return;
+    if (piece === 'triRight' && trapTriRightSnapped) return;
+    e.stopPropagation();
+    const pt = getSVGPoint(e);
+    if (!pt) return;
+
+    const currentOffset =
+      piece === 'rect'
+        ? trapRectOffset
+        : piece === 'triLeft'
+          ? trapTriLeftOffset
+          : trapTriRightOffset;
+
+    setActiveTrapPiece(piece);
+    trapDragOffset.current = {
+      x: pt.x - currentOffset.x,
+      y: pt.y - currentOffset.y
+    };
+  };
+
+  const handleCanvasClick = (e: React.MouseEvent) => {
+    // Click-to-drop chân đường cao Hình tam giác
+    if (selectedShape === 'triangle' && !isAltitudeDrawn && isClickDrawMode) {
+      const pt = getSVGPoint(e);
+      if (!pt) return;
+      const cfg = getShapeConfig('triangle', demoMode);
+      const footSvgX = (cfg.originX ?? 280) + cfg.altitudeX;
+      const footSvgY = cfg.originY ?? 325;
+      if (Math.abs(pt.x - footSvgX) <= 36 && Math.abs(pt.y - footSvgY) <= 45) {
+        setIsAltitudeDrawn(true);
+        setIsDrawingAltitude(false);
+        setIsClickDrawMode(false);
+        setDrawPt(null);
+        setDrawHint(null);
+      } else {
+        setDrawHint('Hãy bấm vào vị trí vuông góc (90°) trên đường đáy để hạ đường cao!');
+      }
+      return;
+    }
+
+    // Click-to-drop chân đường cao Hình thang
+    if (selectedShape === 'trapezoid' && trapClickApex && !isTrapAltComplete) {
+      const pt = getSVGPoint(e);
+      if (!pt) return;
+      const cfg = getShapeConfig('trapezoid', demoMode);
+      const ox = cfg.originX ?? 245;
+      const oy = cfg.originY ?? 325;
+      const footLocalX = trapClickApex === 'left' ? (cfg.leftAltX ?? 50) : (cfg.rightAltX ?? 200);
+      const footSvgX = ox + footLocalX;
+      const footSvgY = oy;
+      if (Math.abs(pt.x - footSvgX) <= 36 && Math.abs(pt.y - footSvgY) <= 45) {
+        if (trapClickApex === 'left') setTrapLeftAltDrawn(true);
+        else setTrapRightAltDrawn(true);
+        setActiveTrapApex(null);
+        setTrapClickApex(null);
+        setTrapDrawPt(null);
+        setTrapDrawHint(null);
+      } else {
+        setTrapDrawHint('Hãy bấm đúng điểm vuông góc (90°) trên đáy lớn để hoàn tất đường cao!');
+      }
     }
   };
 
   const handleMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
-    if (activeShape === null) return;
-    const pt = getSVGPoint(e);
-    if (!pt) return;
+    // 1. Kéo kẻ đường cao hình tam giác
+    if (selectedShape === 'triangle' && (isDrawingAltitude || isClickDrawMode) && !isAltitudeDrawn) {
+      const pt = getSVGPoint(e);
+      if (pt) {
+        setDrawPt({
+          x: Math.max(40, Math.min(pt.x, 720)),
+          y: Math.max(60, Math.min(pt.y, 410))
+        });
+      }
+      return;
+    }
 
-    const rawX = pt.x - dragStartOffset.current.x;
-    const rawY = pt.y - dragStartOffset.current.y;
+    // 2. Kéo ghép mảnh hình tam giác thành hình chữ nhật
+    if (selectedShape === 'triangle' && activeTriPiece) {
+      const pt = getSVGPoint(e);
+      if (!pt) return;
+      const newOffset = {
+        x: Math.max(-240, Math.min(pt.x - triDragOffset.current.x, 260)),
+        y: Math.max(-120, Math.min(pt.y - triDragOffset.current.y, 100))
+      };
+      if (activeTriPiece === 'left') setLeftPieceOffset(newOffset);
+      else if (activeTriPiece === 'right') setRightPieceOffset(newOffset);
+      else if (activeTriPiece === 'obtuseShift') setObtuseShiftOffset(newOffset);
+      return;
+    }
 
-    // Giữ an toàn trong vùng vẽ SVG (0 đến 760, 0 đến 460)
-    const newPos = {
-      x: Math.max(20, Math.min(rawX, 740)),
-      y: Math.max(70, Math.min(rawY, 410))
-    };
+    // 3. Kéo kẻ đường cao hình thang
+    if (selectedShape === 'trapezoid' && (activeTrapApex || trapClickApex) && !isTrapAltComplete) {
+      const pt = getSVGPoint(e);
+      if (pt) {
+        setTrapDrawPt({
+          x: Math.max(40, Math.min(pt.x, 720)),
+          y: Math.max(60, Math.min(pt.y, 410))
+        });
+      }
+      return;
+    }
 
-    if (isSnapped) {
-      const dx = newPos.x - pos1.x;
-      const dy = newPos.y - pos1.y;
-      setPos1(newPos);
-      setPos2(prev => ({ x: prev.x + dx, y: prev.y + dy }));
-    } else {
-      if (activeShape === 1) setPos1(newPos);
-      else setPos2(newPos);
+    // 4. Kéo ghép mảnh hình thang (Hình chữ nhật + Tam giác vuông)
+    if (selectedShape === 'trapezoid' && activeTrapPiece) {
+      const pt = getSVGPoint(e);
+      if (!pt) return;
+      const newOffset = {
+        x: Math.max(-290, Math.min(pt.x - trapDragOffset.current.x, 340)),
+        y: Math.max(-140, Math.min(pt.y - trapDragOffset.current.y, 100))
+      };
+      if (activeTrapPiece === 'rect') setTrapRectOffset(newOffset);
+      else if (activeTrapPiece === 'triLeft') setTrapTriLeftOffset(newOffset);
+      else if (activeTrapPiece === 'triRight') setTrapTriRightOffset(newOffset);
     }
   };
 
   const handleMouseUp = () => {
-    if (activeShape === null) return;
-    const cfg = getShapeConfig(selectedShape, demoMode);
-    
-    const currentDX = pos2.x - pos1.x;
-    const currentDY = pos2.y - pos1.y;
+    // 1. Hoàn tất thao tác kẻ đường cao hình tam giác
+    if (selectedShape === 'triangle' && isDrawingAltitude && !isAltitudeDrawn) {
+      const cfg = getShapeConfig('triangle', demoMode);
+      const footSvgX = (cfg.originX ?? 280) + cfg.altitudeX;
+      const footSvgY = cfg.originY ?? 325;
 
-    // Hút nam châm khi kéo gần vị trí ghép chuẩn (sai số < 55px)
-    if (!isSnapped && Math.abs(currentDX - cfg.targetDX) < 55 && Math.abs(currentDY - cfg.targetDY) < 55) {
-      setPos1(cfg.snappedPos1);
-      setPos2(cfg.snappedPos2);
-      setIsSnapped(true);
+      const movedDist =
+        drawStartRef.current && drawPt
+          ? Math.hypot(drawPt.x - drawStartRef.current.x, drawPt.y - drawStartRef.current.y)
+          : 0;
+
+      if (movedDist < 10) {
+        setIsDrawingAltitude(false);
+        setIsClickDrawMode(true);
+        setDrawHint('Đã chọn đỉnh! Bây giờ hãy bấm vào vị trí vuông góc trên đường cạnh đáy.');
+        return;
+      }
+
+      if (drawPt && Math.abs(drawPt.x - footSvgX) <= 34 && Math.abs(drawPt.y - footSvgY) <= 45) {
+        setIsAltitudeDrawn(true);
+        setIsDrawingAltitude(false);
+        setIsClickDrawMode(false);
+        setDrawPt(null);
+        setDrawHint(null);
+      } else {
+        setIsDrawingAltitude(false);
+        setIsClickDrawMode(false);
+        setDrawPt(null);
+        setDrawHint('Hãy kéo thẳng đứng từ đỉnh xuống vuông góc với đường đáy (90°) nhé!');
+      }
+      return;
     }
 
-    setActiveShape(null);
+    // 2. Bắt dính nam châm mảnh ghép hình tam giác -> hình chữ nhật
+    if (selectedShape === 'triangle' && activeTriPiece) {
+      const cfg = getShapeConfig('triangle', demoMode);
+      if (activeTriPiece === 'left') {
+        if (Math.hypot(leftPieceOffset.x, leftPieceOffset.y) < 55) {
+          setLeftPieceOffset({ x: 0, y: 0 });
+          setLeftPieceSnapped(true);
+        }
+      } else if (activeTriPiece === 'right') {
+        if (Math.hypot(rightPieceOffset.x, rightPieceOffset.y) < 55) {
+          setRightPieceOffset({ x: 0, y: 0 });
+          setRightPieceSnapped(true);
+        }
+      } else if (activeTriPiece === 'obtuseShift') {
+        const targetShiftX = cfg.baseWidth ?? 190;
+        if (Math.hypot(obtuseShiftOffset.x - targetShiftX, obtuseShiftOffset.y) < 60) {
+          setObtuseShiftOffset({ x: targetShiftX, y: 0 });
+          setObtuseShifted(true);
+        }
+      }
+      setActiveTriPiece(null);
+      return;
+    }
+
+    // 3. Hoàn tất thao tác kẻ đường cao hình thang
+    if (selectedShape === 'trapezoid' && activeTrapApex) {
+      const cfg = getShapeConfig('trapezoid', demoMode);
+      const ox = cfg.originX ?? 245;
+      const oy = cfg.originY ?? 325;
+      const footLocalX = activeTrapApex === 'left' ? (cfg.leftAltX ?? 50) : (cfg.rightAltX ?? 200);
+      const footSvgX = ox + footLocalX;
+      const footSvgY = oy;
+
+      const movedDist =
+        trapDrawStartRef.current && trapDrawPt
+          ? Math.hypot(trapDrawPt.x - trapDrawStartRef.current.x, trapDrawPt.y - trapDrawStartRef.current.y)
+          : 0;
+
+      if (movedDist < 10) {
+        setTrapClickApex(activeTrapApex);
+        setActiveTrapApex(null);
+        setTrapDrawHint('Đã chọn đỉnh đáy nhỏ! Hãy bấm xuống điểm vuông góc (90°) trên đáy lớn.');
+        return;
+      }
+
+      if (trapDrawPt && Math.abs(trapDrawPt.x - footSvgX) <= 34 && Math.abs(trapDrawPt.y - footSvgY) <= 45) {
+        if (activeTrapApex === 'left') setTrapLeftAltDrawn(true);
+        else setTrapRightAltDrawn(true);
+        setActiveTrapApex(null);
+        setTrapClickApex(null);
+        setTrapDrawPt(null);
+        setTrapDrawHint(null);
+      } else {
+        setActiveTrapApex(null);
+        setTrapClickApex(null);
+        setTrapDrawPt(null);
+        setTrapDrawHint('Hãy kéo thẳng đứng từ đỉnh đáy nhỏ xuống vuông góc với đáy lớn (90°)!');
+      }
+      return;
+    }
+
+    // 4. Bắt dính nam châm mảnh ghép hình thang (HCN & Tam giác vuông)
+    if (selectedShape === 'trapezoid' && activeTrapPiece) {
+      const cfg = getShapeConfig('trapezoid', demoMode);
+      if (activeTrapPiece === 'rect' && cfg.targetRectOffset) {
+        if (Math.hypot(trapRectOffset.x - cfg.targetRectOffset.x, trapRectOffset.y - cfg.targetRectOffset.y) < 60) {
+          setTrapRectOffset(cfg.targetRectOffset);
+          setTrapRectSnapped(true);
+        }
+      } else if (activeTrapPiece === 'triLeft' && cfg.targetTriLeftOffset) {
+        if (Math.hypot(trapTriLeftOffset.x - cfg.targetTriLeftOffset.x, trapTriLeftOffset.y - cfg.targetTriLeftOffset.y) < 60) {
+          setTrapTriLeftOffset(cfg.targetTriLeftOffset);
+          setTrapTriLeftSnapped(true);
+        }
+      } else if (activeTrapPiece === 'triRight' && cfg.targetTriRightOffset) {
+        if (Math.hypot(trapTriRightOffset.x - cfg.targetTriRightOffset.x, trapTriRightOffset.y - cfg.targetTriRightOffset.y) < 60) {
+          setTrapTriRightOffset(cfg.targetTriRightOffset);
+          setTrapTriRightSnapped(true);
+        }
+      }
+      setActiveTrapPiece(null);
+    }
   };
 
-  // Đặt lại 2 mảnh tách rời cân đối 2 bên
+  // Đặt lại trạng thái ban đầu (hình tam giác / hình thang quay về chưa kẻ đường cao)
   const resetPuzzle = () => {
     const cfg = getShapeConfig(selectedShape, demoMode);
-    setPos1(cfg.separatedPos1);
-    setPos2(cfg.separatedPos2);
-    setIsSnapped(false);
-    setActiveShape(null);
+
+    setIsAltitudeDrawn(false);
+    setIsDrawingAltitude(false);
+    setIsClickDrawMode(false);
+    setDrawPt(null);
+    setDrawHint(null);
+    setLeftPieceOffset(cfg.leftInitOffset || { x: -165, y: 0 });
+    setRightPieceOffset(cfg.rightInitOffset || { x: 115, y: 0 });
+    setLeftPieceSnapped(false);
+    setRightPieceSnapped(false);
+    setObtuseShiftOffset({ x: 0, y: 0 });
+    setObtuseShifted(false);
+    setActiveTriPiece(null);
+
+    setTrapLeftAltDrawn(selectedShape === 'trapezoid' && demoMode === 2);
+    setTrapRightAltDrawn(false);
+    setActiveTrapApex(null);
+    setTrapClickApex(null);
+    setTrapDrawPt(null);
+    setTrapDrawHint(null);
+    setTrapRectOffset({ x: 0, y: 0 });
+    setTrapTriLeftOffset({ x: 0, y: 0 });
+    setTrapTriRightOffset({ x: 0, y: 0 });
+    setTrapRectSnapped(false);
+    setTrapTriLeftSnapped(false);
+    setTrapTriRightSnapped(false);
+    setActiveTrapPiece(null);
   };
 
-  // Nút bấm chuyển đổi nhanh Ghép hình / Tách mảnh
+  // Nút bấm chuyển đổi nhanh cho Hình thang / Hình tam giác
   const toggleSnap = () => {
     const cfg = getShapeConfig(selectedShape, demoMode);
-    if (isSnapped) {
-      setPos1(cfg.separatedPos1);
-      setPos2(cfg.separatedPos2);
-      setIsSnapped(false);
-    } else {
-      setPos1(cfg.snappedPos1);
-      setPos2(cfg.snappedPos2);
-      setIsSnapped(true);
+    if (selectedShape === 'triangle') {
+      if (!isAltitudeDrawn) {
+        setIsAltitudeDrawn(true);
+        setIsDrawingAltitude(false);
+        setIsClickDrawMode(false);
+        setDrawPt(null);
+        setDrawHint(null);
+        return;
+      }
+      if (isTriangleRectComplete) {
+        setLeftPieceOffset(cfg.leftInitOffset || { x: -165, y: 0 });
+        setRightPieceOffset(cfg.rightInitOffset || { x: 115, y: 0 });
+        setLeftPieceSnapped(false);
+        setRightPieceSnapped(false);
+        setObtuseShiftOffset({ x: 0, y: 0 });
+        setObtuseShifted(false);
+      } else {
+        setLeftPieceOffset({ x: 0, y: 0 });
+        setRightPieceOffset({ x: 0, y: 0 });
+        setLeftPieceSnapped(true);
+        setRightPieceSnapped(true);
+        setObtuseShiftOffset({ x: cfg.baseWidth ?? 190, y: 0 });
+        setObtuseShifted(true);
+      }
+      return;
+    }
+
+    if (selectedShape === 'trapezoid') {
+      if (!isTrapAltComplete) {
+        setTrapLeftAltDrawn(true);
+        setTrapRightAltDrawn(true);
+        setActiveTrapApex(null);
+        setTrapClickApex(null);
+        setTrapDrawPt(null);
+        setTrapDrawHint(null);
+        return;
+      }
+      if (isTrapExploreComplete) {
+        setTrapRectOffset({ x: 0, y: 0 });
+        setTrapTriLeftOffset({ x: 0, y: 0 });
+        setTrapTriRightOffset({ x: 0, y: 0 });
+        setTrapRectSnapped(false);
+        setTrapTriLeftSnapped(false);
+        setTrapTriRightSnapped(false);
+      } else {
+        setTrapRectOffset(cfg.targetRectOffset || { x: -230, y: 0 });
+        setTrapTriLeftOffset(cfg.targetTriLeftOffset || { x: 280, y: 0 });
+        setTrapTriRightOffset(cfg.targetTriRightOffset || { x: 130, y: 0 });
+        setTrapRectSnapped(true);
+        setTrapTriLeftSnapped(true);
+        setTrapTriRightSnapped(true);
+      }
     }
   };
 
   const generateRandom = () => {
-    const randomVal = () => Math.floor(Math.random() * 20) + 5;
+    const newBase = Math.floor(Math.random() * 14) + 10; // 10..23
+    const newBaseSmall = Math.floor(Math.random() * (newBase - 5)) + 4; // luôn nhỏ hơn đáy lớn
+    const newHeight = Math.floor(Math.random() * 15) + 5;
     setParams({
       ...params,
-      base: randomVal(),
-      height: randomVal(),
-      baseSmall: Math.floor(Math.random() * 10) + 5,
+      base: newBase,
+      height: newHeight,
+      baseSmall: newBaseSmall,
       radius: Math.floor(Math.random() * 10) + 2
     });
     setUserAreaInput('');
@@ -563,6 +1074,16 @@ const Shape2DPanel: React.FC = () => {
                 >
                   3. Tam giác vuông
                 </button>
+                <button 
+                  onClick={() => setDemoMode(4)} 
+                  className={`py-2 px-3 text-xs font-bold rounded-lg text-left transition-all ${
+                    demoMode === 4 
+                      ? 'bg-sky-100 text-sky-800 border border-sky-300 font-extrabold shadow-xs' 
+                      : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  4. Tam giác đều
+                </button>
               </>
             )}
             
@@ -597,21 +1118,21 @@ const Shape2DPanel: React.FC = () => {
                   onClick={() => setDemoMode(1)} 
                   className={`py-2 px-3 text-xs font-bold rounded-lg text-left transition-all ${
                     demoMode === 1 
-                      ? 'bg-amber-100 text-amber-900 border border-amber-300 font-extrabold shadow-xs' 
+                      ? 'bg-emerald-100 text-emerald-900 border border-emerald-300 font-extrabold shadow-xs' 
                       : 'text-slate-600 hover:bg-slate-100'
                   }`}
                 >
-                  1. Bán kính (r) & Đường kính (d)
+                  1. Chu vi hình tròn (r & d)
                 </button>
                 <button 
                   onClick={() => setDemoMode(2)} 
                   className={`py-2 px-3 text-xs font-bold rounded-lg text-left transition-all ${
                     demoMode === 2 
-                      ? 'bg-amber-100 text-amber-900 border border-amber-300 font-extrabold shadow-xs' 
+                      ? 'bg-emerald-100 text-emerald-900 border border-emerald-300 font-extrabold shadow-xs' 
                       : 'text-slate-600 hover:bg-slate-100'
                   }`}
                 >
-                  2. Cắt 16 nan quạt ghép hình chữ nhật
+                  2. Khám phá Diện tích hình tròn
                 </button>
               </>
             )}
@@ -724,18 +1245,77 @@ const Shape2DPanel: React.FC = () => {
 
         {/* Nút hành động */}
         <div className="grid grid-cols-1 gap-2 pt-1">
-          {selectedShape !== 'circle' && (
-            <button 
-              onClick={toggleSnap} 
-              className={`w-full py-3 px-4 rounded-xl flex items-center justify-center gap-2 font-bold text-sm shadow-xs transition-all active:scale-[0.98] ${
-                isSnapped
-                  ? 'bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300'
-                  : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20 shadow-md'
-              }`}
-            >
-              {isSnapped ? <RefreshCw size={16} /> : <CheckCircle2 size={16} />}
-              {isSnapped ? 'Tách rời 2 mảnh hình' : 'Ghép thành hình bình hành ngay'}
-            </button>
+          {selectedShape === 'triangle' && (
+            <>
+              <button 
+                onClick={toggleSnap} 
+                className={`w-full py-3 px-4 rounded-xl flex items-center justify-center gap-2 font-bold text-sm shadow-xs transition-all active:scale-[0.98] ${
+                  !isAltitudeDrawn
+                    ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-600/20 shadow-md'
+                    : isTriangleRectComplete
+                      ? 'bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300'
+                      : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20 shadow-md'
+                }`}
+              >
+                {!isAltitudeDrawn ? (
+                  <>
+                    <Ruler size={16} /> Kẻ đường cao mẫu
+                  </>
+                ) : isTriangleRectComplete ? (
+                  <>
+                    <RefreshCw size={16} /> Tách rời để kéo ghép lại
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 size={16} /> Ghép thành Hình chữ nhật
+                  </>
+                )}
+              </button>
+              {isAltitudeDrawn && (
+                <button
+                  onClick={resetPuzzle}
+                  className="w-full py-2 px-3 rounded-xl flex items-center justify-center gap-2 font-bold text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-all"
+                >
+                  <RotateCcw size={14} /> Kẻ lại đường cao từ đầu
+                </button>
+              )}
+            </>
+          )}
+          {selectedShape === 'trapezoid' && (
+            <>
+              <button 
+                onClick={toggleSnap} 
+                className={`w-full py-3 px-4 rounded-xl flex items-center justify-center gap-2 font-bold text-sm shadow-xs transition-all active:scale-[0.98] ${
+                  !isTrapAltComplete
+                    ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-600/20 shadow-md'
+                    : isTrapExploreComplete
+                      ? 'bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300'
+                      : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20 shadow-md'
+                }`}
+              >
+                {!isTrapAltComplete ? (
+                  <>
+                    <Ruler size={16} /> Kẻ đường cao mẫu
+                  </>
+                ) : isTrapExploreComplete ? (
+                  <>
+                    <RefreshCw size={16} /> Đưa các mảnh về hình thang
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 size={16} /> Tách thành HCN & Tam giác
+                  </>
+                )}
+              </button>
+              {(trapRightAltDrawn || (demoMode === 1 && trapLeftAltDrawn)) && (
+                <button
+                  onClick={resetPuzzle}
+                  className="w-full py-2 px-3 rounded-xl flex items-center justify-center gap-2 font-bold text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-all"
+                >
+                  <RotateCcw size={14} /> Kẻ lại đường cao từ đầu
+                </button>
+              )}
+            </>
           )}
           <button 
             onClick={generateRandom} 
@@ -761,45 +1341,152 @@ const Shape2DPanel: React.FC = () => {
       <div className="flex-1 p-4 md:p-6 lg:p-8 flex flex-col bg-white overflow-hidden">
         
         {/* BẢNG TƯƠNG TÁC HÌNH HỌC (LƯỚI Ô VUÔNG GIẤY VỞ TOÁN) */}
-        <div className="w-full aspect-[16/10] md:min-h-[460px] math-grid-bg rounded-3xl border-2 border-sky-200 shadow-md board-shadow relative flex items-center justify-center overflow-hidden">
+        <div className={`w-full ${selectedShape === 'circle' && demoMode === 2 ? 'min-h-[540px]' : 'aspect-[16/10] md:min-h-[460px]'} math-grid-bg rounded-3xl border-2 border-emerald-200 shadow-md board-shadow relative flex flex-col justify-between overflow-hidden`}>
+          
+          {/* Vùng Canvas chính chứa Header + SVG + Mascot */}
+          <div className="relative flex-1 flex items-center justify-center min-h-[380px]">
           
           {/* Header Bảng tương tác */}
-          <div className="absolute top-4 left-4 z-20 flex flex-col gap-1.5 pointer-events-none max-w-[70%]">
-            <div className="inline-flex items-center gap-2 bg-sky-600 text-white px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider shadow-md w-fit">
+          <div className={`absolute top-4 left-4 z-20 flex flex-col gap-1.5 pointer-events-none ${selectedShape === 'circle' ? 'max-w-[52%]' : 'max-w-[70%]'}`}>
+            <div className="inline-flex items-center gap-2 bg-emerald-600 text-white px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider shadow-md w-fit">
               <Sparkles size={14} className="text-amber-300" />
               BẢNG TƯƠNG TÁC HÌNH HỌC
             </div>
-            <div className="bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 border border-sky-100 shadow-xs flex items-center gap-2 w-fit">
-              <MousePointer2 size={13} className="text-sky-600 shrink-0" />
-              {selectedShape !== 'circle' ? (
-                isSnapped ? (
+            <div className="bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 border border-emerald-100 shadow-xs flex items-center gap-2 w-fit">
+              <MousePointer2 size={13} className="text-emerald-600 shrink-0" />
+              {selectedShape === 'triangle' ? (
+                !isAltitudeDrawn ? (
+                  <span className="text-rose-700 font-extrabold">
+                    {drawHint || 'Bước 1: Kéo từ đỉnh trên xuống vuông góc với cạnh đáy để tự kẻ chiều cao (h)!'}
+                  </span>
+                ) : isTriangleRectComplete ? (
                   <span className="text-emerald-700 font-extrabold flex items-center gap-1">
-                    <CheckCircle2 size={13} className="text-emerald-600" /> Đã ghép thành công thành hình bình hành!
+                    <CheckCircle2 size={13} className="text-emerald-600" />
+                    Đã ghép thành Hình chữ nhật (dài = a, rộng = h) ➜ S(tam giác) = (a × h) : 2
+                  </span>
+                ) : demoMode === 2 && rightPieceSnapped && !obtuseShifted ? (
+                  <span className="text-amber-800 font-extrabold">
+                    Bước 3: Kéo phần tam giác nhô bên trái sang cạnh phải để tạo Hình chữ nhật!
                   </span>
                 ) : (
-                  <span>Kéo mảnh số 2 ghép với mảnh 1 (hoặc bấm nút "Ghép hình") để khám phá công thức!</span>
+                  <span className="text-sky-800 font-extrabold">
+                    Bước 2: Kéo các mảnh ghép vào khung để biến hình tam giác thành Hình chữ nhật!
+                  </span>
+                )
+              ) : selectedShape === 'trapezoid' ? (
+                !isTrapAltComplete ? (
+                  <span className="text-rose-700 font-extrabold">
+                    {trapDrawHint ||
+                      (demoMode === 1
+                        ? !trapLeftAltDrawn && !trapRightAltDrawn
+                          ? 'Bước 1: Kéo từ 2 đỉnh đáy nhỏ xuống vuông góc với đáy lớn để tự kẻ chiều cao (h)!'
+                          : 'Rất tốt! Hãy kéo kẻ nốt chiều cao thứ 2 xuống đáy lớn (90°)!'
+                        : 'Bước 1: Kéo từ đỉnh trên bên phải xuống vuông góc với đáy lớn để kẻ chiều cao (h)!')}
+                  </span>
+                ) : isTrapExploreComplete ? (
+                  <span className="text-emerald-700 font-extrabold flex items-center gap-1">
+                    <CheckCircle2 size={13} className="text-emerald-600 shrink-0" />
+                    S = S(HCN) + S({demoMode === 1 ? '2 Tam giác vuông' : 'Tam giác vuông'}) ➜ S = (a + b) × h : 2
+                  </span>
+                ) : (
+                  <span className="text-purple-800 font-extrabold">
+                    Bước 2: Kéo Hình chữ nhật sang khung trái và {demoMode === 1 ? '2 Tam giác vuông' : 'Tam giác vuông'} sang khung phải để tính diện tích!
+                  </span>
                 )
               ) : demoMode === 1 ? (
-                <span>Khám phá bán kính (r) và đường kính (d = r × 2) trên mặt phẳng tọa độ ô ly</span>
+                <span>Khám phá bán kính (r), đường kính (d = r × 2) và chu vi hình tròn</span>
               ) : (
-                <span className="text-amber-900 font-extrabold">Cắt ghép 16 nan quạt thành hình chữ nhật để chứng minh S = r × r × 3,14!</span>
+                <span className="text-teal-900 font-extrabold">
+                  Chia thành {circleSlices} phần bằng nhau rồi cắt ghép thành hình gần giống hình chữ nhật!
+                </span>
               )}
             </div>
           </div>
 
+          {/* Thanh chuyển đổi 2 tab cho Hình tròn ở góc trên bên phải */}
+          {selectedShape === 'circle' && (
+            <div className="absolute top-4 right-4 z-20 flex items-center gap-1 bg-white/95 backdrop-blur-md p-1 rounded-2xl border border-emerald-200 shadow-md">
+              <button
+                onClick={() => setDemoMode(1)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+                  demoMode === 1
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:bg-emerald-50 hover:text-emerald-800'
+                }`}
+              >
+                Chu vi hình tròn
+              </button>
+              <button
+                onClick={() => setDemoMode(2)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  demoMode === 2
+                    ? 'bg-teal-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:bg-teal-50 hover:text-teal-800'
+                }`}
+              >
+                <Scissors size={13} />
+                Khám phá Diện tích hình tròn
+              </button>
+            </div>
+          )}
+
           {/* Nút hành động nhanh trên góc phải bảng tương tác */}
           {selectedShape !== 'circle' && (
             <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+              {((selectedShape === 'triangle' && isAltitudeDrawn) ||
+                (selectedShape === 'trapezoid' && (trapRightAltDrawn || (demoMode === 1 && trapLeftAltDrawn)))) && (
+                <button
+                  onClick={resetPuzzle}
+                  className="px-2.5 py-1.5 rounded-xl font-bold text-xs bg-white/95 hover:bg-slate-100 text-slate-700 border border-slate-200 shadow-sm transition-all flex items-center gap-1 cursor-pointer"
+                  title="Kẻ lại chiều cao từ đầu"
+                >
+                  <RotateCcw size={13} />
+                  Kẻ lại h
+                </button>
+              )}
               <button
                 onClick={toggleSnap}
-                className={`px-3 py-1.5 rounded-xl font-extrabold text-xs shadow-md transition-all flex items-center gap-1.5 active:scale-95 ${
-                  isSnapped
-                    ? 'bg-amber-500 hover:bg-amber-600 text-white'
-                    : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                className={`px-3 py-1.5 rounded-xl font-extrabold text-xs shadow-md transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer ${
+                  selectedShape === 'triangle'
+                    ? !isAltitudeDrawn
+                      ? 'bg-rose-600 hover:bg-rose-700 text-white'
+                      : isTriangleRectComplete
+                        ? 'bg-amber-500 hover:bg-amber-600 text-white'
+                        : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                    : !isTrapAltComplete
+                      ? 'bg-rose-600 hover:bg-rose-700 text-white'
+                      : isTrapExploreComplete
+                        ? 'bg-amber-500 hover:bg-amber-600 text-white'
+                        : 'bg-emerald-600 hover:bg-emerald-700 text-white'
                 }`}
               >
-                {isSnapped ? <RefreshCw size={14} /> : <CheckCircle2 size={14} />}
-                {isSnapped ? 'Tách rời mảnh' : 'Ghép hình ngay'}
+                {selectedShape === 'triangle' ? (
+                  !isAltitudeDrawn ? (
+                    <>
+                      <Ruler size={14} /> Kẻ chiều cao mẫu
+                    </>
+                  ) : isTriangleRectComplete ? (
+                    <>
+                      <RefreshCw size={14} /> Tách rời mảnh
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 size={14} /> Ghép thành HCN
+                    </>
+                  )
+                ) : !isTrapAltComplete ? (
+                  <>
+                    <Ruler size={14} /> Kẻ chiều cao mẫu
+                  </>
+                ) : isTrapExploreComplete ? (
+                  <>
+                    <RefreshCw size={14} /> Đưa về hình thang
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 size={14} /> Tách HCN & Tam giác
+                  </>
+                )}
               </button>
             </div>
           )}
@@ -812,6 +1499,7 @@ const Shape2DPanel: React.FC = () => {
             viewBox="0 0 760 460" 
             preserveAspectRatio="xMidYMid meet"
             className="select-none w-full h-full" 
+            onClick={handleCanvasClick}
             onMouseMove={handleMouseMove} 
             onMouseUp={handleMouseUp} 
             onMouseLeave={handleMouseUp} 
@@ -829,418 +1517,1004 @@ const Shape2DPanel: React.FC = () => {
               </linearGradient>
             </defs>
 
-            {/* ================= 1. HÌNH TAM GIÁC ================= */}
-            {selectedShape === 'triangle' && (
-              <>
-                {/* Đường nối hướng dẫn khi chưa ghép */}
-                {!isSnapped && (
-                  <g opacity="0.45" strokeDasharray="4 4" stroke="#0284c7" strokeWidth="1.5">
-                    <line x1={pos1.x + 200} y1={pos1.y} x2={pos2.x - 200} y2={pos2.y} />
-                    <text 
-                      x={(pos1.x + 200 + pos2.x - 200) / 2} 
-                      y={pos1.y - 10} 
-                      textAnchor="middle" 
-                      className="text-[10px] font-bold fill-sky-700 font-mono"
-                    >
-                      Kéo ghép tại đây ➜
-                    </text>
-                  </g>
-                )}
+            {/* ================= 1. HÌNH TAM GIÁC (TỰ KẺ ĐƯỜNG CAO + GHÉP THÀNH HÌNH CHỮ NHẬT) ================= */}
+            {selectedShape === 'triangle' && (() => {
+              const ox = config.originX ?? 280;
+              const oy = config.originY ?? 325;
+              const bw = config.baseWidth ?? 200;
+              const hp = config.heightPx ?? 160;
+              const ax = config.apexX ?? 130;
+              const ay = config.apexY ?? -160;
+              const altX = config.altitudeX;
+              const apexSvgX = ox + ax;
+              const apexSvgY = oy + ay;
+              const footSvgX = ox + altX;
+              const footSvgY = oy;
+              const isNearRightAngle =
+                drawPt !== null &&
+                Math.abs(drawPt.x - footSvgX) <= 34 &&
+                Math.abs(drawPt.y - footSvgY) <= 45;
 
-                {/* Mảnh 1 (Tam giác gốc) */}
-                <g 
-                  transform={`translate(${pos1.x}, ${pos1.y})`} 
-                  onMouseDown={(e) => handleMouseDown(1, e)} 
-                  onTouchStart={(e) => handleMouseDown(1, e)} 
-                  className="cursor-grab active:cursor-grabbing transition-opacity"
-                  filter="url(#shapeShadow)"
-                >
-                  <polygon 
-                    points={config.points} 
-                    fill="#0284c7" 
-                    fillOpacity={isSnapped ? "0.25" : "0.32"} 
-                    stroke="#0284c7" 
-                    strokeWidth="3.5" 
-                    strokeLinejoin="round"
-                  />
+              // Cho Tam giác tù: tọa độ điểm cắt K trên cạnh CB tại x = 0
+              const kY = -123.08;
 
-                  {/* Đoạn kéo dài cạnh đáy cho tam giác tù */}
-                  {demoMode === 2 && (
-                    <line 
-                      x1="0" 
-                      y1="0" 
-                      x2="-60" 
-                      y2="0" 
-                      stroke="#dc2626" 
-                      strokeWidth="2" 
-                      strokeDasharray="4 4" 
-                    />
+              return (
+                <>
+                  {/* Khung gợi ý Hình chữ nhật sau khi đã kẻ xong chiều cao */}
+                  {isAltitudeDrawn && !isTriangleRectComplete && (
+                    <g transform={`translate(${ox}, ${oy})`}>
+                      <rect
+                        x="0"
+                        y={-hp}
+                        width={bw}
+                        height={hp}
+                        fill="#10b981"
+                        fillOpacity="0.04"
+                        stroke="#059669"
+                        strokeWidth="2"
+                        strokeDasharray="6 4"
+                        rx="2"
+                      />
+                      <text
+                        x={bw / 2}
+                        y={-hp - 10}
+                        textAnchor="middle"
+                        className="text-[11px] font-extrabold fill-emerald-700"
+                      >
+                        Khung Hình Chữ Nhật (Dài = a, Rộng = h)
+                      </text>
+                    </g>
                   )}
 
-                  {/* Đường cao h */}
-                  <line 
-                    x1={config.altitudeX} 
-                    y1="0" 
-                    x2={config.altitudeX} 
-                    y2="-160" 
-                    stroke="#dc2626" 
-                    strokeWidth="3" 
-                    strokeDasharray="6 4" 
-                  />
+                  {/* Khối Hình Tam Giác Gốc (tại vị trí trung tâm ox, oy) */}
+                  <g transform={`translate(${ox}, ${oy})`} filter="url(#shapeShadow)">
+                    {/* Với Tam giác tù ở Bước 3 (đã ghép thành hình bình hành): tách phần bên trái x < 0 để kéo sang phải */}
+                    {demoMode === 2 && rightPieceSnapped ? (
+                      <>
+                        {/* Phần cố định nằm trong khung hình chữ nhật [0..bw] của Tam giác 1 */}
+                        <polygon
+                          points={`0,0 ${bw},0 0,${kY}`}
+                          fill="#0284c7"
+                          fillOpacity="0.28"
+                          stroke="#0284c7"
+                          strokeWidth="3"
+                          strokeLinejoin="round"
+                        />
+                        {/* Phần cố định nằm trong khung hình chữ nhật [0..bw] của Tam giác 2 */}
+                        <polygon
+                          points={`${bw},0 ${bw - 60},${-hp} 0,${-hp} 0,${kY}`}
+                          fill="#10b981"
+                          fillOpacity="0.28"
+                          stroke="#059669"
+                          strokeWidth="3"
+                          strokeLinejoin="round"
+                        />
 
-                  {/* Ký hiệu góc vuông chân đường cao */}
-                  <rect 
-                    x={config.altitudeX > 0 ? config.altitudeX - 12 : config.altitudeX} 
-                    y="-12" 
-                    width="12" 
-                    height="12" 
-                    fill="none" 
-                    stroke="#dc2626" 
-                    strokeWidth="1.5" 
-                  />
+                        {/* Mảnh nhô bên trái x < 0 (gồm 2 phần thuộc Tam giác 1 & Tam giác 2) để kéo sang phải thành HCN */}
+                        <g
+                          transform={`translate(${obtuseShiftOffset.x}, ${obtuseShiftOffset.y})`}
+                          onMouseDown={(e) => handleTriPiecePointerDown('obtuseShift', e)}
+                          onTouchStart={(e) => handleTriPiecePointerDown('obtuseShift', e)}
+                          className={obtuseShifted ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'}
+                        >
+                          <polygon
+                            points={`0,0 -60,${-hp} 0,${kY}`}
+                            fill="#0284c7"
+                            fillOpacity="0.32"
+                            stroke="#0284c7"
+                            strokeWidth="3"
+                            strokeLinejoin="round"
+                          />
+                          <polygon
+                            points={`-60,${-hp} 0,${-hp} 0,${kY}`}
+                            fill="#10b981"
+                            fillOpacity="0.32"
+                            stroke="#059669"
+                            strokeWidth="3"
+                            strokeLinejoin="round"
+                          />
+                          {!obtuseShifted && (
+                            <g className="pointer-events-none">
+                              <path
+                                d="M -25 -95 Q 75 -135 170 -95"
+                                fill="none"
+                                stroke="#d97706"
+                                strokeWidth="2.5"
+                                strokeDasharray="5 4"
+                              />
+                              <polygon points="166,-102 178,-92 164,-90" fill="#d97706" />
+                              <rect x="-56" y="-110" width="52" height="20" rx="6" fill="#fef3c7" stroke="#d97706" strokeWidth="1.2" />
+                              <text x="-30" y="-96" textAnchor="middle" className="text-[10px] font-black fill-amber-900">
+                                Kéo sang ➜
+                              </text>
+                            </g>
+                          )}
+                        </g>
+                      </>
+                    ) : (
+                      /* Tam giác gốc bình thường */
+                      <polygon
+                        points={config.points}
+                        fill="#0284c7"
+                        fillOpacity={isTriangleRectComplete ? "0.26" : "0.32"}
+                        stroke="#0284c7"
+                        strokeWidth="3.5"
+                        strokeLinejoin="round"
+                      />
+                    )}
 
-                  {/* Nhãn chiều cao h */}
-                  <rect 
-                    x={config.altitudeX > 0 ? config.altitudeX + 8 : config.altitudeX - 60} 
-                    y="-92" 
-                    width="54" 
-                    height="22" 
-                    rx="6" 
-                    fill="#ffffff" 
-                    stroke="#fca5a5" 
-                    strokeWidth="1.5"
-                  />
-                  <text 
-                    x={config.altitudeX > 0 ? config.altitudeX + 35 : config.altitudeX - 33} 
-                    y="-77" 
-                    textAnchor="middle" 
-                    className="text-xs font-black fill-rose-600 font-mono"
-                  >
-                    h = {params.height}
-                  </text>
-                  
-                  {/* Nhãn cạnh đáy a */}
-                  <rect 
-                    x="75" 
-                    y="14" 
-                    width="54" 
-                    height="22" 
-                    rx="6" 
-                    fill="#ffffff" 
-                    stroke="#bae6fd" 
-                    strokeWidth="1.5"
-                  />
-                  <text 
-                    x="102" 
-                    y="29" 
-                    textAnchor="middle" 
-                    className="text-xs font-black fill-sky-800 font-mono"
-                  >
-                    a = {params.base}
-                  </text>
+                    {/* Ký hiệu 3 cạnh bằng nhau cho 4. Tam giác đều */}
+                    {demoMode === 4 && !isTriangleRectComplete && (
+                      <g stroke="#0369a1" strokeWidth="2.5" strokeLinecap="round" className="pointer-events-none">
+                        {/* Cạnh đáy */}
+                        <line x1="100" y1="-5" x2="100" y2="5" />
+                        {/* Cạnh trái */}
+                        <line x1="45" y1="-89" x2="55" y2="-84" />
+                        {/* Cạnh phải */}
+                        <line x1="155" y1="-89" x2="145" y2="-84" />
+                      </g>
+                    )}
 
-                  {/* Nhãn mảnh số 1 */}
-                  {!isSnapped && (
-                    <text 
-                      x="90" 
-                      y="-45" 
-                      textAnchor="middle" 
-                      className="text-xs font-black fill-sky-900 pointer-events-none"
-                    >
-                      Mảnh 1 (gốc)
-                    </text>
-                  )}
+                    {/* Đoạn kéo dài cạnh đáy cho Tam giác tù */}
+                    {demoMode === 2 && (isAltitudeDrawn || isDrawingAltitude || isClickDrawMode) && !isTriangleRectComplete && (
+                      <line
+                        x1="0"
+                        y1="0"
+                        x2={altX}
+                        y2="0"
+                        stroke="#dc2626"
+                        strokeWidth="2"
+                        strokeDasharray="4 4"
+                      />
+                    )}
 
-                  {/* Các đỉnh A, B, C */}
-                  <circle cx="0" cy="0" r="5" fill="#0284c7" />
-                  <circle cx="200" cy="0" r="5" fill="#0284c7" />
-                  <circle cx={config.altitudeX} cy="-160" r="5" fill="#0284c7" />
-                </g>
+                    {/* Đường cao h (CHỈ HIỆN SAU KHI NGƯỜI DÙNG ĐÃ KẺ) */}
+                    {isAltitudeDrawn && (
+                      <g className="pointer-events-none">
+                        <line
+                          x1={altX}
+                          y1="0"
+                          x2={altX}
+                          y2={-hp}
+                          stroke="#dc2626"
+                          strokeWidth="3"
+                          strokeDasharray="6 4"
+                        />
+                        {/* Ký hiệu góc vuông chân đường cao */}
+                        <rect
+                          x={altX > 0 ? altX - 12 : altX}
+                          y="-12"
+                          width="12"
+                          height="12"
+                          fill="none"
+                          stroke="#dc2626"
+                          strokeWidth="1.8"
+                        />
+                        {/* Nhãn chiều cao h */}
+                        <rect
+                          x={altX > 0 ? altX + 8 : altX - 64}
+                          y={-hp / 2 - 11}
+                          width="56"
+                          height="22"
+                          rx="6"
+                          fill="#ffffff"
+                          stroke="#fca5a5"
+                          strokeWidth="1.5"
+                        />
+                        <text
+                          x={altX > 0 ? altX + 36 : altX - 36}
+                          y={-hp / 2 + 4}
+                          textAnchor="middle"
+                          className="text-xs font-black fill-rose-600 font-mono"
+                        >
+                          h = {params.height}
+                        </text>
+                      </g>
+                    )}
 
-                {/* Mảnh 2 (Tam giác ghép quay 180 độ) */}
-                <g 
-                  transform={`translate(${pos2.x}, ${pos2.y}) rotate(180)`} 
-                  onMouseDown={(e) => handleMouseDown(2, e)} 
-                  onTouchStart={(e) => handleMouseDown(2, e)} 
-                  className="cursor-grab active:cursor-grabbing"
-                  filter="url(#shapeShadow)"
-                >
-                  <polygon 
-                    points={config.points} 
-                    fill={isSnapped ? "#10b981" : "#38bdf8"} 
-                    fillOpacity={isSnapped ? "0.25" : "0.5"} 
-                    stroke={isSnapped ? "#059669" : "#0284c7"} 
-                    strokeWidth="3.5" 
-                    strokeLinejoin="round"
-                    strokeDasharray={isSnapped ? "none" : "8 4"}
-                  />
-                  {!isSnapped && (
-                    <text 
-                      x="100" 
-                      y="-50" 
-                      transform="rotate(180 100 -50)"
-                      textAnchor="middle" 
-                      className="text-xs font-black fill-sky-900 pointer-events-none"
-                    >
-                      Mảnh 2 (quay 180°)
-                    </text>
-                  )}
-                </g>
-
-                {/* Banner giải thích khi ghép thành công */}
-                {isSnapped && (
-                  <g transform={`translate(${pos1.x + 100}, ${pos1.y - 180})`}>
-                    <rect 
-                      x="-130" 
-                      y="-25" 
-                      width="260" 
-                      height="26" 
-                      rx="8" 
-                      fill="#065f46" 
-                      opacity="0.9"
-                    />
-                    <text 
-                      x="0" 
-                      y="-8" 
-                      textAnchor="middle" 
-                      className="text-xs font-black fill-emerald-100 font-sans"
-                    >
-                      ✓ Hình bình hành: Đáy = a, Chiều cao = h
-                    </text>
-                  </g>
-                )}
-              </>
-            )}
-
-            {/* ================= 2. HÌNH THANG ================= */}
-            {selectedShape === 'trapezoid' && (
-              <>
-                {/* Đường nối hướng dẫn khi chưa ghép */}
-                {!isSnapped && (
-                  <g opacity="0.45" strokeDasharray="4 4" stroke="#7c3aed" strokeWidth="1.5">
-                    <line x1={pos1.x + 250} y1={pos1.y} x2={pos2.x - 250} y2={pos2.y} />
-                    <text 
-                      x={(pos1.x + 250 + pos2.x - 250) / 2} 
-                      y={pos1.y - 10} 
-                      textAnchor="middle" 
-                      className="text-[10px] font-bold fill-purple-700 font-mono"
-                    >
-                      Kéo ghép tại đây ➜
-                    </text>
-                  </g>
-                )}
-
-                {/* Mảnh 1 (Hình thang gốc) */}
-                <g 
-                  transform={`translate(${pos1.x}, ${pos1.y})`} 
-                  onMouseDown={(e) => handleMouseDown(1, e)} 
-                  onTouchStart={(e) => handleMouseDown(1, e)} 
-                  className="cursor-grab active:cursor-grabbing"
-                  filter="url(#shapeShadow)"
-                >
-                  <polygon 
-                    points={config.points} 
-                    fill="#7c3aed" 
-                    fillOpacity={isSnapped ? "0.22" : "0.3"} 
-                    stroke="#7c3aed" 
-                    strokeWidth="3.5" 
-                    strokeLinejoin="round"
-                  />
-
-                  {/* Chiều cao h */}
-                  <line 
-                    x1={config.altitudeX} 
-                    y1="-160" 
-                    x2={config.altitudeBottomX} 
-                    y2="0" 
-                    stroke="#dc2626" 
-                    strokeWidth="3" 
-                    strokeDasharray="6 4" 
-                  />
-
-                  {/* Nhãn chiều cao h */}
-                  <rect 
-                    x={config.altitudeX > 50 ? config.altitudeX + 8 : config.altitudeX - 58} 
-                    y="-92" 
-                    width="54" 
-                    height="22" 
-                    rx="6" 
-                    fill="#ffffff" 
-                    stroke="#fca5a5" 
-                    strokeWidth="1.5"
-                  />
-                  <text 
-                    x={config.altitudeX > 50 ? config.altitudeX + 35 : config.altitudeX - 31} 
-                    y="-77" 
-                    textAnchor="middle" 
-                    className="text-xs font-black fill-rose-600 font-mono"
-                  >
-                    h = {params.height}
-                  </text>
-                  
-                  {/* Đáy lớn a */}
-                  <rect 
-                    x="95" 
-                    y="14" 
-                    width="60" 
-                    height="22" 
-                    rx="6" 
-                    fill="#ffffff" 
-                    stroke="#ddd6fe" 
-                    strokeWidth="1.5"
-                  />
-                  <text 
-                    x="125" 
-                    y="29" 
-                    textAnchor="middle" 
-                    className="text-xs font-black fill-purple-800 font-mono"
-                  >
-                    a = {params.base}
-                  </text>
-
-                  {/* Đáy nhỏ b */}
-                  <rect 
-                    x={demoMode === 1 ? "95" : "145"} 
-                    y="-192" 
-                    width="60" 
-                    height="22" 
-                    rx="6" 
-                    fill="#ffffff" 
-                    stroke="#ddd6fe" 
-                    strokeWidth="1.5"
-                  />
-                  <text 
-                    x={demoMode === 1 ? "125" : "175"} 
-                    y="-177" 
-                    textAnchor="middle" 
-                    className="text-xs font-black fill-purple-700 font-mono"
-                  >
-                    b = {params.baseSmall}
-                  </text>
-
-                  {/* Nhãn mảnh số 1 */}
-                  {!isSnapped && (
-                    <text 
-                      x="125" 
-                      y="-45" 
-                      textAnchor="middle" 
-                      className="text-xs font-black fill-purple-900 pointer-events-none"
-                    >
-                      Mảnh 1 (gốc)
-                    </text>
-                  )}
-
-                  {/* 4 đỉnh */}
-                  <circle cx="0" cy="0" r="5" fill="#7c3aed" />
-                  <circle cx="250" cy="0" r="5" fill="#7c3aed" />
-                  <circle cx={demoMode === 1 ? "200" : "250"} cy="-160" r="5" fill="#7c3aed" />
-                  <circle cx={demoMode === 1 ? "50" : "100"} cy="-160" r="5" fill="#7c3aed" />
-                </g>
-
-                {/* Mảnh 2 (Hình thang ghép quay 180 độ) */}
-                <g 
-                  transform={`translate(${pos2.x}, ${pos2.y}) rotate(180)`} 
-                  onMouseDown={(e) => handleMouseDown(2, e)} 
-                  onTouchStart={(e) => handleMouseDown(2, e)} 
-                  className="cursor-grab active:cursor-grabbing"
-                  filter="url(#shapeShadow)"
-                >
-                  <polygon 
-                    points={config.points} 
-                    fill={isSnapped ? "#10b981" : "#a855f7"} 
-                    fillOpacity={isSnapped ? "0.22" : "0.45"} 
-                    stroke={isSnapped ? "#059669" : "#7c3aed"} 
-                    strokeWidth="3.5" 
-                    strokeLinejoin="round"
-                    strokeDasharray={isSnapped ? "none" : "8 4"}
-                  />
-                  {!isSnapped && (
-                    <text 
-                      x="125" 
-                      y="-50" 
-                      transform="rotate(180 125 -50)"
-                      textAnchor="middle" 
-                      className="text-xs font-black fill-purple-900 pointer-events-none"
-                    >
-                      Mảnh 2 (quay 180°)
-                    </text>
-                  )}
-                </g>
-
-                {/* Đoạn kích thước tổng đáy a + b khi ghép thành công */}
-                {isSnapped && (
-                  <g transform={`translate(${pos1.x}, ${pos1.y + 45})`}>
-                    <line 
-                      x1="0" 
-                      y1="0" 
-                      x2={demoMode === 1 ? "400" : "400"} 
-                      y2="0" 
-                      stroke="#059669" 
-                      strokeWidth="2.5" 
-                    />
-                    <line x1="0" y1="-6" x2="0" y2="6" stroke="#059669" strokeWidth="2.5" />
-                    <line x1="400" y1="-6" x2="400" y2="6" stroke="#059669" strokeWidth="2.5" />
-                    <rect 
-                      x="80" 
-                      y="-13" 
-                      width="240" 
-                      height="26" 
-                      rx="6" 
-                      fill="#ecfdf5" 
-                      stroke="#059669" 
+                    {/* Nhãn cạnh đáy a */}
+                    <rect
+                      x={bw / 2 - 30}
+                      y="14"
+                      width="60"
+                      height="22"
+                      rx="6"
+                      fill="#ffffff"
+                      stroke="#bae6fd"
                       strokeWidth="1.5"
                     />
-                    <text 
-                      x="200" 
-                      y="4" 
-                      textAnchor="middle" 
-                      className="text-xs font-black fill-emerald-800 font-mono"
+                    <text
+                      x={bw / 2}
+                      y="29"
+                      textAnchor="middle"
+                      className="text-xs font-black fill-sky-800 font-mono"
                     >
-                      Đáy hình bình hành = a + b = {params.base + params.baseSmall} {params.unit}
+                      a = {params.base}
                     </text>
+
+                    {/* Nhãn Tam giác gốc */}
+                    {!isTriangleRectComplete && !(demoMode === 2 && rightPieceSnapped) && (
+                      <text
+                        x={demoMode === 2 ? bw / 2 - 20 : ax}
+                        y={-36}
+                        textAnchor="middle"
+                        className="text-xs font-black fill-sky-900 pointer-events-none"
+                      >
+                        {demoMode === 4 ? 'Tam giác đều' : 'Tam giác gốc'}
+                      </text>
+                    )}
+
+                    {/* Các đỉnh tam giác */}
+                    <circle cx="0" cy="0" r="5" fill="#0284c7" />
+                    <circle cx={bw} cy="0" r="5" fill="#0284c7" />
+
+                    {/* Điểm đỉnh C tương tác để kéo kẻ chiều cao (khi chưa kẻ) */}
+                    {!isAltitudeDrawn ? (
+                      <g
+                        onMouseDown={handleApexPointerDown}
+                        onTouchStart={handleApexPointerDown}
+                        className="cursor-crosshair"
+                      >
+                        {/* Đường gióng gợi ý hướng vuông góc mờ khi đang kéo */}
+                        {(isDrawingAltitude || isClickDrawMode) && (
+                          <g className="pointer-events-none">
+                            <line
+                              x1={ax}
+                              y1={ay}
+                              x2={altX}
+                              y2="0"
+                              stroke="#94a3b8"
+                              strokeWidth="1.5"
+                              strokeDasharray="4 4"
+                              opacity="0.7"
+                            />
+                            <circle
+                              cx={altX}
+                              cy="0"
+                              r="12"
+                              fill={isNearRightAngle ? '#10b981' : '#f43f5e'}
+                              fillOpacity="0.22"
+                              stroke={isNearRightAngle ? '#059669' : '#e11d48'}
+                              strokeWidth="2"
+                              strokeDasharray="3 2"
+                            />
+                          </g>
+                        )}
+                        <circle
+                          cx={ax}
+                          cy={ay}
+                          r="16"
+                          fill="#f43f5e"
+                          fillOpacity="0.18"
+                          className="animate-ping"
+                        />
+                        <circle
+                          cx={ax}
+                          cy={ay}
+                          r="9"
+                          fill="#e11d48"
+                          stroke="#ffffff"
+                          strokeWidth="2.5"
+                        />
+                        <circle cx={ax} cy={ay} r="22" fill="transparent" />
+                        {/* Nhãn hướng dẫn kéo từ đỉnh */}
+                        <g transform={`translate(${ax}, ${ay - 28})`} className="pointer-events-none">
+                          <rect
+                            x="-92"
+                            y="-12"
+                            width="184"
+                            height="22"
+                            rx="8"
+                            fill="#be123c"
+                            opacity="0.95"
+                          />
+                          <text
+                            x="0"
+                            y="3"
+                            textAnchor="middle"
+                            className="text-[10px] font-black fill-white"
+                          >
+                            ⬇ Kéo từ đỉnh xuống đáy kẻ h
+                          </text>
+                        </g>
+                      </g>
+                    ) : (
+                      <circle cx={ax} cy={ay} r="5" fill="#0284c7" />
+                    )}
                   </g>
-                )}
-              </>
-            )}
+
+                  {/* Nét vẽ đường cao tạm thời khi người dùng đang kéo */}
+                  {(isDrawingAltitude || isClickDrawMode) && drawPt && !isAltitudeDrawn && (
+                    <g className="pointer-events-none">
+                      <line
+                        x1={apexSvgX}
+                        y1={apexSvgY}
+                        x2={isNearRightAngle ? footSvgX : drawPt.x}
+                        y2={isNearRightAngle ? footSvgY : drawPt.y}
+                        stroke={isNearRightAngle ? '#059669' : '#e11d48'}
+                        strokeWidth="3"
+                        strokeDasharray="6 4"
+                      />
+                      <circle
+                        cx={isNearRightAngle ? footSvgX : drawPt.x}
+                        cy={isNearRightAngle ? footSvgY : drawPt.y}
+                        r="6"
+                        fill={isNearRightAngle ? '#10b981' : '#e11d48'}
+                        stroke="#ffffff"
+                        strokeWidth="2"
+                      />
+                      {isNearRightAngle && (
+                        <g transform={`translate(${footSvgX}, ${footSvgY})`}>
+                          <rect
+                            x={altX > 0 ? -12 : 0}
+                            y="-12"
+                            width="12"
+                            height="12"
+                            fill="none"
+                            stroke="#059669"
+                            strokeWidth="2"
+                          />
+                          <rect x="-46" y="10" width="92" height="20" rx="6" fill="#065f46" />
+                          <text x="0" y="24" textAnchor="middle" className="text-[10px] font-black fill-white">
+                            ✓ Vuông góc 90°!
+                          </text>
+                        </g>
+                      )}
+                    </g>
+                  )}
+
+                  {/* GIAI ĐOẠN 2: CÁC MẢNH GHÉP THÀNH HÌNH CHỮ NHẬT (chỉ hiện sau khi đã kẻ chiều cao) */}
+                  {isAltitudeDrawn && (
+                    <>
+                      {/* Mảnh ghép Trái (cho Tam giác nhọn & Tam giác đều) */}
+                      {(demoMode === 1 || demoMode === 4) && config.leftPiecePoints && (
+                        <g
+                          transform={`translate(${ox + leftPieceOffset.x}, ${oy + leftPieceOffset.y})`}
+                          onMouseDown={(e) => handleTriPiecePointerDown('left', e)}
+                          onTouchStart={(e) => handleTriPiecePointerDown('left', e)}
+                          className={leftPieceSnapped ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'}
+                          filter="url(#shapeShadow)"
+                        >
+                          <polygon
+                            points={config.leftPiecePoints}
+                            fill="#10b981"
+                            fillOpacity={leftPieceSnapped ? "0.26" : "0.45"}
+                            stroke="#059669"
+                            strokeWidth="3"
+                            strokeLinejoin="round"
+                            strokeDasharray={leftPieceSnapped ? "none" : "6 4"}
+                          />
+                          {!leftPieceSnapped && (
+                            <g className="pointer-events-none">
+                              <text
+                                x={altX * 0.38}
+                                y={-hp * 0.68}
+                                textAnchor="middle"
+                                className="text-[11px] font-black fill-emerald-950"
+                              >
+                                Mảnh trái
+                              </text>
+                              <text
+                                x={altX * 0.38}
+                                y={-hp * 0.54}
+                                textAnchor="middle"
+                                className="text-[10px] font-bold fill-emerald-800"
+                              >
+                                Kéo ghép ➜
+                              </text>
+                            </g>
+                          )}
+                        </g>
+                      )}
+
+                      {/* Mảnh ghép Phải (dùng cho mọi tam giác; với Tam giác vuông & tù là cả tam giác quay 180°) */}
+                      {!(demoMode === 2 && rightPieceSnapped) && (
+                        <g
+                          transform={`translate(${ox + rightPieceOffset.x}, ${oy + rightPieceOffset.y})`}
+                          onMouseDown={(e) => handleTriPiecePointerDown('right', e)}
+                          onTouchStart={(e) => handleTriPiecePointerDown('right', e)}
+                          className={rightPieceSnapped ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'}
+                          filter="url(#shapeShadow)"
+                        >
+                          <polygon
+                            points={config.rightPiecePoints}
+                            fill="#10b981"
+                            fillOpacity={rightPieceSnapped ? "0.26" : "0.45"}
+                            stroke="#059669"
+                            strokeWidth="3"
+                            strokeLinejoin="round"
+                            strokeDasharray={rightPieceSnapped ? "none" : "6 4"}
+                          />
+                          {!rightPieceSnapped && (
+                            <g className="pointer-events-none">
+                              <text
+                                x={demoMode === 2 ? 75 : demoMode === 3 ? bw * 0.65 : (bw + altX) / 2 + 12}
+                                y={-hp * 0.68}
+                                textAnchor="middle"
+                                className="text-[11px] font-black fill-emerald-950"
+                              >
+                                {demoMode === 1 || demoMode === 4 ? 'Mảnh phải' : 'Tam giác 2'}
+                              </text>
+                              <text
+                                x={demoMode === 2 ? 75 : demoMode === 3 ? bw * 0.65 : (bw + altX) / 2 + 12}
+                                y={-hp * 0.54}
+                                textAnchor="middle"
+                                className="text-[10px] font-bold fill-emerald-800"
+                              >
+                                ⬅ Kéo ghép
+                              </text>
+                            </g>
+                          )}
+                        </g>
+                      )}
+                    </>
+                  )}
+
+                  {/* Viền nổi bật & Kết luận Hình Chữ Nhật khi ghép hoàn chỉnh */}
+                  {isTriangleRectComplete && (
+                    <g transform={`translate(${ox}, ${oy})`} className="pointer-events-none">
+                      <rect
+                        x="0"
+                        y={-hp}
+                        width={bw}
+                        height={hp}
+                        fill="none"
+                        stroke="#059669"
+                        strokeWidth="4"
+                        rx="2"
+                      />
+                      {/* Nhãn Chiều rộng hình chữ nhật ở cạnh trái */}
+                      <rect x="-86" y={-hp / 2 - 12} width="78" height="24" rx="6" fill="#ecfdf5" stroke="#059669" strokeWidth="1.5" />
+                      <text x="-47" y={-hp / 2 + 4} textAnchor="middle" className="text-[11px] font-black fill-emerald-800 font-mono">
+                        Rộng = h
+                      </text>
+
+                      {/* Banner kết luận phía trên Hình chữ nhật */}
+                      <g transform={`translate(${bw / 2}, ${-hp - 18})`}>
+                        <rect
+                          x="-185"
+                          y="-16"
+                          width="370"
+                          height="28"
+                          rx="9"
+                          fill="#065f46"
+                          opacity="0.95"
+                        />
+                        <text
+                          x="0"
+                          y="2"
+                          textAnchor="middle"
+                          className="text-xs font-black fill-emerald-50 font-sans"
+                        >
+                          ✓ Hình chữ nhật (S = a × h) = 2 × Tam giác ➜ S = (a × h) : 2
+                        </text>
+                      </g>
+                    </g>
+                  )}
+                </>
+              );
+            })()}
+
+            {/* ================= 2. HÌNH THANG (TỰ KẺ ĐƯỜNG CAO + TÁCH THÀNH HCN & 2 TAM GIÁC VUÔNG) ================= */}
+            {selectedShape === 'trapezoid' && (() => {
+              const ox = config.originX ?? 245;
+              const oy = config.originY ?? 325;
+              const bw = config.baseWidth ?? 250;
+              const sbw = config.smallBaseWidth ?? 150;
+              const hp = config.heightPx ?? 160;
+              const leftAltX = config.leftAltX ?? 50;
+              const rightAltX = config.rightAltX ?? 200;
+
+              const activeApexSide = activeTrapApex ?? trapClickApex;
+              const activeApexLocalX = activeApexSide === 'left' ? leftAltX : rightAltX;
+              const activeApexSvgX = ox + activeApexLocalX;
+              const activeApexSvgY = oy - hp;
+              const activeFootSvgX = ox + activeApexLocalX;
+              const activeFootSvgY = oy;
+
+              const isNearTrapRightAngle =
+                trapDrawPt !== null &&
+                activeApexSide !== null &&
+                Math.abs(trapDrawPt.x - activeFootSvgX) <= 34 &&
+                Math.abs(trapDrawPt.y - activeFootSvgY) <= 45;
+
+              const rectAreaVal = Number((params.baseSmall * params.height).toFixed(2));
+              const diffBaseVal = Number((params.base - params.baseSmall).toFixed(2));
+              const triAreaVal = Number((((params.base - params.baseSmall) * params.height) / 2).toFixed(2));
+              const rightTargetDone = trapTriRightSnapped && (demoMode === 2 || trapTriLeftSnapped);
+
+              return (
+                <>
+                  {/* GIAI ĐOẠN 2: KHUNG ĐÍCH TÁCH HÌNH (Trái: Hình chữ nhật | Phải: Tam giác vuông) */}
+                  {isTrapAltComplete && (
+                    <g className="pointer-events-none">
+                      {/* Khung 1 (Bên trái): Hình chữ nhật [65..215, y: 165..325] */}
+                      <g transform="translate(65, 165)">
+                        <rect
+                          x="0"
+                          y="0"
+                          width={sbw}
+                          height={hp}
+                          fill={trapRectSnapped ? "#ede9fe" : "#7c3aed"}
+                          fillOpacity={trapRectSnapped ? "0.25" : "0.05"}
+                          stroke="#7c3aed"
+                          strokeWidth={trapRectSnapped ? "2.5" : "2"}
+                          strokeDasharray={trapRectSnapped ? "none" : "6 4"}
+                          rx="2"
+                        />
+                        <text
+                          x={sbw / 2}
+                          y="-12"
+                          textAnchor="middle"
+                          className="text-[11px] font-black fill-purple-800"
+                        >
+                          1. Hình chữ nhật
+                        </text>
+                        {trapRectSnapped ? (
+                          <>
+                            <rect x="-10" y="-42" width={sbw + 20} height="22" rx="6" fill="#7c3aed" />
+                            <text x={sbw / 2} y="-27" textAnchor="middle" className="text-[10px] font-black fill-white font-mono">
+                              S₁ = b × h = {rectAreaVal} {params.unit}²
+                            </text>
+                            <rect x={sbw / 2 - 30} y={hp + 10} width="60" height="20" rx="5" fill="#ffffff" stroke="#c4b5fd" strokeWidth="1.2" />
+                            <text x={sbw / 2} y={hp + 24} textAnchor="middle" className="text-[11px] font-black fill-purple-800 font-mono">
+                              b = {params.baseSmall}
+                            </text>
+                            <rect x="-46" y={hp / 2 - 11} width="40" height="22" rx="5" fill="#ffffff" stroke="#fca5a5" strokeWidth="1.2" />
+                            <text x="-26" y={hp / 2 + 4} textAnchor="middle" className="text-[11px] font-black fill-rose-600 font-mono">
+                              h = {params.height}
+                            </text>
+                          </>
+                        ) : (
+                          <text x={sbw / 2} y={hp / 2 + 4} textAnchor="middle" className="text-[11px] font-bold fill-purple-400">
+                            Kéo HCN vào đây
+                          </text>
+                        )}
+                      </g>
+
+                      {/* Khung 2 (Bên phải): 2 Tam giác vuông ghép hoặc 1 Tam giác vuông [525..625, y: 165..325] */}
+                      <g transform="translate(525, 165)">
+                        {demoMode === 1 ? (
+                          <>
+                            <polygon
+                              points="0,160 100,160 50,0"
+                              fill={rightTargetDone ? "#d1fae5" : "#0284c7"}
+                              fillOpacity={rightTargetDone ? "0.22" : "0.05"}
+                              stroke="#059669"
+                              strokeWidth={rightTargetDone ? "2.5" : "2"}
+                              strokeDasharray={rightTargetDone ? "none" : "6 4"}
+                            />
+                            <line
+                              x1="50"
+                              y1="0"
+                              x2="50"
+                              y2="160"
+                              stroke="#dc2626"
+                              strokeWidth="2"
+                              strokeDasharray="4 4"
+                            />
+                          </>
+                        ) : (
+                          <polygon
+                            points="0,160 100,160 0,0"
+                            fill={rightTargetDone ? "#d1fae5" : "#10b981"}
+                            fillOpacity={rightTargetDone ? "0.22" : "0.05"}
+                            stroke="#059669"
+                            strokeWidth={rightTargetDone ? "2.5" : "2"}
+                            strokeDasharray={rightTargetDone ? "none" : "6 4"}
+                          />
+                        )}
+                        <text
+                          x="50"
+                          y="-12"
+                          textAnchor="middle"
+                          className="text-[11px] font-black fill-emerald-800"
+                        >
+                          {demoMode === 1 ? '2. Ghép 2 Tam giác vuông' : '2. Tam giác vuông'}
+                        </text>
+                        {rightTargetDone ? (
+                          <>
+                            <rect x="-32" y="-42" width="164" height="22" rx="6" fill="#059669" />
+                            <text x="50" y="-27" textAnchor="middle" className="text-[10px] font-black fill-white font-mono">
+                              S₂ = (a-b)×h:2 = {triAreaVal} {params.unit}²
+                            </text>
+                            <rect x="-4" y={hp + 10} width="108" height="20" rx="5" fill="#ffffff" stroke="#6ee7b7" strokeWidth="1.2" />
+                            <text x="50" y={hp + 24} textAnchor="middle" className="text-[10px] font-black fill-emerald-800 font-mono">
+                              Đáy = a - b = {diffBaseVal}
+                            </text>
+                          </>
+                        ) : (
+                          <text x="50" y={hp / 2 + 26} textAnchor="middle" className="text-[10px] font-bold fill-emerald-600">
+                            {demoMode === 1 ? 'Ghép 2 TG vào đây' : 'Kéo TG vào đây'}
+                          </text>
+                        )}
+                      </g>
+                    </g>
+                  )}
+
+                  {/* HÌNH THANG GỐC TẠI TRUNG TÂM */}
+                  <g transform={`translate(${ox}, ${oy})`} filter="url(#shapeShadow)">
+                    <polygon
+                      points={config.points}
+                      fill="#7c3aed"
+                      fillOpacity={isTrapAltComplete ? "0.08" : "0.28"}
+                      stroke="#7c3aed"
+                      strokeWidth={isTrapAltComplete ? "2.5" : "3.5"}
+                      strokeDasharray={isTrapAltComplete ? "6 4" : "none"}
+                      strokeLinejoin="round"
+                    />
+
+                    {/* Hình thang vuông: ký hiệu sẵn góc vuông bên trái tại A(0,0) và D(0,-160) */}
+                    {demoMode === 2 && (
+                      <g className="pointer-events-none">
+                        <rect x="0" y="-12" width="12" height="12" fill="none" stroke="#dc2626" strokeWidth="2" />
+                        <rect x="0" y={-hp} width="12" height="12" fill="none" stroke="#dc2626" strokeWidth="2" />
+                        {!isTrapAltComplete && (
+                          <>
+                            <rect x="-64" y={-hp / 2 - 11} width="56" height="22" rx="6" fill="#ffffff" stroke="#fca5a5" strokeWidth="1.5" />
+                            <text x="-36" y={-hp / 2 + 4} textAnchor="middle" className="text-xs font-black fill-rose-600 font-mono">
+                              h = {params.height}
+                            </text>
+                          </>
+                        )}
+                      </g>
+                    )}
+
+                    {/* Đường cao trái (chế độ 1: chỉ hiện sau khi người dùng đã tự kẻ) */}
+                    {demoMode === 1 && trapLeftAltDrawn && (
+                      <g className="pointer-events-none">
+                        <line x1={leftAltX} y1="0" x2={leftAltX} y2={-hp} stroke="#dc2626" strokeWidth="3" strokeDasharray="6 4" />
+                        <rect x={leftAltX} y="-12" width="12" height="12" fill="none" stroke="#dc2626" strokeWidth="1.8" />
+                        <rect x={leftAltX - 60} y={-hp / 2 - 11} width="52" height="22" rx="6" fill="#ffffff" stroke="#fca5a5" strokeWidth="1.5" />
+                        <text x={leftAltX - 34} y={-hp / 2 + 4} textAnchor="middle" className="text-xs font-black fill-rose-600 font-mono">
+                          h = {params.height}
+                        </text>
+                      </g>
+                    )}
+
+                    {/* Đường cao phải (cả chế độ 1 & 2: chỉ hiện sau khi người dùng đã tự kẻ) */}
+                    {trapRightAltDrawn && (
+                      <g className="pointer-events-none">
+                        <line x1={rightAltX} y1="0" x2={rightAltX} y2={-hp} stroke="#dc2626" strokeWidth="3" strokeDasharray="6 4" />
+                        <rect x={rightAltX - 12} y="-12" width="12" height="12" fill="none" stroke="#dc2626" strokeWidth="1.8" />
+                        <rect x={rightAltX + 8} y={-hp / 2 - 11} width="52" height="22" rx="6" fill="#ffffff" stroke="#fca5a5" strokeWidth="1.5" />
+                        <text x={rightAltX + 34} y={-hp / 2 + 4} textAnchor="middle" className="text-xs font-black fill-rose-600 font-mono">
+                          h = {params.height}
+                        </text>
+                      </g>
+                    )}
+
+                    {/* Nhãn Đáy lớn a & Đáy nhỏ b trên Hình thang gốc */}
+                    <rect x={bw / 2 - 34} y="12" width="68" height="22" rx="6" fill="#ffffff" stroke="#ddd6fe" strokeWidth="1.5" />
+                    <text x={bw / 2} y="27" textAnchor="middle" className="text-xs font-black fill-purple-800 font-mono">
+                      a = {params.base}
+                    </text>
+
+                    <rect
+                      x={demoMode === 1 ? bw / 2 - 34 : sbw / 2 - 34}
+                      y={-hp - 30}
+                      width="68"
+                      height="22"
+                      rx="6"
+                      fill="#ffffff"
+                      stroke="#ddd6fe"
+                      strokeWidth="1.5"
+                    />
+                    <text
+                      x={demoMode === 1 ? bw / 2 : sbw / 2}
+                      y={-hp - 15}
+                      textAnchor="middle"
+                      className="text-xs font-black fill-purple-700 font-mono"
+                    >
+                      b = {params.baseSmall}
+                    </text>
+
+                    {!isTrapAltComplete ? (
+                      <text x={bw / 2} y={-hp / 2 + 5} textAnchor="middle" className="text-xs font-black fill-purple-900 pointer-events-none">
+                        {demoMode === 1 ? 'Hình thang thường' : 'Hình thang vuông'}
+                      </text>
+                    ) : (
+                      <text x={bw / 2} y={-hp / 2 + 5} textAnchor="middle" className="text-[11px] font-bold fill-purple-400 pointer-events-none">
+                        Hình thang ban đầu
+                      </text>
+                    )}
+
+                    {/* Đỉnh đáy lớn */}
+                    <circle cx="0" cy="0" r="5" fill="#7c3aed" />
+                    <circle cx={bw} cy="0" r="5" fill="#7c3aed" />
+
+                    {/* Điểm kéo kẻ chiều cao trái (chỉ dùng cho 1. Hình thang thường) */}
+                    {demoMode === 1 && !trapLeftAltDrawn ? (
+                      <g
+                        onMouseDown={(e) => handleTrapApexPointerDown('left', e)}
+                        onTouchStart={(e) => handleTrapApexPointerDown('left', e)}
+                        className="cursor-crosshair"
+                      >
+                        {activeApexSide === 'left' && (
+                          <g className="pointer-events-none">
+                            <line x1={leftAltX} y1={-hp} x2={leftAltX} y2="0" stroke="#94a3b8" strokeWidth="1.5" strokeDasharray="4 4" opacity="0.7" />
+                            <circle
+                              cx={leftAltX}
+                              cy="0"
+                              r="12"
+                              fill={isNearTrapRightAngle ? '#10b981' : '#f43f5e'}
+                              fillOpacity="0.22"
+                              stroke={isNearTrapRightAngle ? '#059669' : '#e11d48'}
+                              strokeWidth="2"
+                              strokeDasharray="3 2"
+                            />
+                          </g>
+                        )}
+                        <circle cx={leftAltX} cy={-hp} r="15" fill="#f43f5e" fillOpacity="0.18" className="animate-ping" />
+                        <circle cx={leftAltX} cy={-hp} r="9" fill="#e11d48" stroke="#ffffff" strokeWidth="2.5" />
+                        <circle cx={leftAltX} cy={-hp} r="22" fill="transparent" />
+                        <g transform={`translate(${leftAltX - 20}, ${-hp - 28})`} className="pointer-events-none">
+                          <rect x="-66" y="-12" width="132" height="22" rx="8" fill="#be123c" opacity="0.95" />
+                          <text x="0" y="3" textAnchor="middle" className="text-[10px] font-black fill-white">
+                            ⬇ Kéo kẻ h₁ xuống đáy
+                          </text>
+                        </g>
+                      </g>
+                    ) : (
+                      <circle cx={leftAltX} cy={-hp} r="5" fill="#7c3aed" />
+                    )}
+
+                    {/* Điểm kéo kẻ chiều cao phải (dùng cho cả 1. Hình thang thường & 2. Hình thang vuông) */}
+                    {!trapRightAltDrawn ? (
+                      <g
+                        onMouseDown={(e) => handleTrapApexPointerDown('right', e)}
+                        onTouchStart={(e) => handleTrapApexPointerDown('right', e)}
+                        className="cursor-crosshair"
+                      >
+                        {activeApexSide === 'right' && (
+                          <g className="pointer-events-none">
+                            <line x1={rightAltX} y1={-hp} x2={rightAltX} y2="0" stroke="#94a3b8" strokeWidth="1.5" strokeDasharray="4 4" opacity="0.7" />
+                            <circle
+                              cx={rightAltX}
+                              cy="0"
+                              r="12"
+                              fill={isNearTrapRightAngle ? '#10b981' : '#f43f5e'}
+                              fillOpacity="0.22"
+                              stroke={isNearTrapRightAngle ? '#059669' : '#e11d48'}
+                              strokeWidth="2"
+                              strokeDasharray="3 2"
+                            />
+                          </g>
+                        )}
+                        <circle cx={rightAltX} cy={-hp} r="15" fill="#f43f5e" fillOpacity="0.18" className="animate-ping" />
+                        <circle cx={rightAltX} cy={-hp} r="9" fill="#e11d48" stroke="#ffffff" strokeWidth="2.5" />
+                        <circle cx={rightAltX} cy={-hp} r="22" fill="transparent" />
+                        <g transform={`translate(${rightAltX + 26}, ${-hp - 28})`} className="pointer-events-none">
+                          <rect x="-70" y="-12" width="140" height="22" rx="8" fill="#be123c" opacity="0.95" />
+                          <text x="0" y="3" textAnchor="middle" className="text-[10px] font-black fill-white">
+                            {demoMode === 1 ? '⬇ Kéo kẻ h₂ xuống đáy' : '⬇ Kéo kẻ h chia hình'}
+                          </text>
+                        </g>
+                      </g>
+                    ) : (
+                      <circle cx={rightAltX} cy={-hp} r="5" fill="#7c3aed" />
+                    )}
+                  </g>
+
+                  {/* Nét vẽ đường cao tạm thời khi người dùng đang kéo trên Hình thang */}
+                  {activeApexSide !== null && trapDrawPt && !isTrapAltComplete && (
+                    <g className="pointer-events-none">
+                      <line
+                        x1={activeApexSvgX}
+                        y1={activeApexSvgY}
+                        x2={isNearTrapRightAngle ? activeFootSvgX : trapDrawPt.x}
+                        y2={isNearTrapRightAngle ? activeFootSvgY : trapDrawPt.y}
+                        stroke={isNearTrapRightAngle ? '#059669' : '#e11d48'}
+                        strokeWidth="3"
+                        strokeDasharray="6 4"
+                      />
+                      <circle
+                        cx={isNearTrapRightAngle ? activeFootSvgX : trapDrawPt.x}
+                        cy={isNearTrapRightAngle ? activeFootSvgY : trapDrawPt.y}
+                        r="6"
+                        fill={isNearTrapRightAngle ? '#10b981' : '#e11d48'}
+                        stroke="#ffffff"
+                        strokeWidth="2"
+                      />
+                      {isNearTrapRightAngle && (
+                        <g transform={`translate(${activeFootSvgX}, ${activeFootSvgY})`}>
+                          <rect x={activeApexSide === 'left' ? 0 : -12} y="-12" width="12" height="12" fill="none" stroke="#059669" strokeWidth="2" />
+                          <rect x="-46" y="10" width="92" height="20" rx="6" fill="#065f46" />
+                          <text x="0" y="24" textAnchor="middle" className="text-[10px] font-black fill-white">
+                            ✓ Vuông góc 90°!
+                          </text>
+                        </g>
+                      )}
+                    </g>
+                  )}
+
+                  {/* GIAI ĐOẠN 2: CÁC MẢNH ĐÃ CHIA TỪ HÌNH THANG ĐỂ KÉO THẢ */}
+                  {isTrapAltComplete && (
+                    <>
+                      {/* Mảnh Hình chữ nhật ở giữa */}
+                      <g
+                        transform={`translate(${ox + trapRectOffset.x}, ${oy + trapRectOffset.y})`}
+                        onMouseDown={(e) => handleTrapPiecePointerDown('rect', e)}
+                        onTouchStart={(e) => handleTrapPiecePointerDown('rect', e)}
+                        className={trapRectSnapped ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'}
+                        filter="url(#shapeShadow)"
+                      >
+                        <polygon
+                          points={config.rectPoints}
+                          fill="#8b5cf6"
+                          fillOpacity={trapRectSnapped ? "0.32" : "0.45"}
+                          stroke="#6d28d9"
+                          strokeWidth="3"
+                          strokeLinejoin="round"
+                        />
+                        {!trapRectSnapped ? (
+                          <g className="pointer-events-none">
+                            <text
+                              x={(leftAltX + rightAltX) / 2}
+                              y={-hp * 0.56}
+                              textAnchor="middle"
+                              className="text-xs font-black fill-purple-950"
+                            >
+                              Hình chữ nhật
+                            </text>
+                            <text
+                              x={(leftAltX + rightAltX) / 2}
+                              y={-hp * 0.4}
+                              textAnchor="middle"
+                              className="text-[10px] font-bold fill-purple-800"
+                            >
+                              ⬅ Kéo sang khung 1
+                            </text>
+                          </g>
+                        ) : (
+                          <text
+                            x={(leftAltX + rightAltX) / 2}
+                            y={-hp * 0.48}
+                            textAnchor="middle"
+                            className="text-xs font-black fill-purple-950 pointer-events-none"
+                          >
+                            S₁ = b × h
+                          </text>
+                        )}
+                      </g>
+
+                      {/* Mảnh Tam giác vuông trái (chế độ 1: Hình thang thường) */}
+                      {demoMode === 1 && config.triLeftPoints && (
+                        <g
+                          transform={`translate(${ox + trapTriLeftOffset.x}, ${oy + trapTriLeftOffset.y})`}
+                          onMouseDown={(e) => handleTrapPiecePointerDown('triLeft', e)}
+                          onTouchStart={(e) => handleTrapPiecePointerDown('triLeft', e)}
+                          className={trapTriLeftSnapped ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'}
+                          filter="url(#shapeShadow)"
+                        >
+                          <polygon
+                            points={config.triLeftPoints}
+                            fill="#0ea5e9"
+                            fillOpacity={trapTriLeftSnapped ? "0.36" : "0.52"}
+                            stroke="#0284c7"
+                            strokeWidth="3"
+                            strokeLinejoin="round"
+                          />
+                          {!trapTriLeftSnapped ? (
+                            <g className="pointer-events-none">
+                              <text x="31" y={-hp * 0.36} textAnchor="middle" className="text-[10px] font-black fill-sky-950">
+                                TG 1
+                              </text>
+                              <text x="31" y={-hp * 0.22} textAnchor="middle" className="text-[9px] font-bold fill-sky-900">
+                                Kéo ➜
+                              </text>
+                            </g>
+                          ) : (
+                            <text x="34" y={-hp * 0.25} textAnchor="middle" className="text-[10px] font-black fill-sky-950 pointer-events-none">
+                              TG 1
+                            </text>
+                          )}
+                        </g>
+                      )}
+
+                      {/* Mảnh Tam giác vuông phải (cả 2 chế độ) */}
+                      <g
+                        transform={`translate(${ox + trapTriRightOffset.x}, ${oy + trapTriRightOffset.y})`}
+                        onMouseDown={(e) => handleTrapPiecePointerDown('triRight', e)}
+                        onTouchStart={(e) => handleTrapPiecePointerDown('triRight', e)}
+                        className={trapTriRightSnapped ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'}
+                        filter="url(#shapeShadow)"
+                      >
+                        <polygon
+                          points={config.triRightPoints}
+                          fill="#10b981"
+                          fillOpacity={trapTriRightSnapped ? "0.36" : "0.52"}
+                          stroke="#059669"
+                          strokeWidth="3"
+                          strokeLinejoin="round"
+                        />
+                        {!trapTriRightSnapped ? (
+                          <g className="pointer-events-none">
+                            <text
+                              x={demoMode === 1 ? 218 : 185}
+                              y={-hp * 0.36}
+                              textAnchor="middle"
+                              className="text-[10px] font-black fill-emerald-950"
+                            >
+                              {demoMode === 1 ? 'TG 2' : 'Tam giác'}
+                            </text>
+                            <text
+                              x={demoMode === 1 ? 218 : 185}
+                              y={-hp * 0.22}
+                              textAnchor="middle"
+                              className="text-[9px] font-bold fill-emerald-900"
+                            >
+                              Kéo ➜
+                            </text>
+                          </g>
+                        ) : (
+                          <text
+                            x={demoMode === 1 ? 217 : 185}
+                            y={-hp * 0.25}
+                            textAnchor="middle"
+                            className="text-[10px] font-black fill-emerald-950 pointer-events-none"
+                          >
+                            {demoMode === 1 ? 'TG 2' : 'Tam giác'}
+                          </text>
+                        )}
+                      </g>
+
+                      {/* Banner rút ra công thức diện tích Hình thang sau khi ghép đủ các mảnh */}
+                      {isTrapExploreComplete && (
+                        <g transform="translate(335, 382)" className="pointer-events-none">
+                          <rect x="-255" y="-4" width="510" height="46" rx="10" fill="#065f46" opacity="0.96" />
+                          <text x="0" y="14" textAnchor="middle" className="text-[11px] font-extrabold fill-emerald-100 font-sans">
+                            S(hình thang) = S(Hình chữ nhật) + S({demoMode === 1 ? '2 Tam giác vuông' : 'Tam giác vuông'})
+                          </text>
+                          <text x="0" y="33" textAnchor="middle" className="text-xs font-black fill-white font-mono">
+                            = b×h + (a-b)×h:2 = (a + b) × h : 2 = {calculateArea()} {params.unit}²
+                          </text>
+                        </g>
+                      )}
+                    </>
+                  )}
+                </>
+              );
+            })()}
 
             {/* ================= 3. HÌNH TRÒN ================= */}
             {selectedShape === 'circle' && (
               demoMode === 1 ? (
-                /* Chế độ 1: Bán kính & Đường kính */
-                <g transform="translate(380, 225)" filter="url(#shapeShadow)">
+                /* Tab 1: Chu vi hình tròn (Bán kính & Đường kính) */
+                <g transform="translate(380, 232)" filter="url(#shapeShadow)">
                   {/* Đường tròn chính */}
                   <circle 
-                    r="130" 
-                    fill="#f59e0b" 
+                    r="128" 
+                    fill="#10b981" 
                     fillOpacity="0.14" 
-                    stroke="#d97706" 
+                    stroke="#059669" 
                     strokeWidth="4" 
                   />
                   
                   {/* Vành chu vi phát sáng nhẹ */}
                   <circle 
-                    r="130" 
+                    r="128" 
                     fill="none" 
-                    stroke="#f59e0b" 
+                    stroke="#14b8a6" 
                     strokeWidth="8" 
                     strokeOpacity="0.25"
                   />
 
                   {/* Bán kính r (đỏ từ tâm lên trên) */}
-                  <line x1="0" y1="0" x2="0" y2="-130" stroke="#dc2626" strokeWidth="3" />
+                  <line x1="0" y1="0" x2="0" y2="-128" stroke="#dc2626" strokeWidth="3" />
                   <circle cx="0" cy="0" r="5" fill="#dc2626" />
-                  <circle cx="0" cy="-130" r="4" fill="#dc2626" />
+                  <circle cx="0" cy="-128" r="4" fill="#dc2626" />
                   
                   {/* Nhãn r */}
-                  <rect x="10" y="-75" width="62" height="24" rx="6" fill="#ffffff" stroke="#fca5a5" strokeWidth="1.5" />
-                  <text x="41" y="-59" textAnchor="middle" className="text-xs font-black fill-rose-600 font-mono">
+                  <rect x="10" y="-75" width="66" height="24" rx="6" fill="#ffffff" stroke="#fca5a5" strokeWidth="1.5" />
+                  <text x="43" y="-59" textAnchor="middle" className="text-xs font-black fill-rose-600 font-mono">
                     r = {params.radius}
                   </text>
 
                   {/* Đường kính d (xanh dương nét đứt nằm ngang) */}
-                  <line x1="-130" y1="0" x2="130" y2="0" stroke="#0284c7" strokeWidth="2.5" strokeDasharray="6 4" />
-                  <circle cx="-130" cy="0" r="4" fill="#0284c7" />
-                  <circle cx="130" cy="0" r="4" fill="#0284c7" />
+                  <line x1="-128" y1="0" x2="128" y2="0" stroke="#0284c7" strokeWidth="2.5" strokeDasharray="6 4" />
+                  <circle cx="-128" cy="0" r="4" fill="#0284c7" />
+                  <circle cx="128" cy="0" r="4" fill="#0284c7" />
 
                   {/* Nhãn d */}
                   <rect x="-55" y="12" width="110" height="24" rx="6" fill="#ffffff" stroke="#bae6fd" strokeWidth="1.5" />
@@ -1253,99 +2527,225 @@ const Shape2DPanel: React.FC = () => {
                   <text x="-16" y="-8" className="text-sm font-black fill-slate-800 font-serif">O</text>
 
                   {/* Nhãn Chu vi C viền ngoài */}
-                  <rect x="-90" y="145" width="180" height="26" rx="8" fill="#ecfdf5" stroke="#10b981" strokeWidth="1.5" />
-                  <text x="0" y="162" textAnchor="middle" className="text-xs font-black fill-emerald-800 font-mono">
+                  <rect x="-95" y="142" width="190" height="26" rx="8" fill="#ecfdf5" stroke="#10b981" strokeWidth="1.5" />
+                  <text x="0" y="159" textAnchor="middle" className="text-xs font-black fill-emerald-800 font-mono">
                     C = d × 3,14 = {calculateCircumference()} {params.unit}
                   </text>
                 </g>
-              ) : (
-                /* Chế độ 2: Minh họa 16 nan quạt ghép thành hình chữ nhật */
-                <g transform="translate(130, 140)">
-                  {/* Hình tròn bên trái chia 16 nan quạt */}
-                  <g transform="translate(90, 85)">
-                    <circle r="75" fill="#fef3c7" stroke="#d97706" strokeWidth="2.5" />
-                    {Array.from({ length: 8 }).map((_, i) => (
-                      <line 
-                        key={i} 
-                        x1={-75 * Math.cos((i * Math.PI) / 8)} 
-                        y1={-75 * Math.sin((i * Math.PI) / 8)} 
-                        x2={75 * Math.cos((i * Math.PI) / 8)} 
-                        y2={75 * Math.sin((i * Math.PI) / 8)} 
-                        stroke="#d97706" 
-                        strokeWidth="1.2" 
-                        strokeDasharray="3 3"
-                      />
-                    ))}
-                    <circle cx="0" cy="0" r="3" fill="#d97706" />
-                    <text x="0" y="102" textAnchor="middle" className="text-[11px] font-black fill-amber-900">
-                      Hình tròn cắt 16 nan quạt
-                    </text>
-                  </g>
+              ) : (() => {
+                /* Tab 2: Khám phá Diện tích hình tròn — Cắt N phần bằng nhau (4, 8, 16, 32, 64) ghép hình chữ nhật */
+                const N = circleSlices;
+                const M = N / 2;
+                const R = 104;
+                const circX = 380;
+                const circY = 228;
+                const theta = (2 * Math.PI) / N;
+                const halfTheta = theta / 2;
 
-                  {/* Mũi tên chuyển đổi */}
-                  <g transform="translate(205, 85)">
-                    <path d="M 0 0 L 35 0 M 25 -7 L 35 0 L 25 7" fill="none" stroke="#d97706" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                    <text x="18" y="-12" textAnchor="middle" className="text-[10px] font-extrabold fill-amber-800">
-                      Ghép lại
-                    </text>
-                  </g>
+                // Path chuẩn 1 hình quạt đỉnh tại (0, 0), hướng lên trên (-90 độ)
+                const arcX1 = -R * Math.sin(halfTheta);
+                const arcY1 = -R * Math.cos(halfTheta);
+                const arcX2 = R * Math.sin(halfTheta);
+                const arcY2 = -R * Math.cos(halfTheta);
+                const sectorPath = `M 0 0 L ${arcX1.toFixed(3)} ${arcY1.toFixed(3)} A ${R} ${R} 0 0 1 ${arcX2.toFixed(3)} ${arcY2.toFixed(3)} Z`;
 
-                  {/* 16 nan quạt xen kẽ thành hình chữ nhật bên phải */}
-                  <g transform="translate(265, 45)">
-                    {/* Vẽ 8 nan hướng lên và 8 nan hướng xuống xen kẽ */}
-                    <g>
-                      {Array.from({ length: 8 }).map((_, i) => (
-                        <g key={i} transform={`translate(${i * 28}, 0)`}>
-                          {/* Nan quạt chóp ở dưới, đáy cong ở trên */}
-                          <path 
-                            d="M 0 80 L 14 0 L 28 80 Z" 
-                            fill={i % 2 === 0 ? "#f59e0b" : "#fbbf24"} 
-                            stroke="#d97706" 
-                            strokeWidth="1.5" 
-                            fillOpacity="0.75"
+                // Thông số hình ghép ở trạng thái 100%
+                const step = 2 * R * Math.sin(halfTheta);
+                const rectH = R * Math.cos(halfTheta);
+                const startX = circX - ((M - 0.5) * step) / 2;
+                const yBot = circY + rectH / 2;
+                const yTop = circY - rectH / 2;
+
+                // Tham số nội suy animation mượt (0..1)
+                const u = circleMergeProgress / 100;
+                const e = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
+                const sep = Math.sin(u * Math.PI);
+
+                // Tọa độ dấu ngoặc nhọn dưới đáy (chiều dài = 3,14 x r) & chiều rộng r
+                const bx1 = startX;
+                const bx2 = startX + M * step;
+                const bmid = (bx1 + bx2) / 2;
+                const sagitta = R - rectH;
+                const yBrace = yBot + sagitta + 12;
+                const bracePath = `M ${bx1} ${yBrace} Q ${bx1} ${yBrace + 10} ${bx1 + 12} ${yBrace + 10} L ${bmid - 10} ${yBrace + 10} Q ${bmid} ${yBrace + 10} ${bmid} ${yBrace + 18} Q ${bmid} ${yBrace + 10} ${bmid + 10} ${yBrace + 10} L ${bx2 - 12} ${yBrace + 10} Q ${bx2} ${yBrace + 10} ${bx2} ${yBrace}`;
+
+                // Cạnh bên phải của miếng ngoài cùng để hiển thị bán kính r
+                const sideTopX = startX + (M - 0.5) * step + 14;
+                const sideTopY = yTop;
+                const sideBotX = startX + M * step + 14;
+                const sideBotY = yBot;
+                const sideMidX = (sideTopX + sideBotX) / 2;
+                const sideMidY = (sideTopY + sideBotY) / 2;
+
+                const hintOpacity = Math.max(0, Math.min(1, (u - 0.65) / 0.3));
+                const circleRadiusOpacity = Math.max(0, 1 - u * 3);
+
+                return (
+                  <g>
+                    {/* Nhãn hai nửa hình tròn khi đang ở giữa quá trình tách */}
+                    {u > 0.12 && u < 0.88 && (
+                      <g className="pointer-events-none" opacity={sep}>
+                        <rect x="305" y="72" width="150" height="22" rx="8" fill="#ccfbf1" stroke="#0d9488" strokeWidth="1.2" />
+                        <text x="380" y="87" textAnchor="middle" className="text-[10px] font-black fill-teal-900">
+                          Nửa trên ({M} miếng xanh ngọc)
+                        </text>
+                        <rect x="302" y="372" width="156" height="22" rx="8" fill="#fef3c7" stroke="#d97706" strokeWidth="1.2" />
+                        <text x="380" y="387" textAnchor="middle" className="text-[10px] font-black fill-amber-900">
+                          Nửa dưới ({M} miếng vàng cam)
+                        </text>
+                      </g>
+                    )}
+
+                    {/* Các hình quạt cắt từ hình tròn: nửa trên (xanh ngọc) & nửa dưới (vàng cam nhạt) */}
+                    <g filter="url(#shapeShadow)">
+                      {/* Nửa trên (Teal) */}
+                      {Array.from({ length: M }).map((_, i) => {
+                        const alpha = -Math.PI + (i + 0.5) * theta;
+                        const rotStart = (alpha * 180) / Math.PI + 90;
+                        const rotEnd = 0;
+                        const xEnd = startX + i * step;
+                        const yEnd = yBot;
+                        const x = circX + (xEnd - circX) * e;
+                        const y = circY + (yEnd - circY) * e - 34 * sep;
+                        const rot = rotStart + (rotEnd - rotStart) * e;
+                        return (
+                          <path
+                            key={`top-${i}`}
+                            d={sectorPath}
+                            transform={`translate(${x.toFixed(2)}, ${y.toFixed(2)}) rotate(${rot.toFixed(2)})`}
+                            fill={i % 2 === 0 ? "#2dd4bf" : "#14b8a6"}
+                            fillOpacity="0.88"
+                            stroke="#0f766e"
+                            strokeWidth={N >= 32 ? "0.9" : "1.6"}
+                            strokeLinejoin="round"
                           />
-                        </g>
-                      ))}
-                      {Array.from({ length: 7 }).map((_, i) => (
-                        <g key={`down-${i}`} transform={`translate(${i * 28 + 14}, 0)`}>
-                          {/* Nan quạt chóp ở trên, đáy cong ở dưới */}
-                          <path 
-                            d="M 0 0 L 14 80 L 28 0 Z" 
-                            fill={i % 2 === 0 ? "#10b981" : "#34d399"} 
-                            stroke="#059669" 
-                            strokeWidth="1.5" 
-                            fillOpacity="0.75"
+                        );
+                      })}
+
+                      {/* Nửa dưới (Warm Amber / Yellow) */}
+                      {Array.from({ length: M }).map((_, k) => {
+                        const j = M - 1 - k;
+                        const alpha = (k + 0.5) * theta;
+                        const rotStart = (alpha * 180) / Math.PI + 90;
+                        const rotEnd = 180;
+                        const xEnd = startX + (j + 0.5) * step;
+                        const yEnd = yTop;
+                        const x = circX + (xEnd - circX) * e;
+                        const y = circY + (yEnd - circY) * e + 34 * sep;
+                        const rot = rotStart + (rotEnd - rotStart) * e;
+                        return (
+                          <path
+                            key={`bot-${k}`}
+                            d={sectorPath}
+                            transform={`translate(${x.toFixed(2)}, ${y.toFixed(2)}) rotate(${rot.toFixed(2)})`}
+                            fill={k % 2 === 0 ? "#fcd34d" : "#fbbf24"}
+                            fillOpacity="0.9"
+                            stroke="#d97706"
+                            strokeWidth={N >= 32 ? "0.9" : "1.6"}
+                            strokeLinejoin="round"
                           />
-                        </g>
-                      ))}
+                        );
+                      })}
                     </g>
 
-                    {/* Kích thước chiều cao = r */}
-                    <line x1="-12" y1="0" x2="-12" y2="80" stroke="#dc2626" strokeWidth="2" />
-                    <line x1="-16" y1="0" x2="-8" y2="0" stroke="#dc2626" strokeWidth="2" />
-                    <line x1="-16" y1="80" x2="-8" y2="80" stroke="#dc2626" strokeWidth="2" />
-                    <text x="-48" y="44" textAnchor="middle" className="text-xs font-black fill-rose-600 font-mono">
-                      r = {params.radius}
-                    </text>
+                    {/* Tâm O & Bán kính r trên hình tròn ban đầu (khi chưa tách) */}
+                    {circleRadiusOpacity > 0.05 && (
+                      <g className="pointer-events-none" opacity={circleRadiusOpacity}>
+                        <line x1={circX} y1={circY} x2={circX + R} y2={circY} stroke="#dc2626" strokeWidth="3" />
+                        <circle cx={circX} cy={circY} r="4.5" fill="#1e293b" stroke="#ffffff" strokeWidth="1.5" />
+                        <text x={circX - 15} y={circY - 8} className="text-sm font-black fill-slate-900 font-serif">O</text>
+                        {showCircleHints && (
+                          <>
+                            <rect x={circX + R * 0.35} y={circY - 26} width="64" height="22" rx="6" fill="#ffffff" stroke="#fca5a5" strokeWidth="1.5" />
+                            <text x={circX + R * 0.35 + 32} y={circY - 11} textAnchor="middle" className="text-xs font-black fill-rose-600 font-mono">
+                              r = {params.radius}
+                            </text>
+                          </>
+                        )}
+                      </g>
+                    )}
 
-                    {/* Kích thước chiều dài = r x 3.14 (nửa chu vi) */}
-                    <line x1="0" y1="95" x2="224" y2="95" stroke="#0284c7" strokeWidth="2" />
-                    <line x1="0" y1="90" x2="0" y2="100" stroke="#0284c7" strokeWidth="2" />
-                    <line x1="224" y1="90" x2="224" y2="100" stroke="#0284c7" strokeWidth="2" />
-                    <text x="112" y="115" textAnchor="middle" className="text-xs font-black fill-sky-800 font-mono">
-                      Chiều dài ≈ Nửa chu vi = r × 3,14 = {(params.radius * 3.14).toFixed(1)} {params.unit}
-                    </text>
+                    {/* Kích thước & gợi ý khi đã ghép (Hiển thị kích thước & gợi ý Bật/Tắt) */}
+                    {showCircleHints && hintOpacity > 0.02 && (
+                      <g className="pointer-events-none" opacity={hintOpacity}>
+                        {/* Dấu ngoặc nhọn chiều dài đáy = 3,14 x r */}
+                        <path d={bracePath} fill="none" stroke="#0f766e" strokeWidth="2.4" strokeLinecap="round" />
+                        <rect x={bmid - 92} y={yBrace + 22} width="184" height="26" rx="8" fill="#ffffff" stroke="#14b8a6" strokeWidth="1.8" />
+                        <text x={bmid} y={yBrace + 39} textAnchor="middle" className="text-xs font-black fill-teal-900 font-mono">
+                          3,14 × r (= {(params.radius * 3.14).toFixed(1)} {params.unit})
+                        </text>
 
-                    {/* Khung kết luận công thức */}
-                    <rect x="-10" y="135" width="245" height="32" rx="8" fill="#fef3c7" stroke="#d97706" strokeWidth="1.5" />
-                    <text x="112" y="156" textAnchor="middle" className="text-xs font-black fill-amber-950 font-mono">
-                      S = Chiều dài × Chiều rộng = r × r × 3,14
-                    </text>
+                        {/* Nhãn chiều rộng = r ở cạnh bên */}
+                        <line x1={sideTopX} y1={sideTopY} x2={sideBotX} y2={sideBotY} stroke="#dc2626" strokeWidth="2.4" />
+                        <line x1={sideTopX - 5} y1={sideTopY} x2={sideTopX + 5} y2={sideTopY} stroke="#dc2626" strokeWidth="2" />
+                        <line x1={sideBotX - 5} y1={sideBotY} x2={sideBotX + 5} y2={sideBotY} stroke="#dc2626" strokeWidth="2" />
+                        <rect x={sideMidX + 10} y={sideMidY - 13} width="76" height="24" rx="6" fill="#ffffff" stroke="#fca5a5" strokeWidth="1.6" />
+                        <text x={sideMidX + 48} y={sideMidY + 3} textAnchor="middle" className="text-xs font-black fill-rose-600 font-mono">
+                          r = {params.radius} {params.unit}
+                        </text>
+
+                        {/* Khung nét đứt minh họa hình chữ nhật chuẩn khi N >= 16 */}
+                        {N >= 16 && u > 0.92 && (
+                          <rect
+                            x={startX - step / 2}
+                            y={yTop}
+                            width={(M + 0.5) * step}
+                            height={rectH}
+                            fill="none"
+                            stroke="#059669"
+                            strokeWidth="2"
+                            strokeDasharray="6 4"
+                            rx="2"
+                          />
+                        )}
+                      </g>
+                    )}
                   </g>
-                </g>
-              )
+                );
+              })()
             )}
           </svg>
+
+          {/* HỘP THOẠI KHÁM PHÁ CÔNG THỨC DIỆN TÍCH HÌNH TRÒN */}
+          {selectedShape === 'circle' && demoMode === 2 && showCircleFormulaModal && (
+            <div className="absolute inset-0 z-30 bg-slate-900/35 backdrop-blur-[2px] flex items-center justify-center p-4">
+              <div className="bg-white rounded-2xl border-2 border-emerald-400 shadow-2xl max-w-lg w-full p-5 relative animate-in zoom-in-95">
+                <button
+                  onClick={() => setShowCircleFormulaModal(false)}
+                  className="absolute top-3.5 right-3.5 p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                  aria-label="Đóng hộp thoại"
+                >
+                  <X size={18} />
+                </button>
+                <div className="flex items-center gap-2.5 mb-3">
+                  <div className="p-2 rounded-xl bg-emerald-100 text-emerald-700">
+                    <Lightbulb size={20} />
+                  </div>
+                  <div>
+                    <h4 className="text-base font-black text-emerald-950">Gợi ý khám phá công thức</h4>
+                    <p className="text-[11px] font-bold text-teal-700">Diện tích hình tròn (Toán 5)</p>
+                  </div>
+                </div>
+                <div className="bg-emerald-50/80 border border-emerald-200 rounded-xl p-3.5 text-sm text-slate-800 leading-relaxed mb-3">
+                  Khi chia hình tròn thành càng nhiều phần nhỏ, hình ghép được càng giống <strong>hình chữ nhật</strong> có chiều dài = <strong className="text-teal-800">3,14 × r</strong> và chiều rộng = <strong className="text-rose-600">r</strong>. Vậy Diện tích hình tròn = <strong className="text-emerald-800">(3,14 × r) × r = r × r × 3,14</strong>.
+                </div>
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs font-mono text-amber-950 mb-4 flex items-center justify-between flex-wrap gap-2">
+                  <span>Với bán kính <strong>r = {params.radius} {params.unit}</strong>:</span>
+                  <span className="font-black text-emerald-800">
+                    S = {params.radius} × {params.radius} × 3,14 = {calculateArea().toLocaleString('vi-VN')} {params.unit}²
+                  </span>
+                </div>
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => setShowCircleFormulaModal(false)}
+                    className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold shadow-sm transition-all cursor-pointer"
+                  >
+                    Em đã hiểu!
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* NHÂN VẬT ĐỒNG HÀNH Ở GÓC DƯỚI BÊN PHẢI BẢNG */}
           <div className="absolute bottom-3 right-3 z-20 pointer-events-auto">
@@ -1354,15 +2754,143 @@ const Shape2DPanel: React.FC = () => {
                 selectedShape === 'circle' 
                   ? demoMode === 1
                     ? "Đường kính dài gấp 2 lần bán kính: d = r × 2 đấy các em!" 
-                    : "Ghép 16 nan quạt thành hình chữ nhật S = r × r × 3,14!"
-                  : isSnapped 
-                    ? "Hoan hô! Em ghép hình chuẩn xác rồi! 🎉" 
-                    : "Kéo thả mảnh hình để ghép lại nhé!"
+                    : circleMergeProgress === 0
+                      ? `Hình tròn đang chia thành ${circleSlices} phần! Hãy kéo thanh trượt hoặc bấm "Cắt và ghép" nhé!`
+                      : circleMergeProgress < 100
+                        ? "Quan sát hai nửa xanh ngọc và vàng cam tách ra rồi đan xen vào nhau nhé!"
+                        : circleSlices <= 8
+                          ? `Đã ghép ${circleSlices} miếng! Hãy kéo mốc lên 16, 32 hoặc 64 phần để thấy giống hình chữ nhật hơn nhé!`
+                          : `Tuyệt vời! Ghép ${circleSlices} phần tạo thành hình giống hình chữ nhật dài 3,14 × r, rộng r!`
+                  : selectedShape === 'triangle'
+                    ? !isAltitudeDrawn
+                      ? "Em hãy kéo từ đỉnh xuống vuông góc với đáy để kẻ chiều cao h nhé!"
+                      : isTriangleRectComplete
+                        ? "Tuyệt vời! Hình chữ nhật có S = a × h gấp đôi tam giác nên S(tam giác) = (a × h) : 2!"
+                        : "Kéo các mảnh ghép vào khung để tạo thành Hình chữ nhật nhé!"
+                    : !isTrapAltComplete
+                      ? "Em hãy tự kéo từ đỉnh đáy nhỏ xuống vuông góc với đáy lớn để kẻ chiều cao h nhé!"
+                      : isTrapExploreComplete
+                        ? `Tuyệt vời! Hình thang = Hình chữ nhật + ${demoMode === 1 ? '2 Tam giác vuông' : 'Tam giác vuông'} ➜ S = (a + b) × h : 2!`
+                        : "Kéo Hình chữ nhật sang trái và Tam giác vuông sang phải để tính tổng diện tích nhé!"
               }
-              subMessage={isSnapped ? "Diện tích ghép được = 2 lần hình gốc!" : undefined}
-              isHappy={isSnapped}
+              subMessage={
+                selectedShape === 'circle' && demoMode === 2 && circleMergeProgress >= 95 && circleSlices >= 16
+                  ? "Rút ra: S = (3,14 × r) × r = r × r × 3,14"
+                  : selectedShape === 'triangle' && isTriangleRectComplete
+                    ? "Rút ra: S = (đáy × chiều cao) : 2"
+                    : selectedShape === 'trapezoid' && isTrapExploreComplete
+                      ? "Rút ra: S = (đáy lớn + đáy nhỏ) × chiều cao : 2"
+                      : undefined
+              }
+              isHappy={
+                selectedShape === 'circle'
+                  ? demoMode === 2 && circleMergeProgress >= 95
+                  : selectedShape === 'triangle'
+                    ? isTriangleRectComplete
+                    : isTrapExploreComplete
+              }
             />
           </div>
+
+          </div>
+
+          {/* BẢNG ĐIỀU KHIỂN TRỰC QUAN CHO TAB "KHÁM PHÁ DIỆN TÍCH HÌNH TRÒN" */}
+          {selectedShape === 'circle' && demoMode === 2 && (
+            <div className="bg-white/95 backdrop-blur-md border-t-2 border-emerald-100 px-4 py-3.5 z-20">
+              <div className="grid grid-cols-1 xl:grid-cols-12 gap-3 items-center">
+                
+                {/* Thanh trượt 1: Chia hình tròn thành 4, 8, 16, 32, 64 phần */}
+                <div className="xl:col-span-5 bg-emerald-50/70 border border-emerald-200 rounded-2xl px-3.5 py-2.5">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs font-extrabold text-emerald-950 flex items-center gap-1.5">
+                      <SlidersHorizontal size={13} className="text-emerald-600" />
+                      Chia hình tròn thành các phần bằng nhau:
+                    </span>
+                    <span className="text-xs font-black text-white bg-emerald-600 px-2 py-0.5 rounded-lg">
+                      {circleSlices} phần
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={CIRCLE_SLICE_OPTIONS.length - 1}
+                    step={1}
+                    value={circleSliceIdx}
+                    onChange={(e) => setCircleSliceIdx(Number(e.target.value))}
+                    className="w-full accent-emerald-600 cursor-pointer h-2 bg-emerald-200 rounded-lg"
+                  />
+                  <div className="flex justify-between mt-1">
+                    {CIRCLE_SLICE_OPTIONS.map((count, idx) => (
+                      <button
+                        key={count}
+                        onClick={() => setCircleSliceIdx(idx)}
+                        className={`text-[11px] font-extrabold px-1.5 py-0.5 rounded-md transition-all cursor-pointer ${
+                          circleSliceIdx === idx
+                            ? 'bg-emerald-600 text-white shadow-xs'
+                            : 'text-emerald-800 hover:bg-emerald-100'
+                        }`}
+                      >
+                        {count}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Nút bấm + Thanh trượt 2: Cắt và ghép thành hình mới (0% - 100%) */}
+                <div className="xl:col-span-4 bg-teal-50/70 border border-teal-200 rounded-2xl px-3.5 py-2.5">
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <button
+                      onClick={() => setIsCircleAnimating(true)}
+                      disabled={isCircleAnimating}
+                      className="px-2.5 py-1 rounded-xl bg-teal-600 hover:bg-teal-700 disabled:opacity-70 text-white text-xs font-extrabold flex items-center gap-1.5 shadow-xs transition-all active:scale-95 cursor-pointer"
+                    >
+                      {circleMergeProgress >= 99 ? <RotateCcw size={12} /> : <Play size={12} />}
+                      {circleMergeProgress >= 99 ? 'Thu về hình tròn' : 'Cắt và ghép thành hình mới'}
+                    </button>
+                    <span className="text-xs font-black text-teal-800 font-mono">
+                      {circleMergeProgress}%
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    step={1}
+                    value={circleMergeProgress}
+                    onChange={(e) => {
+                      setIsCircleAnimating(false);
+                      setCircleMergeProgress(Number(e.target.value));
+                    }}
+                    className="w-full accent-teal-600 cursor-pointer h-2 bg-teal-200 rounded-lg"
+                  />
+                </div>
+
+                {/* Ô chọn Hiển thị kích thước & gợi ý + Nút Khám phá công thức */}
+                <div className="xl:col-span-3 flex flex-row xl:flex-col gap-2 justify-between">
+                  <label className="flex items-center gap-2 bg-slate-50 hover:bg-emerald-50/70 border border-slate-200 rounded-xl px-3 py-2 cursor-pointer select-none transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={showCircleHints}
+                      onChange={(e) => setShowCircleHints(e.target.checked)}
+                      className="w-4 h-4 accent-emerald-600 rounded cursor-pointer"
+                    />
+                    <span className="text-xs font-bold text-slate-700 flex items-center gap-1">
+                      <Eye size={13} className="text-emerald-600" />
+                      Hiển thị kích thước & gợi ý
+                    </span>
+                  </label>
+                  <button
+                    onClick={() => setShowCircleFormulaModal(true)}
+                    className="py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-black shadow-sm flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer"
+                  >
+                    <Lightbulb size={14} />
+                    Khám phá công thức
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          )}
 
         </div>
 
@@ -1382,6 +2910,38 @@ const Shape2DPanel: React.FC = () => {
                   {info.formula}
                 </div>
               </div>
+
+              {selectedShape === 'triangle' && (
+                <div className={`p-3 rounded-xl border mb-3 text-xs leading-relaxed transition-all ${
+                  isTriangleRectComplete
+                    ? 'bg-emerald-50 border-emerald-300 text-emerald-950 shadow-xs'
+                    : 'bg-white/90 border-sky-200 text-slate-700'
+                }`}>
+                  <p className="font-black text-sky-900 mb-1 flex items-center gap-1.5">
+                    <Lightbulb size={14} className="text-amber-500" />
+                    Khám phá từ Hình chữ nhật:
+                  </p>
+                  <p>
+                    Ghép <strong>2 hình tam giác bằng nhau</strong> thành <strong>Hình chữ nhật</strong> có chiều dài bằng đáy <strong>a</strong>, chiều rộng bằng chiều cao <strong>h</strong>. Vì diện tích hình chữ nhật là <strong>a × h</strong> nên diện tích một hình tam giác là <strong>(a × h) : 2</strong>.
+                  </p>
+                </div>
+              )}
+
+              {selectedShape === 'trapezoid' && (
+                <div className={`p-3 rounded-xl border mb-3 text-xs leading-relaxed transition-all ${
+                  isTrapExploreComplete
+                    ? 'bg-emerald-50 border-emerald-300 text-emerald-950 shadow-xs'
+                    : 'bg-white/90 border-purple-200 text-slate-700'
+                }`}>
+                  <p className="font-black text-purple-900 mb-1 flex items-center gap-1.5">
+                    <Lightbulb size={14} className="text-amber-500" />
+                    Khám phá từ Hình chữ nhật & 2 Tam giác vuông:
+                  </p>
+                  <p>
+                    Kẻ đường cao <strong>h</strong> chia hình thang thành <strong>1 Hình chữ nhật</strong> (diện tích <strong>b × h</strong>) và <strong>{demoMode === 1 ? '2 Tam giác vuông' : '1 Tam giác vuông'}</strong> ghép lại có đáy <strong>(a - b)</strong> (diện tích <strong>(a - b) × h : 2</strong>). Cộng lại ta được: <strong>S = b × h + (a - b) × h : 2 = (a + b) × h : 2</strong>.
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">

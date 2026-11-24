@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
 import { 
   Home as HomeIcon,
   Compass as CompassIcon,
@@ -14,7 +13,6 @@ import {
   Search as SearchIcon,
   ShieldCheck as ShieldCheckIcon
 } from 'lucide-react';
-import { auth } from './firebase';
 import { useFirebase } from './components/FirebaseProvider';
 import AppLogo from './components/AppLogo';
 import HomeLandingPanel from './components/HomeLandingPanel';
@@ -77,7 +75,7 @@ const App: React.FC = () => {
     }
   };
 
-  const { user, userProfile, isAdmin, loading, signOutUser } = useFirebase();
+  const { user, userProfile, isAdmin, loading, signOutUser, openLoginModal } = useFirebase();
 
   const isMasterAdmin = !user?.isAnonymous && (user?.email === 'thule020895@gmail.com' || isAdmin);
 
@@ -124,10 +122,7 @@ const App: React.FC = () => {
   const navItems = isMasterAdmin ? [...baseNavItems, adminNavItem] : baseNavItems;
 
   const login = () => {
-    const provider = new GoogleAuthProvider();
-    signInWithPopup(auth, provider).catch(err => {
-      console.error("Login error:", err);
-    });
+    openLoginModal();
   };
 
   const logout = async () => {

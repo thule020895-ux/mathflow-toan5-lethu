@@ -15,7 +15,9 @@ import {
   Play,
   Dices,
   RefreshCw,
-  BookOpen
+  BookOpen,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import MascotCompanion from './MascotCompanion';
 
@@ -49,6 +51,7 @@ export const ProbabilityStatsPanel: React.FC = () => {
   // State bài tập tương tác
   const [userPracticeAns, setUserPracticeAns] = useState<string>('');
   const [practiceResult, setPracticeResult] = useState<{ isChecked: boolean; isCorrect: boolean } | null>(null);
+  const [showStatsPercent, setShowStatsPercent] = useState<boolean>(false);
 
   // Tính toán số liệu thống kê
   const totalStudents = statsData.reduce((acc, curr) => acc + curr.count, 0);
@@ -101,12 +104,14 @@ export const ProbabilityStatsPanel: React.FC = () => {
     setStatsData(newStats);
     setUserPracticeAns('');
     setPracticeResult(null);
+    setShowStatsPercent(false);
   };
 
   const handleResetToInitial = () => {
     setStatsData(INITIAL_STATS);
     setUserPracticeAns('');
     setPracticeResult(null);
+    setShowStatsPercent(false);
   };
 
   // Câu hỏi tương tác: tỉ số % của CLB Bóng đá trên tổng số HS
@@ -223,30 +228,49 @@ export const ProbabilityStatsPanel: React.FC = () => {
 
                 {/* Chú giải quạt tròn */}
                 <div className="grid grid-cols-2 gap-2 w-full pt-2 border-t border-slate-100 text-[11px] font-bold">
-                  {piePaths.map((s, idx) => (
-                    <div key={idx} className="flex items-center gap-1.5">
-                      <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
-                      <span className="truncate">{s.name}: <strong className="font-mono">{s.percent}%</strong></span>
-                    </div>
-                  ))}
+                  {piePaths.map((s, idx) => {
+                    const hidePct = !isInitialData() && !showStatsPercent && !practiceResult?.isCorrect;
+                    return (
+                      <div key={idx} className="flex items-center gap-1.5">
+                        <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
+                        <span className="truncate">{s.name}: <strong className="font-mono">{hidePct ? '?%' : `${s.percent}%`}</strong></span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
               {/* Biểu đồ cột (Bar Chart) */}
               <div className="bg-white p-4 rounded-3xl border border-slate-200 shadow-xs flex flex-col justify-between">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                  <BarChart3 size={16} className="text-teal-600" />
-                  Biểu đồ cột số lượng học sinh (Tổng: {totalStudents} em)
-                </span>
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                    <BarChart3 size={16} className="text-teal-600" />
+                    Biểu đồ cột (Tổng: {totalStudents} em)
+                  </span>
+                  {!isInitialData() && (
+                    <button
+                      onClick={() => setShowStatsPercent(prev => !prev)}
+                      className={`px-2.5 py-1 rounded-full text-[11px] font-extrabold border flex items-center gap-1 transition-all cursor-pointer ${
+                        showStatsPercent || practiceResult?.isCorrect
+                          ? 'bg-emerald-600 text-white border-emerald-500'
+                          : 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100'
+                      }`}
+                    >
+                      {showStatsPercent || practiceResult?.isCorrect ? <EyeOff size={12} /> : <Eye size={12} />}
+                      {showStatsPercent || practiceResult?.isCorrect ? 'Ẩn %' : 'Hiện %'}
+                    </button>
+                  )}
+                </div>
 
                 <div className="space-y-3 my-auto">
                   {statsData.map((item, idx) => {
                     const pct = Math.round((item.count / totalStudents) * 100);
+                    const hidePct = !isInitialData() && !showStatsPercent && !practiceResult?.isCorrect;
                     return (
                       <div key={idx} className="space-y-1">
                         <div className="flex justify-between text-xs font-bold text-slate-700">
                           <span>{item.name}</span>
-                          <span className="font-mono text-slate-900">{item.count} em ({pct}%)</span>
+                          <span className="font-mono text-slate-900">{item.count} em ({hidePct ? '?%' : `${pct}%`})</span>
                         </div>
                         <div className="h-6 w-full bg-slate-100 rounded-xl overflow-hidden p-0.5 border border-slate-200">
                           <div

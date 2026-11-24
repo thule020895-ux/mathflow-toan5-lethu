@@ -12,7 +12,9 @@ import {
   Shuffle,
   BookOpen,
   PieChart,
-  Split
+  Split,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import MascotCompanion from './MascotCompanion';
 
@@ -56,6 +58,7 @@ export const RatioFractionPanel: React.FC<RatioFractionPanelProps> = ({ initialS
   const [userAns1, setUserAns1] = useState<string>(''); // Số bé hoặc kết quả phân số
   const [userAns2, setUserAns2] = useState<string>(''); // Số lớn
   const [practiceResult, setPracticeResult] = useState<{ isChecked: boolean; isCorrect: boolean } | null>(null);
+  const [showDiagramHint, setShowDiagramHint] = useState(false);
 
   // Kiểm tra số liệu mẫu ban đầu
   const isInitialData = () => {
@@ -112,6 +115,7 @@ export const RatioFractionPanel: React.FC<RatioFractionPanelProps> = ({ initialS
     setUserAns1('');
     setUserAns2('');
     setPracticeResult(null);
+    setShowDiagramHint(false);
   };
 
   const handleResetToInitial = () => {
@@ -125,6 +129,7 @@ export const RatioFractionPanel: React.FC<RatioFractionPanelProps> = ({ initialS
     setUserAns1('');
     setUserAns2('');
     setPracticeResult(null);
+    setShowDiagramHint(false);
   };
 
   const handleCheckAnswer = () => {
@@ -149,7 +154,10 @@ export const RatioFractionPanel: React.FC<RatioFractionPanelProps> = ({ initialS
     setUserAns1('');
     setUserAns2('');
     setPracticeResult(null);
+    setShowDiagramHint(false);
   };
+
+  const isFracHintVisible = isInitialData() || showDiagramHint || Boolean(practiceResult?.isCorrect);
 
   return (
     <div className="p-4 sm:p-6 bg-gradient-to-b from-purple-50/40 via-white to-slate-50 min-h-full flex flex-col justify-between">
@@ -170,7 +178,7 @@ export const RatioFractionPanel: React.FC<RatioFractionPanelProps> = ({ initialS
           {/* Sub-tabs Switcher */}
           <div className="flex flex-wrap gap-1.5 p-1 bg-slate-100 rounded-2xl border border-slate-200">
             <button
-              onClick={() => { setSubMode('sum_ratio'); setUserAns1(''); setUserAns2(''); setPracticeResult(null); }}
+              onClick={() => { setSubMode('sum_ratio'); setUserAns1(''); setUserAns2(''); setPracticeResult(null); setShowDiagramHint(false); }}
               className={`px-3 py-2 rounded-xl text-xs font-black transition-all ${
                 subMode === 'sum_ratio'
                   ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30'
@@ -180,7 +188,7 @@ export const RatioFractionPanel: React.FC<RatioFractionPanelProps> = ({ initialS
               1. Tổng – Tỉ
             </button>
             <button
-              onClick={() => { setSubMode('diff_ratio'); setUserAns1(''); setUserAns2(''); setPracticeResult(null); }}
+              onClick={() => { setSubMode('diff_ratio'); setUserAns1(''); setUserAns2(''); setPracticeResult(null); setShowDiagramHint(false); }}
               className={`px-3 py-2 rounded-xl text-xs font-black transition-all ${
                 subMode === 'diff_ratio'
                   ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30'
@@ -190,7 +198,7 @@ export const RatioFractionPanel: React.FC<RatioFractionPanelProps> = ({ initialS
               2. Hiệu – Tỉ
             </button>
             <button
-              onClick={() => { setSubMode('fraction_of_num'); setUserAns1(''); setUserAns2(''); setPracticeResult(null); }}
+              onClick={() => { setSubMode('fraction_of_num'); setUserAns1(''); setUserAns2(''); setPracticeResult(null); setShowDiagramHint(false); }}
               className={`px-3 py-2 rounded-xl text-xs font-black transition-all ${
                 subMode === 'fraction_of_num'
                   ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30'
@@ -204,16 +212,31 @@ export const RatioFractionPanel: React.FC<RatioFractionPanelProps> = ({ initialS
 
         {/* KHỐI SƠ ĐỒ ĐOẠN THẲNG TRỰC QUAN SỐ PHẦN */}
         <div className="mb-6 bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/90 shadow-xs">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
               <BookOpen size={16} className="text-purple-600" />
               Sơ đồ minh họa số phần bằng nhau
             </span>
-            <span className="text-xs font-black text-purple-700 bg-purple-50 px-2.5 py-1 rounded-full border border-purple-200">
-              {subMode === 'sum_ratio' && `Tỉ số: ${sumRatioData.numPart}/${sumRatioData.denPart} | Tổng: ${sumRatioData.sum}`}
-              {subMode === 'diff_ratio' && `Tỉ số: ${diffRatioData.numPart}/${diffRatioData.denPart} | Hiệu: ${diffRatioData.diff}`}
-              {subMode === 'fraction_of_num' && `Tìm ${fracData.numerator}/${fracData.denominator} của ${fracData.total}`}
-            </span>
+            <div className="flex items-center gap-2">
+              {subMode === 'fraction_of_num' && !isInitialData() && (
+                <button
+                  onClick={() => setShowDiagramHint(prev => !prev)}
+                  className={`px-2.5 py-1 rounded-full text-[11px] font-extrabold border flex items-center gap-1 transition-all cursor-pointer ${
+                    isFracHintVisible
+                      ? 'bg-emerald-600 text-white border-emerald-500'
+                      : 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100'
+                  }`}
+                >
+                  {isFracHintVisible ? <EyeOff size={12} /> : <Eye size={12} />}
+                  {isFracHintVisible ? 'Ẩn gợi ý 1 phần' : 'Hiện gợi ý 1 phần'}
+                </button>
+              )}
+              <span className="text-xs font-black text-purple-700 bg-purple-50 px-2.5 py-1 rounded-full border border-purple-200">
+                {subMode === 'sum_ratio' && `Tỉ số: ${sumRatioData.numPart}/${sumRatioData.denPart} | Tổng: ${sumRatioData.sum}`}
+                {subMode === 'diff_ratio' && `Tỉ số: ${diffRatioData.numPart}/${diffRatioData.denPart} | Hiệu: ${diffRatioData.diff}`}
+                {subMode === 'fraction_of_num' && `Tìm ${fracData.numerator}/${fracData.denominator} của ${fracData.total}`}
+              </span>
+            </div>
           </div>
 
           <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-4">
@@ -300,7 +323,9 @@ export const RatioFractionPanel: React.FC<RatioFractionPanelProps> = ({ initialS
                             : 'bg-slate-200 border-slate-300 text-slate-600'
                         }`}>
                           <span>1/{fracData.denominator}</span>
-                          <span className="text-[9px] font-mono font-semibold">({fracData.total / fracData.denominator})</span>
+                          <span className="text-[9px] font-mono font-semibold">
+                            ({isFracHintVisible ? fracData.total / fracData.denominator : '?'})
+                          </span>
                         </div>
                       );
                     })}
@@ -308,7 +333,9 @@ export const RatioFractionPanel: React.FC<RatioFractionPanelProps> = ({ initialS
                 </div>
                 <div className="pt-2 border-t border-slate-200 flex justify-between text-xs font-bold text-emerald-900">
                   <span>Số phần lấy: {fracData.numerator} phần xanh lá trên tổng số {fracData.denominator} phần bằng nhau</span>
-                  <span>Mỗi phần có giá trị = {fracData.total} : {fracData.denominator} = {fracData.total / fracData.denominator}</span>
+                  <span>
+                    Mỗi phần có giá trị = {isFracHintVisible ? `${fracData.total} : ${fracData.denominator} = ${fracData.total / fracData.denominator}` : '?'}
+                  </span>
                 </div>
               </>
             )}

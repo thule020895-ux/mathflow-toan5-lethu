@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
-import { Sparkles, MessageCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Sparkles, AlertTriangle } from 'lucide-react';
 
 interface MascotCompanionProps {
   message?: string;
   customMessage?: string;
   subMessage?: string;
   isHappy?: boolean;
+  isWarning?: boolean;
+  compact?: boolean;
   mood?: string;
   className?: string;
 }
@@ -15,6 +17,8 @@ export const MascotCompanion: React.FC<MascotCompanionProps> = ({
   customMessage,
   subMessage,
   isHappy = false,
+  isWarning = false,
+  compact = false,
   mood,
   className = ""
 }) => {
@@ -22,6 +26,10 @@ export const MascotCompanion: React.FC<MascotCompanionProps> = ({
   const effectiveHappy = isHappy || mood === 'happy';
   const [isHovered, setIsHovered] = useState(false);
   const [clickCount, setClickCount] = useState(0);
+
+  useEffect(() => {
+    setClickCount(0);
+  }, [effectiveMessage, isWarning]);
 
   const funQuotes = [
     "MathFlow: Học chủ động – Vững tư duy!",
@@ -31,37 +39,55 @@ export const MascotCompanion: React.FC<MascotCompanionProps> = ({
     "Tam giác, hình thang, hình tròn đều có công thức tuyệt vời!"
   ];
 
-  const currentMessage = clickCount > 0 ? funQuotes[clickCount % funQuotes.length] : effectiveMessage;
+  const currentMessage = !isWarning && clickCount > 0 ? funQuotes[clickCount % funQuotes.length] : effectiveMessage;
 
   return (
     <div 
-      className={`flex items-end gap-2 md:gap-3 select-none transition-transform duration-300 ${className}`}
+      className={`flex items-end gap-2 ${compact ? '' : 'md:gap-3'} select-none transition-transform duration-300 ${className}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      onClick={() => setClickCount(prev => prev + 1)}
-      title="Bấm vào bạn nhỏ để nhận lời động viên học tập!"
+      onClick={() => { if (!isWarning) setClickCount(prev => prev + 1); }}
+      title={isWarning ? "Chú ý kiểm tra lại đơn vị đo!" : "Bấm vào bạn nhỏ để nhận lời động viên học tập!"}
     >
       {/* Speech Bubble */}
-      <div className="relative bg-white/95 backdrop-blur-sm border-2 border-sky-300 rounded-2xl px-3.5 py-2 shadow-lg max-w-[200px] md:max-w-[230px] transition-all hover:scale-105 cursor-pointer">
+      <div className={`relative backdrop-blur-sm border-2 rounded-2xl shadow-lg transition-all hover:scale-[1.02] cursor-pointer ${
+        compact ? 'px-2.5 py-1.5 max-w-[220px] md:max-w-[260px]' : 'px-3.5 py-2 max-w-[200px] md:max-w-[230px]'
+      } ${
+        isWarning
+          ? 'bg-amber-50/95 border-rose-400 shadow-rose-200/50'
+          : 'bg-white/95 border-sky-300'
+      }`}>
         <div className="flex items-start gap-1.5">
-          <Sparkles className="w-4 h-4 text-amber-500 shrink-0 mt-0.5 animate-pulse" />
+          {isWarning ? (
+            <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5 animate-bounce" />
+          ) : (
+            <Sparkles className="w-4 h-4 text-amber-500 shrink-0 mt-0.5 animate-pulse" />
+          )}
           <div>
-            <p className="text-xs md:text-sm font-bold text-sky-900 leading-snug">
+            <p className={`${compact ? 'text-[11px] md:text-xs' : 'text-xs md:text-sm'} font-bold leading-snug ${
+              isWarning ? 'text-rose-800' : 'text-sky-900'
+            }`}>
               {currentMessage}
             </p>
             {subMessage && (
-              <p className="text-[10px] text-slate-500 font-medium mt-0.5 leading-tight">
+              <p className={`text-[10px] font-medium mt-0.5 leading-tight ${
+                isWarning ? 'text-amber-800' : 'text-slate-500'
+              }`}>
                 {subMessage}
               </p>
             )}
           </div>
         </div>
         {/* Bubble arrow pointing towards mascot */}
-        <div className="absolute -bottom-2 right-6 w-3 h-3 bg-white border-r-2 border-b-2 border-sky-300 rotate-45"></div>
+        <div className={`absolute -bottom-2 right-5 w-3 h-3 rotate-45 border-r-2 border-b-2 ${
+          isWarning ? 'bg-amber-50 border-rose-400' : 'bg-white border-sky-300'
+        }`}></div>
       </div>
 
       {/* 2D Cartoon Vietnamese Primary Student Mascot */}
-      <div className="relative w-20 h-24 md:w-24 md:h-28 shrink-0 cursor-pointer animate-mascot-float">
+      <div className={`relative shrink-0 cursor-pointer animate-mascot-float ${
+        compact ? 'w-14 h-16 md:w-16 md:h-20' : 'w-20 h-24 md:w-24 md:h-28'
+      }`}>
         <svg 
           viewBox="0 0 120 140" 
           className="w-full h-full drop-shadow-md overflow-visible"

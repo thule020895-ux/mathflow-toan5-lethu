@@ -34,8 +34,7 @@ import {
   setDoc,
   updateDoc
 } from 'firebase/firestore';
-import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import { db, auth } from '../firebase';
+import { db } from '../firebase';
 import { useFirebase, AppUserProfile, UserRole } from './FirebaseProvider';
 
 enum OperationType {
@@ -76,7 +75,7 @@ const AdminPanel: React.FC = () => {
   const [isSeeding, setIsSeeding] = useState(false);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
-  const { user, userProfile, isAdmin } = useFirebase();
+  const { user, userProfile, isAdmin, openLoginModal } = useFirebase();
 
   const isMasterAdmin = user?.email === 'thule020895@gmail.com' || isAdmin;
 
@@ -261,10 +260,7 @@ const AdminPanel: React.FC = () => {
   };
 
   const login = () => {
-    const provider = new GoogleAuthProvider();
-    signInWithPopup(auth, provider).catch(err => {
-      console.error("Login error:", err);
-    });
+    openLoginModal();
   };
 
   // Filtered users
