@@ -331,6 +331,43 @@ export const GoldenBellIllustration: React.FC<Props> = ({ spec }) => {
             <text x="160" y="86" textAnchor="middle" fontSize="11.5" fontWeight="700" fill="#0369a1">Vận tốc đoàn tàu: {d.speed}</text>
           </svg>
         )}
+
+        {spec.type === 'commune_bar_chart' && (
+          <svg viewBox="0 0 320 130" className="w-full max-w-[300px] h-28">
+            <text x="160" y="15" textAnchor="middle" fontSize="11" fontWeight="800" fill="#334155">
+              So sánh diện tích các xã (km²)
+            </text>
+            <line x1="36" y1="104" x2="292" y2="104" stroke="#64748b" strokeWidth="2" />
+            {[
+              { name: 'Quỳ Châu', val: '327,53', h: 66, color: '#0284c7', x: 58 },
+              { name: 'Châu Tiến', val: '247,16', h: 50, color: '#10b981', x: 142 },
+              { name: 'Châu Bình', val: '130,91', h: 28, color: '#f59e0b', x: 226 },
+            ].map((item) => (
+              <g key={item.name}>
+                <rect x={item.x} y={104 - item.h} width="42" height={item.h} rx="5" fill={item.color} />
+                <text x={item.x + 21} y={99 - item.h} textAnchor="middle" fontSize="10.5" fontWeight="800" fill="#0f172a">
+                  {item.val}
+                </text>
+                <text x={item.x + 21} y="120" textAnchor="middle" fontSize="10.5" fontWeight="700" fill="#475569">
+                  {item.name}
+                </text>
+              </g>
+            ))}
+          </svg>
+        )}
+
+        {spec.type === 'sugar_bag' && (
+          <svg viewBox="0 0 300 100" className="w-full max-w-[280px] h-24">
+            <rect x="24" y="20" width="76" height="58" rx="14" fill="#fef3c7" stroke="#d97706" strokeWidth="2.5" />
+            <path d="M 46 20 L 40 10 L 84 10 L 78 20" fill="#fde68a" stroke="#d97706" strokeWidth="2" />
+            <text x="62" y="48" textAnchor="middle" fontSize="11.5" fontWeight="800" fill="#92400e">Bao đường</text>
+            <text x="62" y="65" textAnchor="middle" fontSize="12" fontWeight="900" fill="#b45309">{d.total}</text>
+            <line x1="112" y1="49" x2="144" y2="49" stroke="#0284c7" strokeWidth="2.5" />
+            <polygon points="150,49 140,43 140,55" fill="#0284c7" />
+            <rect x="156" y="24" width="128" height="50" rx="10" fill="#eff6ff" stroke="#93c5fd" strokeWidth="1.5" />
+            <text x="220" y="53" textAnchor="middle" fontSize="10.5" fontWeight="800" fill="#1e40af">{d.step}</text>
+          </svg>
+        )}
       </div>
     </div>
   );

@@ -92,6 +92,31 @@ function normalizeNumericAnswer(value: string): string {
   return value.trim().toLowerCase().replace(/\s+/g, '').replace(/\./g, ',');
 }
 
+function renderFormattedMathText(text: string): React.ReactNode {
+  const parts = text.split(/(mm²|cm²|dm²|m²|km²|mm³|cm³|dm³|m³|km³|cm2|dm2|m2|km2|cm3|dm3|m3)/g);
+  return parts.map((part, idx) => {
+    if (/^(mm|cm|dm|m|km)[²2]$/.test(part)) {
+      const unitBase = part.slice(0, -1);
+      return (
+        <React.Fragment key={idx}>
+          {unitBase}
+          <sup>2</sup>
+        </React.Fragment>
+      );
+    }
+    if (/^(mm|cm|dm|m|km)[³3]$/.test(part)) {
+      const unitBase = part.slice(0, -1);
+      return (
+        <React.Fragment key={idx}>
+          {unitBase}
+          <sup>3</sup>
+        </React.Fragment>
+      );
+    }
+    return <React.Fragment key={idx}>{part}</React.Fragment>;
+  });
+}
+
 function getAwardTitle(correctCount: number): {
   title: string;
   subtitle: string;
@@ -284,7 +309,11 @@ const GoldenBellGame: React.FC = () => {
     const set = STAGE_QUESTION_SETS[round] || STAGE_QUESTION_SETS[1];
     return set.map((q) => ({
       ...q,
-      options: q.options ? [...q.options].sort(() => Math.random() - 0.5) : undefined,
+      options: q.options
+        ? q.preserveOptionOrder
+          ? [...q.options]
+          : [...q.options].sort(() => Math.random() - 0.5)
+        : undefined,
     }));
   }, []);
 
@@ -433,8 +462,11 @@ const GoldenBellGame: React.FC = () => {
         return next;
       });
       setShowFeedback('correct');
+      const bonusLabel = starActiveForCurrent
+        ? `+${gained} điểm (Ngôi sao hy vọng nhân đôi!)`
+        : `+${gained} điểm`;
       setFeedbackDetail(
-        starActiveForCurrent ? `+${gained} điểm (Ngôi sao hy vọng nhân đôi!)` : `+${gained} điểm`
+        currentQ.explanation ? `${bonusLabel} · ${currentQ.explanation}` : bonusLabel
       );
       confetti({
         particleCount: starActiveForCurrent ? 70 : 35,
@@ -444,7 +476,7 @@ const GoldenBellGame: React.FC = () => {
 
       transitionTimeoutRef.current = setTimeout(() => {
         advanceToNextQuestion(updatedScore);
-      }, 1350);
+      }, currentQ.explanation ? 1900 : 1350);
     } else {
       setWrongCount((prev) => prev + 1);
       setOutcomes((prev) => {
@@ -469,10 +501,14 @@ const GoldenBellGame: React.FC = () => {
               : 'Sai'
             : `${currentQ.answer}${currentQ.unit ? ` ${currentQ.unit}` : ''}`;
         setShowFeedback('wrong');
-        setFeedbackDetail(`Đáp án đúng là: ${rightText}`);
+        setFeedbackDetail(
+          currentQ.explanation
+            ? `Đáp án đúng là: ${rightText}. ${currentQ.explanation}`
+            : `Đáp án đúng là: ${rightText}`
+        );
         transitionTimeoutRef.current = setTimeout(() => {
           finishGame(roundScore, currentQuestionIndex + 1);
-        }, 1600);
+        }, currentQ.explanation ? 2300 : 1600);
       }
     }
   };
@@ -1037,7 +1073,9 @@ const GoldenBellGame: React.FC = () => {
                             {showFeedback === 'correct' ? 'Chính xác!' : 'Chưa đúng rồi!'}
                           </p>
                           {feedbackDetail && (
-                            <p className="text-sm font-bold text-slate-700">{feedbackDetail}</p>
+                            <p className="text-sm font-bold text-slate-700 max-w-lg leading-relaxed">
+                              {renderFormattedMathText(feedbackDetail)}
+                            </p>
                           )}
                         </motion.div>
                       </motion.div>
@@ -1045,7 +1083,7 @@ const GoldenBellGame: React.FC = () => {
                   </AnimatePresence>
 
                   <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-800 leading-snug">
-                    Câu {currentQuestionIndex + 1}: {currentQ.question}
+                    Câu {currentQuestionIndex + 1}: {renderFormattedMathText(currentQ.question)}
                   </h2>
 
                   {currentQ.svg && <GoldenBellIllustration spec={currentQ.svg} />}
@@ -1058,7 +1096,9 @@ const GoldenBellGame: React.FC = () => {
                         <p className="text-xs font-extrabold text-sky-800 uppercase tracking-wide mb-0.5">
                           Gợi ý hướng tư duy từ Trợ lý MathFlow
                         </p>
-                        <p className="text-sm font-semibold text-slate-700">{activeHintText}</p>
+                        <p className="text-sm font-semibold text-slate-700">
+                          {renderFormattedMathText(activeHintText)}
+                        </p>
                       </div>
                     </div>
                   )}
@@ -1089,7 +1129,7 @@ const GoldenBellGame: React.FC = () => {
                           >
                             {letter}
                           </span>
-                          <span className="flex-1">{opt}</span>
+                          <span className="flex-1">{renderFormattedMathText(opt)}</span>
                         </button>
                       );
                     })}
@@ -1138,7 +1178,7 @@ const GoldenBellGame: React.FC = () => {
                       />
                       {currentQ.unit && (
                         <span className="bg-amber-100 text-amber-900 px-4 py-4 rounded-2xl text-xl font-black whitespace-nowrap shrink-0">
-                          {currentQ.unit}
+                          {renderFormattedMathText(currentQ.unit)}
                         </span>
                       )}
                     </div>
@@ -1329,7 +1369,7 @@ const GoldenBellGame: React.FC = () => {
 
               <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-5">
                 <p className="text-xl sm:text-2xl font-black text-slate-900">
-                  {activeRescueQuestion.question}
+                  {renderFormattedMathText(activeRescueQuestion.question)}
                 </p>
               </div>
 
@@ -1342,7 +1382,7 @@ const GoldenBellGame: React.FC = () => {
                       onClick={() => handleRescueAnswer(opt)}
                       className="bg-white hover:bg-amber-50 border-2 border-slate-200 hover:border-amber-400 py-4 px-3 rounded-2xl text-xl font-black text-slate-800 transition-all"
                     >
-                      {opt}
+                      {renderFormattedMathText(opt)}
                     </button>
                   ))}
                 </div>
@@ -1358,7 +1398,7 @@ const GoldenBellGame: React.FC = () => {
                     <span>Giải cứu chưa thành công!</span>
                   </div>
                   <span className="text-sm font-bold text-slate-700">
-                    Đáp án đúng là: {activeRescueQuestion.answer}
+                    Đáp án đúng là: {renderFormattedMathText(activeRescueQuestion.answer)}
                   </span>
                 </div>
               )}
