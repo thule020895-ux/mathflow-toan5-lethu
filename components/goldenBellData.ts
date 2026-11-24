@@ -386,7 +386,7 @@ export const STAGE_QUESTION_SETS: Record<number, GoldenBellQuestion[]> = {
     {
       id: '2-4',
       type: 'boolean',
-      timeLimit: 10,
+      timeLimit: 40,
       question: 'Giá trị của 4,8 : 0,5 bằng giá trị của 4,8 × 2.',
       answer: true,
       hint: 'Vì 0,5 = 1/2 nên chia cho 1/2 chính là nhân với 2.',
@@ -394,7 +394,7 @@ export const STAGE_QUESTION_SETS: Record<number, GoldenBellQuestion[]> = {
     {
       id: '2-5',
       type: 'fill',
-      timeLimit: 20,
+      timeLimit: 40,
       unit: 'cm',
       question: 'Một hình tròn có bán kính 3,5 cm. Chu vi hình tròn đó là bao nhiêu xăng-ti-mét?',
       answer: '21,98',
@@ -428,7 +428,7 @@ export const STAGE_QUESTION_SETS: Record<number, GoldenBellQuestion[]> = {
     {
       id: '2-9',
       type: 'boolean',
-      timeLimit: 10,
+      timeLimit: 40,
       question: 'Diện tích hình tròn có bán kính 4 cm lớn hơn 50 cm².',
       answer: true,
       hint: 'Tính nhẩm 4 × 4 × 3,14 xem có vượt quá 50 hay không.',
@@ -445,7 +445,7 @@ export const STAGE_QUESTION_SETS: Record<number, GoldenBellQuestion[]> = {
     {
       id: '2-11',
       type: 'fill',
-      timeLimit: 20,
+      timeLimit: 40,
       unit: 'kg',
       question: 'Một can chứa 15 lít dầu, mỗi lít dầu nặng 0,8 kg và vỏ can nặng 1,2 kg. Hỏi cả can dầu nặng bao nhiêu ki-lô-gam?',
       answer: '13,2',
@@ -471,7 +471,7 @@ export const STAGE_QUESTION_SETS: Record<number, GoldenBellQuestion[]> = {
     {
       id: '2-14',
       type: 'boolean',
-      timeLimit: 10,
+      timeLimit: 40,
       question: 'Kết quả của phép trừ 42,5 - 17,8 là 25,7.',
       answer: false,
       hint: 'Kiểm tra lại phép trừ có nhớ ở hàng đơn vị: 42 - 1 - 17.',
@@ -488,7 +488,7 @@ export const STAGE_QUESTION_SETS: Record<number, GoldenBellQuestion[]> = {
     {
       id: '2-16',
       type: 'fill',
-      timeLimit: 20,
+      timeLimit: 40,
       unit: 'cm²',
       question: 'Tính diện tích hình tròn có đường kính 10 cm.',
       answer: '78,5',
@@ -559,7 +559,7 @@ export const STAGE_QUESTION_SETS: Record<number, GoldenBellQuestion[]> = {
     {
       id: '3-4',
       type: 'boolean',
-      timeLimit: 10,
+      timeLimit: 40,
       question: '1 dm³ bằng 1 000 cm³.',
       answer: true,
       hint: 'Mỗi đơn vị đo thể tích lớn gấp 1 000 lần đơn vị bé tiếp liền.',
@@ -567,7 +567,7 @@ export const STAGE_QUESTION_SETS: Record<number, GoldenBellQuestion[]> = {
     {
       id: '3-5',
       type: 'fill',
-      timeLimit: 20,
+      timeLimit: 40,
       unit: 'học sinh',
       question: 'Một trường tiểu học có 600 học sinh, trong đó có 45% là học sinh nữ. Hỏi trường đó có bao nhiêu học sinh nữ?',
       answer: '270',
@@ -602,7 +602,7 @@ export const STAGE_QUESTION_SETS: Record<number, GoldenBellQuestion[]> = {
     {
       id: '3-9',
       type: 'boolean',
-      timeLimit: 10,
+      timeLimit: 40,
       question: 'Số đo thể tích 3,5 m³ bằng 3 500 dm³.',
       answer: true,
       hint: 'Nhân 3,5 với 1 000 để đổi từ mét khối sang đề-xi-mét khối.',
@@ -619,7 +619,7 @@ export const STAGE_QUESTION_SETS: Record<number, GoldenBellQuestion[]> = {
     {
       id: '3-11',
       type: 'fill',
-      timeLimit: 20,
+      timeLimit: 40,
       unit: 'cm³',
       question: 'Tính thể tích của một hình lập phương có cạnh dài 6 cm.',
       answer: '216',
@@ -645,7 +645,7 @@ export const STAGE_QUESTION_SETS: Record<number, GoldenBellQuestion[]> = {
     {
       id: '3-14',
       type: 'boolean',
-      timeLimit: 10,
+      timeLimit: 40,
       question: 'Khi gấp đôi độ dài cạnh của một hình lập phương thì thể tích của nó tăng lên 4 lần.',
       answer: false,
       hint: 'Thể tích bằng cạnh × cạnh × cạnh, nên nếu mỗi chiều gấp 2 lần thì thể tích gấp 2 × 2 × 2 lần.',
@@ -662,7 +662,7 @@ export const STAGE_QUESTION_SETS: Record<number, GoldenBellQuestion[]> = {
     {
       id: '3-16',
       type: 'fill',
-      timeLimit: 20,
+      timeLimit: 40,
       unit: 'đồng',
       question: 'Bác An gửi tiết kiệm 40 000 000 đồng với lãi suất 0,5% một tháng. Sau 1 tháng bác An nhận được bao nhiêu tiền lãi?',
       answer: '200000',
@@ -733,7 +733,7 @@ export const STAGE_QUESTION_SETS: Record<number, GoldenBellQuestion[]> = {
     {
       id: '4-4',
       type: 'boolean',
-      timeLimit: 10,
+      timeLimit: 40,
       question: 'Một ô tô chạy với vận tốc 54 km/giờ tương đương với vận tốc 15 m/giây.',
       answer: true,
       hint: 'Đổi 54 km = 54 000 m và 1 giờ = 3 600 giây rồi thực hiện phép chia.',
@@ -741,7 +741,7 @@ export const STAGE_QUESTION_SETS: Record<number, GoldenBellQuestion[]> = {
     {
       id: '4-5',
       type: 'fill',
-      timeLimit: 20,
+      timeLimit: 40,
       unit: 'km',
       question: 'Một ca nô đi với vận tốc 24 km/giờ trong 2 giờ 30 phút. Quãng đường ca nô đi được là bao nhiêu ki-lô-mét?',
       answer: '60',
@@ -776,7 +776,7 @@ export const STAGE_QUESTION_SETS: Record<number, GoldenBellQuestion[]> = {
     {
       id: '4-9',
       type: 'boolean',
-      timeLimit: 10,
+      timeLimit: 40,
       question: 'Tung một đồng xu 20 lần có 12 lần xuất hiện mặt ngửa, vậy tỉ số giữa số lần xuất hiện mặt ngửa và tổng số lần tung là 3/5.',
       answer: true,
       hint: 'Lập phân số 12/20 rồi rút gọn cả tử số và mẫu số cho 4.',
@@ -793,7 +793,7 @@ export const STAGE_QUESTION_SETS: Record<number, GoldenBellQuestion[]> = {
     {
       id: '4-11',
       type: 'fill',
-      timeLimit: 20,
+      timeLimit: 40,
       unit: 'phút',
       question: 'Một người đi bộ với vận tốc 4,5 km/giờ trên quãng đường dài 1,8 km. Hỏi người đó đi hết bao nhiêu phút?',
       answer: '24',
@@ -819,7 +819,7 @@ export const STAGE_QUESTION_SETS: Record<number, GoldenBellQuestion[]> = {
     {
       id: '4-14',
       type: 'boolean',
-      timeLimit: 10,
+      timeLimit: 40,
       question: 'Trong hộp có 5 viên bi xanh và 5 viên bi đỏ giống nhau. Khi lấy ngẫu nhiên 1 viên bi thì chắc chắn lấy được bi đỏ.',
       answer: false,
       hint: 'Vì trong hộp có cả bi xanh và bi đỏ nên sự kiện lấy được bi đỏ chỉ là "có thể", không "chắc chắn".',
@@ -836,7 +836,7 @@ export const STAGE_QUESTION_SETS: Record<number, GoldenBellQuestion[]> = {
     {
       id: '4-16',
       type: 'fill',
-      timeLimit: 20,
+      timeLimit: 40,
       unit: 'giây',
       question: 'Một vận động viên chạy quãng đường 100 m với vận tốc 8 m/giây. Hỏi vận động viên đó chạy hết bao nhiêu giây?',
       answer: '12,5',
@@ -907,7 +907,7 @@ export const STAGE_QUESTION_SETS: Record<number, GoldenBellQuestion[]> = {
     {
       id: '5-4',
       type: 'boolean',
-      timeLimit: 10,
+      timeLimit: 40,
       question: 'Khi giảm chiều dài hình chữ nhật đi 20% và tăng chiều rộng thêm 25% thì diện tích hình chữ nhật không đổi.',
       answer: true,
       hint: 'Coi chiều dài và chiều rộng ban đầu là 100%, nhân 80% với 125% để kiểm tra diện tích mới.',
@@ -915,7 +915,7 @@ export const STAGE_QUESTION_SETS: Record<number, GoldenBellQuestion[]> = {
     {
       id: '5-5',
       type: 'fill',
-      timeLimit: 20,
+      timeLimit: 40,
       unit: 'tạ',
       question: 'Có 500 kg hạt tươi chứa 28% nước. Phơi khô thành hạt khô chỉ còn 10% nước. Hỏi thu được bao nhiêu tạ hạt khô?',
       answer: '4',
@@ -950,7 +950,7 @@ export const STAGE_QUESTION_SETS: Record<number, GoldenBellQuestion[]> = {
     {
       id: '5-9',
       type: 'boolean',
-      timeLimit: 10,
+      timeLimit: 40,
       question: 'Để đánh số trang một cuốn sách từ trang 1 đến trang 99, cần dùng tất cả 189 chữ số.',
       answer: true,
       hint: 'Từ trang 1 đến 9 có 9 số có 1 chữ số; từ trang 10 đến 99 có 90 số có 2 chữ số.',
@@ -967,7 +967,7 @@ export const STAGE_QUESTION_SETS: Record<number, GoldenBellQuestion[]> = {
     {
       id: '5-11',
       type: 'fill',
-      timeLimit: 20,
+      timeLimit: 40,
       unit: 'tuổi',
       question: 'Hiện nay tổng số tuổi của hai mẹ con là 42 tuổi. Sau 4 năm nữa, tuổi mẹ gấp 4 lần tuổi con. Hỏi hiện nay con bao nhiêu tuổi?',
       answer: '6',
@@ -993,7 +993,7 @@ export const STAGE_QUESTION_SETS: Record<number, GoldenBellQuestion[]> = {
     {
       id: '5-14',
       type: 'boolean',
-      timeLimit: 10,
+      timeLimit: 40,
       question: 'Một hình vuông có chu vi 24 cm thì diện tích của nó là 36 cm².',
       answer: true,
       hint: 'Tìm độ dài cạnh hình vuông bằng chu vi chia cho 4, rồi lấy cạnh nhân cạnh.',
@@ -1010,7 +1010,7 @@ export const STAGE_QUESTION_SETS: Record<number, GoldenBellQuestion[]> = {
     {
       id: '5-16',
       type: 'fill',
-      timeLimit: 20,
+      timeLimit: 40,
       unit: 'quyển',
       question: 'Ba lớp khối 5 góp được 180 quyển sách. Lớp 5A góp nhiều hơn 5B là 12 quyển, lớp 5C góp bằng trung bình cộng của 5A và 5B. Hỏi lớp 5A góp bao nhiêu quyển?',
       answer: '66',

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Home as HomeIcon,
   Compass as CompassIcon,
@@ -39,6 +39,17 @@ const App: React.FC = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [isInAppBrowser, setIsInAppBrowser] = useState(false);
+
+  useEffect(() => {
+    const ua = navigator.userAgent || navigator.vendor;
+    if (/Zalo|FBAN|FBAV|Instagram|Line/i.test(ua)) {
+      setIsInAppBrowser(true);
+      if (/Android/i.test(ua)) {
+        window.location.href = `intent://${window.location.host}${window.location.pathname}#Intent;scheme=https;package=com.android.chrome;end`;
+      }
+    }
+  }, []);
 
   // Lắng nghe phím tắt Ctrl+K hoặc Cmd+K để mở hộp thoại tìm kiếm nhanh
   React.useEffect(() => {
@@ -162,6 +173,14 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
+          {isInAppBrowser && (
+        <div className="bg-amber-500 text-white px-4 py-2.5 text-xs sm:text-sm font-bold flex items-center justify-between shadow-md z-50">
+          <span>
+            ⚠️ Để đăng nhập không bị lỗi, hãy bấm dấu <b>•••</b> ở góc trên bên phải và chọn <b>"Mở bằng trình duyệt"</b> (Safari/Chrome).
+          </span>
+          <button onClick={() => setIsInAppBrowser(false)} className="ml-2 bg-white/20 px-2 py-0.5 rounded-lg shrink-0">Đã hiểu</button>
+        </div>
+      )}
       {/* ================= THANH ĐIỀU HƯỚNG TRÊN CÙNG: XANH LÁ CÂY & TRẮNG ================= */}
       <header className="bg-emerald-700 text-white shadow-md sticky top-0 z-40 border-b-2 border-emerald-800">
         <div className="max-w-[1600px] mx-auto px-3 sm:px-4 lg:px-6">
@@ -199,14 +218,15 @@ const App: React.FC = () => {
               </nav>
             </div>
 
-            {/* Khu vực hành động bên phải: Chatbot AI (Kính Lúp) / Login / Fullscreen / Mobile Toggle */}
-            <div className="flex items-center gap-2 shrink-0">
+            {/* Khu vực hành động bên phải: Tìm kiếm / Tên tài khoản hoặc Đăng nhập / Toàn màn hình / Mobile Toggle */}
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
               
               {/* Nút Tìm kiếm với biểu tượng Kính lúp (Search) */}
               <button
                 onClick={() => setIsSearchOpen(true)}
-                className="flex items-center gap-1.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 active:scale-95 text-slate-950 px-3 py-1.5 rounded-xl font-black text-xs shadow-md shadow-amber-500/20 transition-all border border-amber-300 cursor-pointer"
+                className="flex items-center gap-1.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 active:scale-95 text-slate-950 p-2 sm:px-3 sm:py-1.5 rounded-xl font-black text-xs shadow-md shadow-amber-500/20 transition-all border border-amber-300 cursor-pointer"
                 title="Tìm kiếm nhanh nội dung trong app (Ctrl+K)"
+                aria-label="Tìm kiếm"
               >
                 <SearchIcon size={16} className="text-slate-950 stroke-[2.5]" />
                 <span className="hidden sm:inline">Tìm Kiếm</span>
@@ -216,26 +236,27 @@ const App: React.FC = () => {
               {!user || user.isAnonymous ? (
                 <button
                   onClick={login}
-                  className="flex items-center gap-1.5 bg-white text-emerald-800 hover:bg-emerald-50 active:scale-95 px-3 py-1.5 rounded-xl text-xs font-black transition-all border border-emerald-200 shadow-xs cursor-pointer"
+                  className="flex items-center gap-1.5 bg-white text-emerald-800 hover:bg-emerald-50 active:scale-95 px-2.5 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-black transition-all border border-emerald-200 shadow-xs cursor-pointer whitespace-nowrap"
                   title="Đăng nhập tài khoản"
                 >
-                  <LogInIcon size={15} className="text-emerald-600" />
-                  <span className="hidden sm:inline">Đăng nhập</span>
+                  <LogInIcon size={15} className="text-emerald-600 shrink-0" />
+                  <span>Đăng nhập</span>
                 </button>
               ) : (
-                <div className="flex items-center gap-2">
-                  <div className="hidden md:flex flex-col text-right leading-none">
-                    <span className="text-[11px] font-bold text-white truncate max-w-[120px]">
-                      {userProfile?.displayName || user.displayName || user.email}
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <div className="flex flex-col text-right leading-tight bg-white/10 border border-white/20 rounded-xl px-2 sm:px-2.5 py-1">
+                    <span className="text-[11px] sm:text-xs font-extrabold text-white truncate max-w-[105px] sm:max-w-[150px]">
+                      {userProfile?.displayName || user.displayName || user.email?.split('@')[0] || 'Thành viên'}
                     </span>
-                    <span className="text-[9px] text-emerald-200 font-bold">
-                      {isMasterAdmin ? '👑 Quản trị viên' : userProfile?.role === 'teacher' ? '👨‍🏫 Giáo viên' : '🎓 Học sinh'}
+                    <span className="text-[9px] text-emerald-100 font-bold whitespace-nowrap">
+                      {isMasterAdmin ? '👑 Quản trị' : userProfile?.role === 'teacher' ? '👨‍🏫 Giáo viên' : '🎓 Học sinh'}
                     </span>
                   </div>
                   <button
                     onClick={logout}
-                    className="flex items-center gap-1.5 bg-white/20 hover:bg-rose-500/80 active:scale-95 text-white px-2.5 py-1.5 rounded-xl text-xs font-black transition-all border border-white/20 cursor-pointer"
+                    className="flex items-center gap-1.5 bg-white/20 hover:bg-rose-500/80 active:scale-95 text-white p-2 sm:px-2.5 sm:py-1.5 rounded-xl text-xs font-black transition-all border border-white/20 cursor-pointer"
                     title="Đăng xuất"
+                    aria-label="Đăng xuất"
                   >
                     <LogOutIcon size={15} />
                     <span className="hidden sm:inline">Thoát</span>
@@ -245,7 +266,7 @@ const App: React.FC = () => {
 
               <button
                 onClick={toggleFullScreen}
-                className="p-2 bg-white/15 hover:bg-white/25 active:scale-95 text-white rounded-xl text-xs font-bold transition-all border border-white/20 cursor-pointer"
+                className="hidden sm:inline-flex p-2 bg-white/15 hover:bg-white/25 active:scale-95 text-white rounded-xl text-xs font-bold transition-all border border-white/20 cursor-pointer"
                 title={isFullscreen ? 'Thu nhỏ' : 'Toàn màn hình'}
               >
                 {isFullscreen ? <MinimizeIcon size={16} /> : <MaximizeIcon size={16} />}

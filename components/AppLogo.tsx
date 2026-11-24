@@ -17,7 +17,7 @@ export const AppLogo: React.FC<AppLogoProps> = ({
 }) => {
   const sizeMap = {
     sm: { px: 'w-9 h-9' },
-    md: { px: 'w-11 h-11' },
+    md: { px: 'w-9 h-9 sm:w-11 sm:h-11' },
     lg: { px: 'w-14 h-14' },
     xl: { px: 'w-18 h-18' },
   };
@@ -25,7 +25,7 @@ export const AppLogo: React.FC<AppLogoProps> = ({
   const { px } = sizeMap[size];
 
   return (
-    <div className={`flex items-center gap-3 select-none ${className}`}>
+    <div className={`flex items-center gap-2 sm:gap-3 select-none ${className}`}>
       {/* Impressive MathFlow Emblem Badge */}
       <div 
         className={`relative ${px} shrink-0 group cursor-pointer`}
@@ -183,20 +183,20 @@ export const AppLogo: React.FC<AppLogoProps> = ({
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
             <span 
-              className={`text-xl sm:text-2xl font-black tracking-tight ${
+              className={`text-base sm:text-2xl font-black tracking-tight ${
                 textColor === 'light' ? 'text-white' : 'text-slate-800'
-              } drop-shadow-sm flex items-center`}
+              } drop-shadow-sm flex items-center whitespace-nowrap`}
             >
               Math<span className="text-amber-300">Flow</span>
             </span>
-            <span className="inline-flex items-center gap-1 text-[11px] font-black uppercase bg-white text-emerald-800 px-2.5 py-0.5 rounded-full shadow-sm border border-emerald-200">
+            <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-black uppercase bg-white text-emerald-800 px-2.5 py-0.5 rounded-full shadow-sm border border-emerald-200 whitespace-nowrap">
               TOÁN 5
             </span>
           </div>
           <span 
-            className={`text-[10px] sm:text-[11px] font-extrabold tracking-wider ${
+            className={`hidden sm:block text-[10px] sm:text-[11px] font-extrabold tracking-wider ${
               textColor === 'light' ? 'text-emerald-100' : 'text-emerald-700'
-            } opacity-95`}
+            } opacity-95 whitespace-nowrap`}
           >
             Học chủ động – Vững tư duy.
           </span>

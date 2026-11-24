@@ -158,11 +158,9 @@ function getAwardTitle(correctCount: number): {
 }
 
 function getQuestionTimeLimit(question?: GoldenBellQuestion): number {
-  if (!question) return 20;
+  if (!question) return 40;
   if (question.timeLimit) return question.timeLimit;
-  if (question.type === 'boolean') return 10;
-  if (question.type === 'fill') return 20;
-  return 25;
+  return 40;
 }
 
 const MILESTONES = [5, 10, 15, 20];
@@ -178,7 +176,7 @@ const GoldenBellGame: React.FC = () => {
   const [roundScore, setRoundScore] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [wrongCount, setWrongCount] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(25);
+  const [timeLeft, setTimeLeft] = useState(40);
   const [userAnswer, setUserAnswer] = useState<string>('');
   const [showFeedback, setShowFeedback] = useState<'correct' | 'wrong' | null>(null);
   const [feedbackDetail, setFeedbackDetail] = useState<string>('');
@@ -975,7 +973,7 @@ const GoldenBellGame: React.FC = () => {
                     <span className="bg-white border border-slate-200 px-3.5 py-1.5 rounded-xl shadow-xs">
                       {currentQ.type === 'multiple' && 'Trắc nghiệm 4 lựa chọn'}
                       {currentQ.type === 'fill' && 'Bảng con tốc độ · Nhập số'}
-                      {currentQ.type === 'boolean' && 'Phán đoán Đúng / Sai · 10 giây'}
+                      {currentQ.type === 'boolean' && 'Phán đoán Đúng / Sai'}
                     </span>
                     <span
                       className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border font-black tabular-nums ${
