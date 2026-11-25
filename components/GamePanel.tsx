@@ -35,7 +35,7 @@ import {
 } from './arenaQuestionGenerator';
 
 interface GamePanelProps {
-  onOpenPercentHunt?: () => void;
+  openPercentHuntSignal?: number;
 }
 
 interface GameConfig {
@@ -68,8 +68,8 @@ const GAMES: GameConfig[] = [
 const OPTION_LABELS = ['A', 'B', 'C', 'D'];
 const TOTAL_TIME_SECONDS = 180;
 
-const GamePanel: React.FC<GamePanelProps> = ({ onOpenPercentHunt }) => {
-  const [isPercentHuntOpen, setIsPercentHuntOpen] = useState(false);
+const GamePanel: React.FC<GamePanelProps> = ({ openPercentHuntSignal = 0 }) => {
+  const [isPercentHuntOpen, setIsPercentHuntOpen] = useState(openPercentHuntSignal > 0);
   const [selectedGame, setSelectedGame] = useState<GameType | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [questions, setQuestions] = useState<ArenaQuestion[]>([]);
@@ -81,12 +81,15 @@ const GamePanel: React.FC<GamePanelProps> = ({ onOpenPercentHunt }) => {
   const [pickedOption, setPickedOption] = useState<number | null>(null);
   const [gameOver, setGameOver] = useState(false);
 
-  const handleOpenPercentHunt = () => {
-    if (onOpenPercentHunt) {
-      onOpenPercentHunt();
-    } else {
+  useEffect(() => {
+    if (openPercentHuntSignal > 0) {
+      setIsPlaying(false);
       setIsPercentHuntOpen(true);
     }
+  }, [openPercentHuntSignal]);
+
+  const handleOpenPercentHunt = () => {
+    setIsPercentHuntOpen(true);
   };
 
   const startGame = (type: GameType) => {

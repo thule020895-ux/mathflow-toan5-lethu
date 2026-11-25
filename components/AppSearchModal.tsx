@@ -39,6 +39,7 @@ export interface SearchItem {
   exploreTopicId?: ExploreTopicId;
   conquerSubTab?: ConquerSubTab;
   funSubTab?: FunSubTab;
+  openPercentHunt?: boolean;
   anchor?: string;
   previewTags?: string[];
 }
@@ -51,7 +52,8 @@ interface AppSearchModalProps {
     exploreTopicId?: ExploreTopicId, 
     conquerSubTab?: ConquerSubTab,
     anchor?: string,
-    funSubTab?: FunSubTab
+    funSubTab?: FunSubTab,
+    openPercentHunt?: boolean
   ) => void;
 }
 
@@ -203,7 +205,8 @@ const SEARCH_DATABASE: SearchItem[] = [
       'giảm giá', 'toán 5 tập 2', 'phần trăm', 'trò chơi phần trăm'
     ],
     tab: 'fun',
-    funSubTab: 'percent_hunt',
+    funSubTab: 'game',
+    openPercentHunt: true,
     previewTags: ['Tìm giá trị %', '4 tình huống', 'Chế độ giáo viên']
   },
 
@@ -486,7 +489,7 @@ export const AppSearchModal: React.FC<AppSearchModalProps> = ({ isOpen, onClose,
   }, [searchTerm, selectedCategory]);
 
   const handleItemClick = (item: SearchItem) => {
-    onNavigate(item.tab, item.exploreTopicId, item.conquerSubTab, item.anchor, item.funSubTab);
+    onNavigate(item.tab, item.exploreTopicId, item.conquerSubTab, item.anchor, item.funSubTab, item.openPercentHunt);
     onClose();
   };
 

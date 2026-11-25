@@ -14,8 +14,7 @@ import {
   Star,
   NotebookPen,
   Sparkles,
-  Layers,
-  Target
+  Layers
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import MascotCompanion from './MascotCompanion';
@@ -82,11 +81,7 @@ const DOMAINS: DomainConfig[] = [
 
 const OPTION_LABELS = ['A', 'B', 'C', 'D'];
 
-interface QuizPanelProps {
-  onOpenPercentHunt?: () => void;
-}
-
-const QuizPanel: React.FC<QuizPanelProps> = ({ onOpenPercentHunt }) => {
+const QuizPanel: React.FC = () => {
   // 3 màn hình tách biệt:
   // 1) selectedDomainId === null -> Màn hình 1: Chọn Mạch kiến thức
   // 2) selectedDomainId !== null && selectedSetId === null -> Màn hình 2: Danh sách Bộ đề luyện tập
@@ -266,38 +261,6 @@ const QuizPanel: React.FC<QuizPanelProps> = ({ onOpenPercentHunt }) => {
               </button>
             ))}
           </div>
-
-          {onOpenPercentHunt && (
-            <div className="pt-2">
-              <button
-                type="button"
-                onClick={onOpenPercentHunt}
-                className="w-full text-left bg-gradient-to-r from-teal-50 via-white to-amber-50 rounded-3xl border-2 border-teal-300 hover:border-orange-400 shadow-sm hover:shadow-md transition-all duration-200 p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer group active:scale-[0.99]"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-teal-600 to-emerald-500 text-white flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform shrink-0">
-                    <Target size={28} />
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-xs font-black uppercase tracking-wider text-orange-600">
-                      Trò chơi bài học · Toán 5, Tập 2
-                    </p>
-                    <h3 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
-                      🎯 Săn tìm đáp án đúng (Tỉ số phần trăm)
-                    </h3>
-                    <p className="text-xs sm:text-sm text-slate-600 font-medium">
-                      Chinh phục bài toán &ldquo;Tìm giá trị phần trăm của một số&rdquo; qua 4 tình huống thực tế sinh động.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-teal-600 to-emerald-600 group-hover:from-amber-500 group-hover:to-orange-500 text-white font-black text-sm transition-all shrink-0 shadow-xs">
-                  <span>Vào chơi ngay</span>
-                  <ArrowRight size={17} className="group-hover:translate-x-1 transition-transform" />
-                </div>
-              </button>
-            </div>
-          )}
         </div>
       </div>
     );

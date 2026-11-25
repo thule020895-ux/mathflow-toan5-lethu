@@ -36,6 +36,7 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabId>('home');
   const [selectedExploreTopic, setSelectedExploreTopic] = useState<ExploreTopicId>('geom_measure');
   const [selectedFunSubTab, setSelectedFunSubTab] = useState<FunSubTab>('quiz');
+  const [openPercentHuntSignal, setOpenPercentHuntSignal] = useState(0);
   const [selectedConquerSubTab, setSelectedConquerSubTab] = useState<ConquerSubTab>('challenge');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -69,7 +70,8 @@ const App: React.FC = () => {
     exploreTopicId?: ExploreTopicId,
     conquerSubTab?: ConquerSubTab,
     anchor?: string,
-    funSubTab?: FunSubTab
+    funSubTab?: FunSubTab,
+    openPercentHunt?: boolean
   ) => {
     setActiveTab(tab);
     if (exploreTopicId) {
@@ -77,6 +79,9 @@ const App: React.FC = () => {
     }
     if (funSubTab) {
       setSelectedFunSubTab(funSubTab);
+    }
+    if (openPercentHunt) {
+      setOpenPercentHuntSignal((prev) => prev + 1);
     }
     if (conquerSubTab) {
       setSelectedConquerSubTab(conquerSubTab);
@@ -371,7 +376,12 @@ const App: React.FC = () => {
             />
           )}
           {activeTab === 'explore' && <ExplorePanel initialTopicId={selectedExploreTopic} />}
-          {activeTab === 'fun' && <FunExperiencePanel initialSubTab={selectedFunSubTab} />}
+          {activeTab === 'fun' && (
+            <FunExperiencePanel
+              initialSubTab={selectedFunSubTab}
+              openPercentHuntSignal={openPercentHuntSignal}
+            />
+          )}
           {activeTab === 'conquer' && <ConquerHubPanel initialSubTab={selectedConquerSubTab} />}
           {activeTab === 'admin' && <AdminPanel />}
         </div>
