@@ -1691,46 +1691,62 @@ const Shape2DPanel: React.FC = () => {
                           strokeWidth="1.8"
                         />
                         {/* Nhãn chiều cao h */}
-                        <rect
-                          x={altX > 0 ? altX + 8 : altX - 64}
-                          y={-hp / 2 - 11}
-                          width="56"
-                          height="22"
-                          rx="6"
-                          fill="#ffffff"
-                          stroke="#fca5a5"
-                          strokeWidth="1.5"
-                        />
-                        <text
-                          x={altX > 0 ? altX + 36 : altX - 36}
-                          y={-hp / 2 + 4}
-                          textAnchor="middle"
-                          className="text-xs font-black fill-rose-600 font-mono"
-                        >
-                          h = {params.height}
-                        </text>
+                        {(() => {
+                          const hText = `h = ${params.height} ${params.unit}`;
+                          const hW = Math.max(78, hText.length * 7.5 + 18);
+                          return (
+                            <>
+                              <rect
+                                x={altX > 0 ? altX + 8 : altX - hW - 8}
+                                y={-hp / 2 - 11}
+                                width={hW}
+                                height="22"
+                                rx="6"
+                                fill="#ffffff"
+                                stroke="#fca5a5"
+                                strokeWidth="1.5"
+                              />
+                              <text
+                                x={altX > 0 ? altX + 8 + hW / 2 : altX - 8 - hW / 2}
+                                y={-hp / 2 + 4}
+                                textAnchor="middle"
+                                className="text-xs font-black fill-rose-600 font-mono"
+                              >
+                                {hText}
+                              </text>
+                            </>
+                          );
+                        })()}
                       </g>
                     )}
 
                     {/* Nhãn cạnh đáy a */}
-                    <rect
-                      x={bw / 2 - 30}
-                      y="14"
-                      width="60"
-                      height="22"
-                      rx="6"
-                      fill="#ffffff"
-                      stroke="#bae6fd"
-                      strokeWidth="1.5"
-                    />
-                    <text
-                      x={bw / 2}
-                      y="29"
-                      textAnchor="middle"
-                      className="text-xs font-black fill-sky-800 font-mono"
-                    >
-                      a = {params.base}
-                    </text>
+                    {(() => {
+                      const aText = `a = ${params.base} ${params.unit}`;
+                      const aW = Math.max(82, aText.length * 7.5 + 18);
+                      return (
+                        <>
+                          <rect
+                            x={bw / 2 - aW / 2}
+                            y="14"
+                            width={aW}
+                            height="22"
+                            rx="6"
+                            fill="#ffffff"
+                            stroke="#bae6fd"
+                            strokeWidth="1.5"
+                          />
+                          <text
+                            x={bw / 2}
+                            y="29"
+                            textAnchor="middle"
+                            className="text-xs font-black fill-sky-800 font-mono"
+                          >
+                            {aText}
+                          </text>
+                        </>
+                      );
+                    })()}
 
                     {/* Nhãn Tam giác gốc */}
                     {!isTriangleRectComplete && !(demoMode === 2 && rightPieceSnapped) && (
@@ -2056,14 +2072,24 @@ const Shape2DPanel: React.FC = () => {
                             <text x={sbw / 2} y="-27" textAnchor="middle" className="text-[10px] font-black fill-white font-mono">
                               S₁ = b × h = {rectAreaVal} {params.unit}²
                             </text>
-                            <rect x={sbw / 2 - 30} y={hp + 10} width="60" height="20" rx="5" fill="#ffffff" stroke="#c4b5fd" strokeWidth="1.2" />
-                            <text x={sbw / 2} y={hp + 24} textAnchor="middle" className="text-[11px] font-black fill-purple-800 font-mono">
-                              b = {params.baseSmall}
-                            </text>
-                            <rect x="-46" y={hp / 2 - 11} width="40" height="22" rx="5" fill="#ffffff" stroke="#fca5a5" strokeWidth="1.2" />
-                            <text x="-26" y={hp / 2 + 4} textAnchor="middle" className="text-[11px] font-black fill-rose-600 font-mono">
-                              h = {params.height}
-                            </text>
+                            {(() => {
+                              const bTrapText = `b = ${params.baseSmall} ${params.unit}`;
+                              const bTrapW = Math.max(76, bTrapText.length * 7 + 16);
+                              const hTrapText = `h = ${params.height} ${params.unit}`;
+                              const hTrapW = Math.max(66, hTrapText.length * 7 + 16);
+                              return (
+                                <>
+                                  <rect x={sbw / 2 - bTrapW / 2} y={hp + 10} width={bTrapW} height="20" rx="5" fill="#ffffff" stroke="#c4b5fd" strokeWidth="1.2" />
+                                  <text x={sbw / 2} y={hp + 24} textAnchor="middle" className="text-[11px] font-black fill-purple-800 font-mono">
+                                    {bTrapText}
+                                  </text>
+                                  <rect x={-hTrapW - 6} y={hp / 2 - 11} width={hTrapW} height="22" rx="5" fill="#ffffff" stroke="#fca5a5" strokeWidth="1.2" />
+                                  <text x={-hTrapW / 2 - 6} y={hp / 2 + 4} textAnchor="middle" className="text-[11px] font-black fill-rose-600 font-mono">
+                                    {hTrapText}
+                                  </text>
+                                </>
+                              );
+                            })()}
                           </>
                         ) : (
                           <text x={sbw / 2} y={hp / 2 + 4} textAnchor="middle" className="text-[11px] font-bold fill-purple-400">
@@ -2118,10 +2144,18 @@ const Shape2DPanel: React.FC = () => {
                             <text x="50" y="-27" textAnchor="middle" className="text-[10px] font-black fill-white font-mono">
                               S₂ = (a-b)×h:2 = {triAreaVal} {params.unit}²
                             </text>
-                            <rect x="-4" y={hp + 10} width="108" height="20" rx="5" fill="#ffffff" stroke="#6ee7b7" strokeWidth="1.2" />
-                            <text x="50" y={hp + 24} textAnchor="middle" className="text-[10px] font-black fill-emerald-800 font-mono">
-                              Đáy = a - b = {diffBaseVal}
-                            </text>
+                            {(() => {
+                              const diffText = `Đáy = a - b = ${diffBaseVal} ${params.unit}`;
+                              const diffW = Math.max(128, diffText.length * 6.5 + 16);
+                              return (
+                                <>
+                                  <rect x={50 - diffW / 2} y={hp + 10} width={diffW} height="20" rx="5" fill="#ffffff" stroke="#6ee7b7" strokeWidth="1.2" />
+                                  <text x="50" y={hp + 24} textAnchor="middle" className="text-[10px] font-black fill-emerald-800 font-mono">
+                                    {diffText}
+                                  </text>
+                                </>
+                              );
+                            })()}
                           </>
                         ) : (
                           <text x="50" y={hp / 2 + 26} textAnchor="middle" className="text-[10px] font-bold fill-emerald-600">
@@ -2149,65 +2183,88 @@ const Shape2DPanel: React.FC = () => {
                       <g className="pointer-events-none">
                         <rect x="0" y="-12" width="12" height="12" fill="none" stroke="#dc2626" strokeWidth="2" />
                         <rect x="0" y={-hp} width="12" height="12" fill="none" stroke="#dc2626" strokeWidth="2" />
-                        {!isTrapAltComplete && (
-                          <>
-                            <rect x="-64" y={-hp / 2 - 11} width="56" height="22" rx="6" fill="#ffffff" stroke="#fca5a5" strokeWidth="1.5" />
-                            <text x="-36" y={-hp / 2 + 4} textAnchor="middle" className="text-xs font-black fill-rose-600 font-mono">
-                              h = {params.height}
-                            </text>
-                          </>
-                        )}
+                        {!isTrapAltComplete && (() => {
+                          const hSqText = `h = ${params.height} ${params.unit}`;
+                          const hSqW = Math.max(76, hSqText.length * 7.5 + 16);
+                          return (
+                            <>
+                              <rect x={-hSqW - 8} y={-hp / 2 - 11} width={hSqW} height="22" rx="6" fill="#ffffff" stroke="#fca5a5" strokeWidth="1.5" />
+                              <text x={-hSqW / 2 - 8} y={-hp / 2 + 4} textAnchor="middle" className="text-xs font-black fill-rose-600 font-mono">
+                                {hSqText}
+                              </text>
+                            </>
+                          );
+                        })()}
                       </g>
                     )}
 
                     {/* Đường cao trái (chế độ 1: chỉ hiện sau khi người dùng đã tự kẻ) */}
-                    {demoMode === 1 && trapLeftAltDrawn && (
-                      <g className="pointer-events-none">
-                        <line x1={leftAltX} y1="0" x2={leftAltX} y2={-hp} stroke="#dc2626" strokeWidth="3" strokeDasharray="6 4" />
-                        <rect x={leftAltX} y="-12" width="12" height="12" fill="none" stroke="#dc2626" strokeWidth="1.8" />
-                        <rect x={leftAltX - 60} y={-hp / 2 - 11} width="52" height="22" rx="6" fill="#ffffff" stroke="#fca5a5" strokeWidth="1.5" />
-                        <text x={leftAltX - 34} y={-hp / 2 + 4} textAnchor="middle" className="text-xs font-black fill-rose-600 font-mono">
-                          h = {params.height}
-                        </text>
-                      </g>
-                    )}
+                    {demoMode === 1 && trapLeftAltDrawn && (() => {
+                      const hLeftText = `h = ${params.height} ${params.unit}`;
+                      const hLeftW = Math.max(74, hLeftText.length * 7.5 + 16);
+                      return (
+                        <g className="pointer-events-none">
+                          <line x1={leftAltX} y1="0" x2={leftAltX} y2={-hp} stroke="#dc2626" strokeWidth="3" strokeDasharray="6 4" />
+                          <rect x={leftAltX} y="-12" width="12" height="12" fill="none" stroke="#dc2626" strokeWidth="1.8" />
+                          <rect x={leftAltX - hLeftW - 8} y={-hp / 2 - 11} width={hLeftW} height="22" rx="6" fill="#ffffff" stroke="#fca5a5" strokeWidth="1.5" />
+                          <text x={leftAltX - 8 - hLeftW / 2} y={-hp / 2 + 4} textAnchor="middle" className="text-xs font-black fill-rose-600 font-mono">
+                            {hLeftText}
+                          </text>
+                        </g>
+                      );
+                    })()}
 
                     {/* Đường cao phải (cả chế độ 1 & 2: chỉ hiện sau khi người dùng đã tự kẻ) */}
-                    {trapRightAltDrawn && (
-                      <g className="pointer-events-none">
-                        <line x1={rightAltX} y1="0" x2={rightAltX} y2={-hp} stroke="#dc2626" strokeWidth="3" strokeDasharray="6 4" />
-                        <rect x={rightAltX - 12} y="-12" width="12" height="12" fill="none" stroke="#dc2626" strokeWidth="1.8" />
-                        <rect x={rightAltX + 8} y={-hp / 2 - 11} width="52" height="22" rx="6" fill="#ffffff" stroke="#fca5a5" strokeWidth="1.5" />
-                        <text x={rightAltX + 34} y={-hp / 2 + 4} textAnchor="middle" className="text-xs font-black fill-rose-600 font-mono">
-                          h = {params.height}
-                        </text>
-                      </g>
-                    )}
+                    {trapRightAltDrawn && (() => {
+                      const hRightText = `h = ${params.height} ${params.unit}`;
+                      const hRightW = Math.max(74, hRightText.length * 7.5 + 16);
+                      return (
+                        <g className="pointer-events-none">
+                          <line x1={rightAltX} y1="0" x2={rightAltX} y2={-hp} stroke="#dc2626" strokeWidth="3" strokeDasharray="6 4" />
+                          <rect x={rightAltX - 12} y="-12" width="12" height="12" fill="none" stroke="#dc2626" strokeWidth="1.8" />
+                          <rect x={rightAltX + 8} y={-hp / 2 - 11} width={hRightW} height="22" rx="6" fill="#ffffff" stroke="#fca5a5" strokeWidth="1.5" />
+                          <text x={rightAltX + 8 + hRightW / 2} y={-hp / 2 + 4} textAnchor="middle" className="text-xs font-black fill-rose-600 font-mono">
+                            {hRightText}
+                          </text>
+                        </g>
+                      );
+                    })()}
 
                     {/* Nhãn Đáy lớn a & Đáy nhỏ b trên Hình thang gốc */}
-                    <rect x={bw / 2 - 34} y="12" width="68" height="22" rx="6" fill="#ffffff" stroke="#ddd6fe" strokeWidth="1.5" />
-                    <text x={bw / 2} y="27" textAnchor="middle" className="text-xs font-black fill-purple-800 font-mono">
-                      a = {params.base}
-                    </text>
+                    {(() => {
+                      const aTrapText = `a = ${params.base} ${params.unit}`;
+                      const aTrapW = Math.max(84, aTrapText.length * 7.5 + 18);
+                      const bTrapTopText = `b = ${params.baseSmall} ${params.unit}`;
+                      const bTrapTopW = Math.max(82, bTrapTopText.length * 7.5 + 18);
+                      const bCenterX = demoMode === 1 ? bw / 2 : sbw / 2;
+                      return (
+                        <>
+                          <rect x={bw / 2 - aTrapW / 2} y="12" width={aTrapW} height="22" rx="6" fill="#ffffff" stroke="#ddd6fe" strokeWidth="1.5" />
+                          <text x={bw / 2} y="27" textAnchor="middle" className="text-xs font-black fill-purple-800 font-mono">
+                            {aTrapText}
+                          </text>
 
-                    <rect
-                      x={demoMode === 1 ? bw / 2 - 34 : sbw / 2 - 34}
-                      y={-hp - 30}
-                      width="68"
-                      height="22"
-                      rx="6"
-                      fill="#ffffff"
-                      stroke="#ddd6fe"
-                      strokeWidth="1.5"
-                    />
-                    <text
-                      x={demoMode === 1 ? bw / 2 : sbw / 2}
-                      y={-hp - 15}
-                      textAnchor="middle"
-                      className="text-xs font-black fill-purple-700 font-mono"
-                    >
-                      b = {params.baseSmall}
-                    </text>
+                          <rect
+                            x={bCenterX - bTrapTopW / 2}
+                            y={-hp - 30}
+                            width={bTrapTopW}
+                            height="22"
+                            rx="6"
+                            fill="#ffffff"
+                            stroke="#ddd6fe"
+                            strokeWidth="1.5"
+                          />
+                          <text
+                            x={bCenterX}
+                            y={-hp - 15}
+                            textAnchor="middle"
+                            className="text-xs font-black fill-purple-700 font-mono"
+                          >
+                            {bTrapTopText}
+                          </text>
+                        </>
+                      );
+                    })()}
 
                     {!isTrapAltComplete ? (
                       <text x={bw / 2} y={-hp / 2 + 5} textAnchor="middle" className="text-xs font-black fill-purple-900 pointer-events-none">
@@ -2506,10 +2563,18 @@ const Shape2DPanel: React.FC = () => {
                   <circle cx="0" cy="-128" r="4" fill="#dc2626" />
                   
                   {/* Nhãn r */}
-                  <rect x="10" y="-75" width="66" height="24" rx="6" fill="#ffffff" stroke="#fca5a5" strokeWidth="1.5" />
-                  <text x="43" y="-59" textAnchor="middle" className="text-xs font-black fill-rose-600 font-mono">
-                    r = {params.radius}
-                  </text>
+                  {(() => {
+                    const rText = `r = ${params.radius} ${params.unit}`;
+                    const rW = Math.max(82, rText.length * 7.5 + 18);
+                    return (
+                      <>
+                        <rect x="10" y="-75" width={rW} height="24" rx="6" fill="#ffffff" stroke="#fca5a5" strokeWidth="1.5" />
+                        <text x={10 + rW / 2} y="-59" textAnchor="middle" className="text-xs font-black fill-rose-600 font-mono">
+                          {rText}
+                        </text>
+                      </>
+                    );
+                  })()}
 
                   {/* Đường kính d (xanh dương nét đứt nằm ngang) */}
                   <line x1="-128" y1="0" x2="128" y2="0" stroke="#0284c7" strokeWidth="2.5" strokeDasharray="6 4" />
@@ -2654,14 +2719,18 @@ const Shape2DPanel: React.FC = () => {
                         <line x1={circX} y1={circY} x2={circX + R} y2={circY} stroke="#dc2626" strokeWidth="3" />
                         <circle cx={circX} cy={circY} r="4.5" fill="#1e293b" stroke="#ffffff" strokeWidth="1.5" />
                         <text x={circX - 15} y={circY - 8} className="text-sm font-black fill-slate-900 font-serif">O</text>
-                        {showCircleHints && (
-                          <>
-                            <rect x={circX + R * 0.35} y={circY - 26} width="64" height="22" rx="6" fill="#ffffff" stroke="#fca5a5" strokeWidth="1.5" />
-                            <text x={circX + R * 0.35 + 32} y={circY - 11} textAnchor="middle" className="text-xs font-black fill-rose-600 font-mono">
-                              r = {params.radius}
-                            </text>
-                          </>
-                        )}
+                        {showCircleHints && (() => {
+                          const r2Text = `r = ${params.radius} ${params.unit}`;
+                          const r2W = Math.max(80, r2Text.length * 7.5 + 16);
+                          return (
+                            <>
+                              <rect x={circX + R * 0.28} y={circY - 26} width={r2W} height="22" rx="6" fill="#ffffff" stroke="#fca5a5" strokeWidth="1.5" />
+                              <text x={circX + R * 0.28 + r2W / 2} y={circY - 11} textAnchor="middle" className="text-xs font-black fill-rose-600 font-mono">
+                                {r2Text}
+                              </text>
+                            </>
+                          );
+                        })()}
                       </g>
                     )}
 

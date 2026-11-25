@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { ExploreTopicId } from './ExplorePanel';
 import { ConquerSubTab } from './ConquerHubPanel';
+import { FunSubTab } from './FunExperiencePanel';
 
 export type SearchCategory = 'all' | 'explore' | 'fun' | 'conquer' | 'tools';
 
@@ -37,6 +38,7 @@ export interface SearchItem {
   tab: 'home' | 'explore' | 'fun' | 'conquer' | 'admin';
   exploreTopicId?: ExploreTopicId;
   conquerSubTab?: ConquerSubTab;
+  funSubTab?: FunSubTab;
   anchor?: string;
   previewTags?: string[];
 }
@@ -48,7 +50,8 @@ interface AppSearchModalProps {
     tab: 'home' | 'explore' | 'fun' | 'conquer' | 'admin', 
     exploreTopicId?: ExploreTopicId, 
     conquerSubTab?: ConquerSubTab,
-    anchor?: string
+    anchor?: string,
+    funSubTab?: FunSubTab
   ) => void;
 }
 
@@ -184,7 +187,24 @@ const SEARCH_DATABASE: SearchItem[] = [
       'trò chơi', 'tro choi', 'nối phép tính', 'game toán', 'tính nhẩm', 'phản xạ', 'mini game'
     ],
     tab: 'fun',
+    funSubTab: 'game',
     previewTags: ['Nối phép tính', 'Tính nhẩm nhanh', 'Học qua trò chơi']
+  },
+  {
+    id: 'fun-percent-hunt',
+    title: 'Săn Tìm Đáp Án Đúng (Tỉ Số Phần Trăm)',
+    subtitle: 'Trò chơi tìm giá trị phần trăm của một số (Toán 5, Tập 2) với 4 tình huống thực tế và chế độ giáo viên mở rộng',
+    category: 'fun',
+    categoryLabel: 'Vui Học & Trò Chơi',
+    categoryColor: 'bg-teal-100 text-teal-800 border-teal-200',
+    icon: '🎯',
+    keywords: [
+      'săn tìm đáp án đúng', 'san tim dap an dung', 'tìm giá trị phần trăm của một số', 'tỉ số phần trăm',
+      'giảm giá', 'toán 5 tập 2', 'phần trăm', 'trò chơi phần trăm'
+    ],
+    tab: 'fun',
+    funSubTab: 'percent_hunt',
+    previewTags: ['Tìm giá trị %', '4 tình huống', 'Chế độ giáo viên']
   },
 
   // --- CHINH PHỤC ĐỈNH CAO ---
@@ -466,7 +486,7 @@ export const AppSearchModal: React.FC<AppSearchModalProps> = ({ isOpen, onClose,
   }, [searchTerm, selectedCategory]);
 
   const handleItemClick = (item: SearchItem) => {
-    onNavigate(item.tab, item.exploreTopicId, item.conquerSubTab, item.anchor);
+    onNavigate(item.tab, item.exploreTopicId, item.conquerSubTab, item.anchor, item.funSubTab);
     onClose();
   };
 

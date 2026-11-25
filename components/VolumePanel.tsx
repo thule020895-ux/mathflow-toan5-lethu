@@ -338,13 +338,13 @@ const VolumePanel: React.FC = () => {
                
                {/* Nhãn a - Dài */}
                <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 font-mono font-black text-teal-800 text-xs bg-white px-2 py-0.5 rounded-md border border-teal-200 whitespace-nowrap shadow-xs">
-                 a = {selectedShape === 'rect_prism' ? params.length : params.side}
+                 a = {selectedShape === 'rect_prism' ? params.length : params.side} {params.unit}
                </div>
                
                {/* Nhãn h - Cao */}
                {selectedShape === 'rect_prism' && (
-                 <div className="absolute -left-12 top-1/2 -translate-y-1/2 font-mono font-black text-rose-600 text-xs bg-white px-2 py-0.5 rounded-md border border-rose-200 whitespace-nowrap shadow-xs -rotate-90">
-                   h = {params.height}
+                 <div className="absolute -left-14 top-1/2 -translate-y-1/2 font-mono font-black text-rose-600 text-xs bg-white px-2 py-0.5 rounded-md border border-rose-200 whitespace-nowrap shadow-xs -rotate-90">
+                   h = {params.height} {params.unit}
                  </div>
                )}
             </div>
@@ -360,7 +360,7 @@ const VolumePanel: React.FC = () => {
             >
                {selectedShape === 'rect_prism' && (
                  <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 font-mono font-black text-sky-800 text-xs bg-white px-2 py-0.5 rounded-md border border-sky-200 whitespace-nowrap shadow-xs">
-                   b = {params.width}
+                   b = {params.width} {params.unit}
                  </div>
                )}
             </div>
@@ -455,9 +455,9 @@ const VolumePanel: React.FC = () => {
                     Đề bài luyện tập:
                   </p>
                   {selectedShape === 'rect_prism' ? (
-                    <p>Cho hình hộp chữ nhật có chiều dài <strong>a = {params.length} cm</strong>, chiều rộng <strong>b = {params.width} cm</strong> và chiều cao <strong>h = {params.height} cm</strong>. Em hãy tính thể tích V của hình hộp chữ nhật.</p>
+                    <p>Cho hình hộp chữ nhật có chiều dài <strong>a = {params.length} {params.unit}</strong>, chiều rộng <strong>b = {params.width} {params.unit}</strong> và chiều cao <strong>h = {params.height} {params.unit}</strong>. Em hãy tính thể tích V của hình hộp chữ nhật.</p>
                   ) : (
-                    <p>Cho hình lập phương có độ dài cạnh <strong>a = {params.side} cm</strong>. Em hãy tính thể tích V của hình lập phương.</p>
+                    <p>Cho hình lập phương có độ dài cạnh <strong>a = {params.side} {params.unit}</strong>. Em hãy tính thể tích V của hình lập phương.</p>
                   )}
                   <p className="text-[11px] text-slate-500 mt-1 italic">
                     Gợi ý: {selectedShape === 'rect_prism' ? 'V = a × b × h' : 'V = a × a × a'}

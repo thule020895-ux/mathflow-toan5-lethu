@@ -17,7 +17,7 @@ import { useFirebase } from './components/FirebaseProvider';
 import AppLogo from './components/AppLogo';
 import HomeLandingPanel from './components/HomeLandingPanel';
 import ExplorePanel, { ExploreTopicId } from './components/ExplorePanel';
-import FunExperiencePanel from './components/FunExperiencePanel';
+import FunExperiencePanel, { FunSubTab } from './components/FunExperiencePanel';
 import ConquerHubPanel, { ConquerSubTab } from './components/ConquerHubPanel';
 import AdminPanel from './components/AdminPanel';
 import AppSearchModal from './components/AppSearchModal';
@@ -35,6 +35,7 @@ interface NavItem {
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabId>('home');
   const [selectedExploreTopic, setSelectedExploreTopic] = useState<ExploreTopicId>('geom_measure');
+  const [selectedFunSubTab, setSelectedFunSubTab] = useState<FunSubTab>('quiz');
   const [selectedConquerSubTab, setSelectedConquerSubTab] = useState<ConquerSubTab>('challenge');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -67,11 +68,15 @@ const App: React.FC = () => {
     tab: TabId,
     exploreTopicId?: ExploreTopicId,
     conquerSubTab?: ConquerSubTab,
-    anchor?: string
+    anchor?: string,
+    funSubTab?: FunSubTab
   ) => {
     setActiveTab(tab);
     if (exploreTopicId) {
       setSelectedExploreTopic(exploreTopicId);
+    }
+    if (funSubTab) {
+      setSelectedFunSubTab(funSubTab);
     }
     if (conquerSubTab) {
       setSelectedConquerSubTab(conquerSubTab);
@@ -366,7 +371,7 @@ const App: React.FC = () => {
             />
           )}
           {activeTab === 'explore' && <ExplorePanel initialTopicId={selectedExploreTopic} />}
-          {activeTab === 'fun' && <FunExperiencePanel />}
+          {activeTab === 'fun' && <FunExperiencePanel initialSubTab={selectedFunSubTab} />}
           {activeTab === 'conquer' && <ConquerHubPanel initialSubTab={selectedConquerSubTab} />}
           {activeTab === 'admin' && <AdminPanel />}
         </div>

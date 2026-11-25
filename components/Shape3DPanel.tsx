@@ -263,13 +263,16 @@ const Shape3DPanel: React.FC = () => {
                     <label className="text-xs font-bold text-slate-500">Chiều dài (a):</label>
                     <span className="text-[10px] font-black text-sky-600 bg-sky-50 px-1.5 py-0.5 rounded">dài</span>
                   </div>
-                  <input 
-                    type="number" 
-                    min="1"
-                    value={params.valL} 
-                    onChange={(e) => setParams({...params, valL: Number(e.target.value), l: Math.min(Number(e.target.value) * 10, 180)})} 
-                    className="w-full text-base font-black text-sky-700 outline-none"
-                  />
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="number" 
+                      min="1"
+                      value={params.valL} 
+                      onChange={(e) => setParams({...params, valL: Number(e.target.value), l: Math.min(Number(e.target.value) * 10, 180)})} 
+                      className="w-full text-base font-black text-sky-700 outline-none"
+                    />
+                    <span className="text-xs font-bold text-slate-400">{params.unit}</span>
+                  </div>
                 </div>
 
                 <div className="bg-white p-3 rounded-xl border border-slate-200/90 shadow-xs focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
@@ -277,13 +280,16 @@ const Shape3DPanel: React.FC = () => {
                     <label className="text-xs font-bold text-slate-500">Chiều rộng (b):</label>
                     <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">rộng</span>
                   </div>
-                  <input 
-                    type="number" 
-                    min="1"
-                    value={params.valW} 
-                    onChange={(e) => setParams({...params, valW: Number(e.target.value), w: Math.min(Number(e.target.value) * 10, 180)})} 
-                    className="w-full text-base font-black text-indigo-700 outline-none"
-                  />
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="number" 
+                      min="1"
+                      value={params.valW} 
+                      onChange={(e) => setParams({...params, valW: Number(e.target.value), w: Math.min(Number(e.target.value) * 10, 180)})} 
+                      className="w-full text-base font-black text-indigo-700 outline-none"
+                    />
+                    <span className="text-xs font-bold text-slate-400">{params.unit}</span>
+                  </div>
                 </div>
 
                 <div className="bg-white p-3 rounded-xl border border-slate-200/90 shadow-xs focus-within:border-rose-400 focus-within:ring-2 focus-within:ring-rose-100 transition-all">
@@ -291,13 +297,16 @@ const Shape3DPanel: React.FC = () => {
                     <label className="text-xs font-bold text-slate-500">Chiều cao (h):</label>
                     <span className="text-[10px] font-black text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded">cao</span>
                   </div>
-                  <input 
-                    type="number" 
-                    min="1"
-                    value={params.valH} 
-                    onChange={(e) => setParams({...params, valH: Number(e.target.value), h: Math.min(Number(e.target.value) * 10, 180)})} 
-                    className="w-full text-base font-black text-rose-600 outline-none"
-                  />
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="number" 
+                      min="1"
+                      value={params.valH} 
+                      onChange={(e) => setParams({...params, valH: Number(e.target.value), h: Math.min(Number(e.target.value) * 10, 180)})} 
+                      className="w-full text-base font-black text-rose-600 outline-none"
+                    />
+                    <span className="text-xs font-bold text-slate-400">{params.unit}</span>
+                  </div>
                 </div>
               </>
             )}
@@ -308,15 +317,31 @@ const Shape3DPanel: React.FC = () => {
                   <label className="text-xs font-bold text-slate-500">Độ dài cạnh (a):</label>
                   <span className="text-[10px] font-black text-sky-600 bg-sky-50 px-1.5 py-0.5 rounded">cạnh</span>
                 </div>
-                <input 
-                  type="number" 
-                  min="1"
-                  value={params.valA} 
-                  onChange={(e) => setParams({...params, valA: Number(e.target.value), a: Math.min(Number(e.target.value) * 10, 180)})} 
-                  className="w-full text-base font-black text-sky-700 outline-none"
-                />
+                <div className="flex items-center gap-2">
+                  <input 
+                    type="number" 
+                    min="1"
+                    value={params.valA} 
+                    onChange={(e) => setParams({...params, valA: Number(e.target.value), a: Math.min(Number(e.target.value) * 10, 180)})} 
+                    className="w-full text-base font-black text-sky-700 outline-none"
+                  />
+                  <span className="text-xs font-bold text-slate-400">{params.unit}</span>
+                </div>
               </div>
             )}
+
+            <div className="bg-white p-3 rounded-xl border border-slate-200/90 shadow-xs">
+              <label className="text-xs font-bold text-slate-500 block mb-1">Đơn vị đo:</label>
+              <select 
+                value={params.unit} 
+                onChange={(e) => setParams({...params, unit: e.target.value})} 
+                className="w-full text-sm font-bold text-slate-700 outline-none bg-transparent cursor-pointer"
+              >
+                <option value="cm">cm (Xăng-ti-mét)</option>
+                <option value="dm">dm (Đề-xi-mét)</option>
+                <option value="m">m (Mét)</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -408,6 +433,27 @@ const Shape3DPanel: React.FC = () => {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Hiển thị số đo kèm đơn vị ngay trên bảng mô phỏng 3D */}
+          <div className="absolute bottom-3 left-3 z-20 flex flex-wrap items-center gap-1.5 pointer-events-none">
+            {selectedShape === 'rect_prism' ? (
+              <>
+                <span className="font-mono font-black text-sky-700 text-xs bg-white/95 px-2.5 py-1 rounded-lg border border-sky-200 shadow-xs">
+                  a = {params.valL} {params.unit}
+                </span>
+                <span className="font-mono font-black text-indigo-700 text-xs bg-white/95 px-2.5 py-1 rounded-lg border border-indigo-200 shadow-xs">
+                  b = {params.valW} {params.unit}
+                </span>
+                <span className="font-mono font-black text-rose-600 text-xs bg-white/95 px-2.5 py-1 rounded-lg border border-rose-200 shadow-xs">
+                  h = {params.valH} {params.unit}
+                </span>
+              </>
+            ) : (
+              <span className="font-mono font-black text-sky-700 text-xs bg-white/95 px-2.5 py-1 rounded-lg border border-sky-200 shadow-xs">
+                a = {params.valA} {params.unit}
+              </span>
+            )}
           </div>
 
           {/* Nhân vật đồng hành góc dưới */}
@@ -507,9 +553,9 @@ const Shape3DPanel: React.FC = () => {
                     Đề bài luyện tập:
                   </p>
                   {selectedShape === 'rect_prism' ? (
-                    <p>Cho hình hộp chữ nhật có chiều dài <strong>a = {params.valL} cm</strong>, chiều rộng <strong>b = {params.valW} cm</strong> và chiều cao <strong>h = {params.valH} cm</strong>. Em hãy tính:</p>
+                    <p>Cho hình hộp chữ nhật có chiều dài <strong>a = {params.valL} {params.unit}</strong>, chiều rộng <strong>b = {params.valW} {params.unit}</strong> và chiều cao <strong>h = {params.valH} {params.unit}</strong>. Em hãy tính:</p>
                   ) : (
-                    <p>Cho hình lập phương có độ dài cạnh <strong>a = {params.valA} cm</strong>. Em hãy tính:</p>
+                    <p>Cho hình lập phương có độ dài cạnh <strong>a = {params.valA} {params.unit}</strong>. Em hãy tính:</p>
                   )}
                   <p className="text-[11px] text-slate-500 mt-1 italic">
                     Gợi ý: {selectedShape === 'rect_prism' ? 'Sxq = (a + b) × 2 × h | Stp = Sxq + a × b × 2' : 'Sxq = a × a × 4 | Stp = a × a × 6'}

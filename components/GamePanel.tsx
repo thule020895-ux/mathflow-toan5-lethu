@@ -27,11 +27,16 @@ import {
 import confetti from 'canvas-confetti';
 import MascotCompanion from './MascotCompanion';
 import ArenaIllustration, { renderMathUnitText } from './ArenaIllustrations';
+import PercentHuntGame from './PercentHuntGame';
 import {
   GameType,
   ArenaQuestion,
   generateArenaSession
 } from './arenaQuestionGenerator';
+
+interface GamePanelProps {
+  onOpenPercentHunt?: () => void;
+}
 
 interface GameConfig {
   id: GameType;
@@ -63,7 +68,8 @@ const GAMES: GameConfig[] = [
 const OPTION_LABELS = ['A', 'B', 'C', 'D'];
 const TOTAL_TIME_SECONDS = 180;
 
-const GamePanel: React.FC = () => {
+const GamePanel: React.FC<GamePanelProps> = ({ onOpenPercentHunt }) => {
+  const [isPercentHuntOpen, setIsPercentHuntOpen] = useState(false);
   const [selectedGame, setSelectedGame] = useState<GameType | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [questions, setQuestions] = useState<ArenaQuestion[]>([]);
@@ -74,6 +80,14 @@ const GamePanel: React.FC = () => {
   const [lives, setLives] = useState(3);
   const [pickedOption, setPickedOption] = useState<number | null>(null);
   const [gameOver, setGameOver] = useState(false);
+
+  const handleOpenPercentHunt = () => {
+    if (onOpenPercentHunt) {
+      onOpenPercentHunt();
+    } else {
+      setIsPercentHuntOpen(true);
+    }
+  };
 
   const startGame = (type: GameType) => {
     const session = generateArenaSession(type);
@@ -141,6 +155,10 @@ const GamePanel: React.FC = () => {
     }, 520);
   };
 
+  if (isPercentHuntOpen) {
+    return <PercentHuntGame onBack={() => setIsPercentHuntOpen(false)} />;
+  }
+
   // ==================== MÀN HÌNH CHỌN THỬ THÁCH (GIỮ NGUYÊN GIAO DIỆN) ====================
   if (!isPlaying) {
     return (
@@ -162,6 +180,28 @@ const GamePanel: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 max-w-6xl mx-auto w-full pb-6">
+          <motion.button
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            onClick={handleOpenPercentHunt}
+            className="group bg-gradient-to-br from-teal-50 via-white to-amber-50 p-5 rounded-2xl border-2 border-teal-300 shadow-sm hover:shadow-lg hover:border-orange-400 transition-all text-left flex items-start gap-4 relative overflow-hidden cursor-pointer"
+          >
+            <div className="bg-gradient-to-br from-teal-600 to-emerald-500 p-3.5 rounded-xl text-white shadow-md group-hover:scale-105 transition-transform shrink-0">
+              <Target size={24} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="font-black text-teal-950 text-base leading-tight mb-1">
+                🎯 Săn tìm đáp án đúng (Tỉ số phần trăm)
+              </h4>
+              <p className="text-slate-600 text-xs leading-relaxed line-clamp-2 font-semibold">
+                Tìm giá trị phần trăm của một số · Toán 5, Tập 2 với 4 tình huống thực tế và chế độ giáo viên mở rộng.
+              </p>
+            </div>
+            <div className="absolute right-3.5 bottom-3.5 opacity-0 group-hover:opacity-100 transition-opacity">
+              <ChevronRight className="text-orange-500" size={18} />
+            </div>
+          </motion.button>
+
           {GAMES.map((game, idx) => (
             <motion.button
               key={game.id}

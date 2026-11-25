@@ -22,7 +22,6 @@ import {
   Clock,
   MapPin
 } from 'lucide-react';
-import MascotCompanion from './MascotCompanion';
 
 type MotionMode = 's' | 'v' | 't';
 
@@ -101,40 +100,6 @@ const MotionPanel: React.FC = () => {
     const validMSec = inputs.unitS === 'm' && inputs.unitT === 'giây';
     return !(validKmH || validMMin || validMSec);
   })();
-
-  const getMascotSpeech = () => {
-    if (isUnitMismatch) {
-      if (mode === 's') {
-        return {
-          message: `Chú ý! Đơn vị thời gian (${inputs.unitT}) chưa khớp với vận tốc (${inputs.unitV})!`,
-          subMessage: `Em cần đổi "${inputs.unitT}" sang "${expectedFromV.time}" trước khi tính quãng đường nhé.`
-        };
-      }
-      if (mode === 't') {
-        return {
-          message: `Chú ý! Đơn vị quãng đường (${inputs.unitS}) chưa khớp với vận tốc (${inputs.unitV})!`,
-          subMessage: `Em cần đổi "${inputs.unitS}" sang "${expectedFromV.dist}" trước khi tính thời gian nhé.`
-        };
-      }
-      return {
-        message: `Chú ý! Quãng đường (${inputs.unitS}) và thời gian (${inputs.unitT}) chưa cùng hệ đơn vị!`,
-        subMessage: `Hãy chọn km đi với giờ, hoặc m đi với phút/giây trước khi tính vận tốc nhé.`
-      };
-    }
-
-    const reachedB = animProgress >= 99.9;
-    if (reachedB) {
-      return {
-        message: 'Xe đã chạm đích Điểm B! Đáp án đã hiển thị trên bảng.',
-        subMessage: 'Bấm "Đặt lại" hoặc kéo thanh trượt để quan sát lại từng bước nhé!'
-      };
-    }
-
-    return {
-      message: 's = v × t  |  v = s : t  |  t = s : v',
-      subMessage: 'Bấm "Chạy mô phỏng" để xem xe di chuyển qua từng mốc thời gian!'
-    };
-  };
 
   // Đồng bộ reset xe về A & ẩn đáp án khi đổi số liệu
   const resetSimulationState = () => {
@@ -358,12 +323,10 @@ const MotionPanel: React.FC = () => {
     }
   };
 
-  const mascotSpeech = getMascotSpeech();
-
   return (
     <div className="flex flex-col lg:flex-row h-full min-h-[680px]">
       {/* Sidebar Controls */}
-      <div className="w-full lg:w-76 bg-slate-50/90 p-4 md:p-5 border-b lg:border-b-0 lg:border-r border-slate-200/80 space-y-4 overflow-y-auto custom-scrollbar shrink-0">
+      <div className="w-full lg:w-80 bg-slate-50/90 p-4 md:p-5 border-b lg:border-b-0 lg:border-r border-slate-200/80 space-y-4 overflow-y-auto custom-scrollbar shrink-0">
         <div>
           <div className="flex items-center gap-2 mb-2.5">
             <div className="p-1.5 bg-orange-100 text-orange-700 rounded-lg">
@@ -522,44 +485,87 @@ const MotionPanel: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Content — Tối ưu chiều cao gọn gàng để hiển thị trọn vẹn trên 1 màn hình */}
-      <div className="flex-1 p-3.5 md:p-5 flex flex-col bg-white overflow-hidden justify-between gap-3.5">
+      {/* Main Content — Tối ưu chiều cao gọn gàng để hiển thị trọn vẹn bảng tương tác */}
+      <div className="flex-1 min-w-0 p-3.5 md:p-5 flex flex-col bg-white overflow-y-auto justify-between gap-3.5">
         
         {/* KHUNG MÔ PHỎNG ĐƯỜNG CHUYỂN ĐỘNG TRÊN NỀN Ô LY TOÁN */}
-        <div className="w-full math-grid-bg rounded-2xl border-2 border-orange-200 shadow-sm board-shadow p-3 md:p-4 select-none flex flex-col gap-3">
-          {/* Header khung mô phỏng */}
+        <div className="w-full math-grid-bg rounded-2xl border-2 border-orange-200 shadow-sm board-shadow p-3 md:p-4 select-none flex flex-col gap-2">
+          {/* Header khung mô phỏng + Cụm nút thao tác ở góc trên bên phải */}
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="bg-orange-600 text-white px-3 py-1 rounded-xl text-[11px] font-black uppercase tracking-wider shadow-xs flex items-center gap-1.5">
               <Sparkles size={13} className="text-amber-300" />
               MÔ PHỎNG ĐƯỜNG CHUYỂN ĐỘNG
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               {isUnitMismatch && (
-                <span className="px-2.5 py-1 rounded-lg bg-rose-100 text-rose-800 border border-rose-300 text-[11px] font-extrabold animate-pulse">
-                  ⚠ Lệch đơn vị đo
+                <span className="px-2 py-1 rounded-lg bg-rose-100 text-rose-800 border border-rose-300 text-[11px] font-extrabold animate-pulse">
+                  ⚠ Lệch đơn vị
                 </span>
               )}
+
+              {/* Cụm nút icon thao tác gọn ở góc */}
+              <div className="flex items-center gap-1 bg-white/95 border border-orange-200 rounded-xl p-1 shadow-xs">
+                <button
+                  type="button"
+                  onClick={handlePlay}
+                  disabled={isPlaying}
+                  title="Chạy"
+                  aria-label="Chạy mô phỏng"
+                  className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
+                    isPlaying
+                      ? 'bg-emerald-100 text-emerald-400 cursor-not-allowed'
+                      : 'bg-emerald-600 hover:bg-emerald-700 text-white active:scale-95'
+                  }`}
+                >
+                  <Play size={13} fill="currentColor" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handlePause}
+                  disabled={!isPlaying}
+                  title="Tạm dừng"
+                  aria-label="Tạm dừng mô phỏng"
+                  className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
+                    !isPlaying
+                      ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                      : 'bg-amber-500 hover:bg-amber-600 text-white active:scale-95'
+                  }`}
+                >
+                  <Pause size={13} fill="currentColor" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResetSim}
+                  title="Đặt lại"
+                  aria-label="Đặt lại mô phỏng"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all active:scale-95 cursor-pointer"
+                >
+                  <RotateCcw size={13} />
+                </button>
+              </div>
+
               <button
+                type="button"
                 onClick={() => setShowSimAnswer(prev => !prev)}
-                className={`px-3 py-1 rounded-xl text-xs font-extrabold shadow-xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer border ${
+                className={`px-2.5 py-1.5 rounded-xl text-xs font-extrabold shadow-xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer border ${
                   isAnswerVisible
                     ? 'bg-emerald-600 text-white border-emerald-500 hover:bg-emerald-700'
                     : 'bg-white text-orange-800 border-orange-300 hover:bg-amber-50'
                 }`}
               >
                 {isAnswerVisible ? <EyeOff size={13} /> : <Eye size={13} />}
-                {isAnswerVisible ? 'Ẩn đáp án' : 'Hiện đáp án'}
+                <span>{isAnswerVisible ? 'Ẩn đáp án' : 'Hiện đáp án'}</span>
               </button>
             </div>
           </div>
 
           {/* Khu vực đường chạy + Xe + Vạch chia thời gian */}
-          <div className="pt-14 pb-1 px-6 md:px-10 relative">
+          <div className="pt-14 pb-0 px-5 md:px-8 relative">
             <div className="relative w-full">
               {/* Xe chuyển động + Nhãn động thời gian & quãng đường */}
               <div
-                className="absolute -top-13 flex flex-col items-center z-20 pointer-events-none"
+                className="absolute -top-[54px] flex flex-col items-center z-20 pointer-events-none"
                 style={{ left: `${animProgress}%`, transform: 'translateX(-50%)' }}
               >
                 {/* Nhãn động khi xe chạy hoặc đang tua */}
@@ -639,7 +645,7 @@ const MotionPanel: React.FC = () => {
               </div>
 
               {/* Mốc Điểm A, Quãng đường s (giữa), Điểm B */}
-              <div className="flex justify-between items-start mt-5">
+              <div className="flex justify-between items-start mt-4">
                 <div className="flex flex-col items-start">
                   <div className="flex items-center gap-1.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-blue-600 border border-white shadow-xs inline-block" />
@@ -683,72 +689,21 @@ const MotionPanel: React.FC = () => {
             </div>
           </div>
 
-          {/* Thanh điều khiển mô phỏng & Trợ lý góc dưới (không che đường chạy) */}
-          <div className="pt-2 border-t border-orange-200/70 flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3">
-            {/* Cụm nút điều khiển + Thanh trượt tua */}
-            <div className="flex-1 bg-white/90 rounded-xl border border-orange-200/90 p-2.5 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shadow-xs">
-              <div className="flex items-center gap-1.5 shrink-0">
-                <button
-                  onClick={handlePlay}
-                  disabled={isPlaying}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-extrabold flex items-center gap-1 transition-all cursor-pointer ${
-                    isPlaying
-                      ? 'bg-emerald-100 text-emerald-500 cursor-not-allowed'
-                      : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs active:scale-95'
-                  }`}
-                >
-                  <Play size={13} fill="currentColor" />
-                  Chạy mô phỏng
-                </button>
-                <button
-                  onClick={handlePause}
-                  disabled={!isPlaying}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-extrabold flex items-center gap-1 transition-all cursor-pointer ${
-                    !isPlaying
-                      ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                      : 'bg-amber-500 hover:bg-amber-600 text-white shadow-xs active:scale-95'
-                  }`}
-                >
-                  <Pause size={13} fill="currentColor" />
-                  Tạm dừng
-                </button>
-                <button
-                  onClick={handleResetSim}
-                  className="px-2.5 py-1.5 rounded-lg text-xs font-extrabold bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center gap-1 transition-all active:scale-95 cursor-pointer"
-                >
-                  <RotateCcw size={13} />
-                  Đặt lại
-                </button>
-              </div>
-
-              {/* Thanh trượt tua tiến trình theo thời gian */}
-              <div className="flex-1 flex items-center gap-2 min-w-[140px]">
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  step={0.5}
-                  value={animProgress}
-                  onChange={(e) => handleScrub(Number(e.target.value))}
-                  aria-label="Thanh trượt tua tiến trình theo thời gian"
-                  className="w-full accent-orange-600 cursor-pointer h-2 rounded-lg"
-                />
-                <span className="text-[11px] font-mono font-black text-orange-800 bg-orange-50 px-2 py-0.5 rounded-md border border-orange-200 shrink-0 min-w-[44px] text-center">
-                  {Math.round(animProgress)}%
-                </span>
-              </div>
-            </div>
-
-            {/* Nhân vật trợ lý nhắc đơn vị / cổ vũ */}
-            <div className="flex justify-end shrink-0">
-              <MascotCompanion
-                compact
-                isWarning={isUnitMismatch}
-                isHappy={!isUnitMismatch && (hasReachedB || Boolean(practiceResult?.isCorrect))}
-                message={mascotSpeech.message}
-                subMessage={mascotSpeech.subMessage}
-              />
-            </div>
+          {/* Thanh trượt tua tiến trình siêu gọn */}
+          <div className="px-5 md:px-8 pt-1 flex items-center gap-2.5">
+            <input
+              type="range"
+              min={0}
+              max={100}
+              step={0.5}
+              value={animProgress}
+              onChange={(e) => handleScrub(Number(e.target.value))}
+              aria-label="Thanh trượt tua tiến trình theo thời gian"
+              className="w-full accent-orange-600 cursor-pointer h-1.5 rounded-lg"
+            />
+            <span className="text-[11px] font-mono font-black text-orange-800 bg-white/90 px-2 py-0.5 rounded-md border border-orange-200 shrink-0 min-w-[42px] text-center">
+              {Math.round(animProgress)}%
+            </span>
           </div>
         </div>
 
