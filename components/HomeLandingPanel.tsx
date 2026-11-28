@@ -404,11 +404,11 @@ export const HomeLandingPanel: React.FC<HomeLandingPanelProps> = ({
 
           <div className="space-y-3 flex-1">
             <h4 className="text-lg sm:text-xl md:text-2xl font-black text-red-600 tracking-wide select-none">
-              MathFlow – Nâng Cánh Ước Mơ Học Toán Vùng Cao
+              MathFlow – Khơi Nguồn Đam Mê Toán Học Số
             </h4>
 
             <p className="text-xs sm:text-sm text-slate-700 leading-relaxed italic font-medium">
-              &quot;Với tâm huyết mang công nghệ số và phương pháp học tập trực quan sinh động đến với các em học sinh lớp 5, đặc biệt là đối với các em nhỏ vùng cao, MathFlow được xây dựng với mong muốn biến những con số, hình khối khô khan thành những trải nghiệm đầy hứng khởi và niềm vui khám phá.&quot;
+              &quot;Với tâm huyết mang công nghệ số và phương pháp học tập trực quan sinh động đến với các em học sinh lớp 5, MathFlow được xây dựng với mong muốn biến những con số, hình khối khô khan thành những trải nghiệm đầy hứng khởi và niềm vui khám phá.&quot;
             </p>
 
             <p className="text-xs sm:text-sm font-bold text-emerald-800 pt-1 border-t border-emerald-100">
